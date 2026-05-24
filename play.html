@@ -443,11 +443,37 @@ window.addEventListener('load', () => {
   try {
     const s = JSON.parse(saved);
     if (s.user && s.token) {
+      // Check if pet is missing owner
+      const lastVisit = localStorage.getItem('pw_last_visit');
+      const now = Date.now();
+      if (lastVisit && (now - parseInt(lastVisit)) > 24 * 3600 * 1000) {
+        localStorage.setItem('pw_last_visit', now.toString());
+        window.location.href = '/missing.html';
+        return;
+      }
+      localStorage.setItem('pw_last_visit', now.toString());
       loadPet(s.token);
       updateBestScores();
+      applyDailyBonus(s.token);
     } else { window.location.href = '/'; }
   } catch { window.location.href = '/'; }
 });
+
+async function applyDailyBonus(token) {
+  const bonus = JSON.parse(localStorage.getItem('pw_daily_bonus') || '{}');
+  if (!bonus.energy && !bonus.mood) return;
+  try {
+    const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    if (data.pet) {
+      const updates = { id: data.pet.id };
+      if (bonus.energy) updates.energy = Math.min(100, (data.pet.energy||80) + bonus.energy);
+      if (bonus.mood) updates.mood = Math.min(100, (data.pet.mood||80) + bonus.mood);
+      fetch('/api/pet', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(updates) }).catch(()=>{});
+      localStorage.removeItem('pw_daily_bonus');
+    }
+  } catch {}
+}
 
 async function loadPet(token) {
   try {
