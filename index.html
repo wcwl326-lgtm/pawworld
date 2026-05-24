@@ -3,191 +3,252 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PawWorld — AI 宠物卡通生成器</title>
+<title>PawWorld 🐾</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --orange: #F97316; --orange-light: #FFF7ED; --orange-mid: #FED7AA;
     --purple: #8B5CF6; --purple-light: #EDE9FE;
-    --green: #10B981;
-    --gray-200: #E5E7EB; --gray-400: #9CA3AF; --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937;
+    --green: #10B981; --green-light: #ECFDF5;
+    --blue: #3B82F6; --blue-light: #EFF6FF;
+    --pink: #EC4899; --pink-light: #FDF2F8;
+    --gray-100: #F3F4F6; --gray-200: #E5E7EB; --gray-400: #9CA3AF;
+    --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937;
     --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px; --radius-xl: 32px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Nunito', sans-serif; background: #FFF9F5; min-height: 100vh; overflow-x: hidden; }
+  body { font-family: 'Nunito', sans-serif; background: #FFF9F5; min-height: 100vh; }
   body::before { content: ''; position: fixed; top: -120px; right: -120px; width: 400px; height: 400px; background: radial-gradient(circle, #FED7AA 0%, transparent 70%); z-index: 0; pointer-events: none; }
   body::after { content: ''; position: fixed; bottom: -100px; left: -100px; width: 350px; height: 350px; background: radial-gradient(circle, #DDD6FE 0%, transparent 70%); z-index: 0; pointer-events: none; }
-  .page { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 28px 20px 60px; }
-  .header { text-align: center; margin-bottom: 32px; animation: slideDown 0.6s ease; }
-  @keyframes slideDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .page { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 28px 20px 80px; display: none; }
+  .page.active { display: block; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.5); } }
-  .logo { font-family: 'Fredoka One', sans-serif; font-size: 38px; color: var(--orange); letter-spacing: 1px; line-height: 1; }
+  @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
+  @keyframes pop { 0% { transform:scale(1); } 50% { transform:scale(1.25); } 100% { transform:scale(1); } }
+  @keyframes floatUp { 0% { opacity:1; transform:translateY(0) scale(1); } 100% { opacity:0; transform:translateY(-70px) scale(0.5); } }
+
+  .logo { font-family: 'Fredoka One', sans-serif; font-size: 36px; color: var(--orange); letter-spacing: 1px; }
   .logo span { color: var(--purple); }
-  .tagline { margin-top: 8px; font-size: 15px; color: var(--gray-600); font-weight: 600; }
 
-  .section-card { background: white; border-radius: var(--radius-xl); padding: 20px; margin-bottom: 16px; border: 1.5px solid var(--gray-200); animation: fadeUp 0.5s ease both; }
-  .section-card:nth-child(1) { animation-delay: 0.1s; }
-  .section-card:nth-child(2) { animation-delay: 0.15s; }
-  .section-card:nth-child(3) { animation-delay: 0.2s; }
-  .section-card:nth-child(4) { animation-delay: 0.25s; }
+  /* Auth page */
+  .auth-header { text-align: center; margin-bottom: 32px; animation: fadeUp 0.5s ease; }
+  .auth-tagline { font-size: 14px; color: var(--gray-600); margin-top: 6px; font-weight: 600; }
+  .auth-card { background: white; border-radius: var(--radius-xl); padding: 28px 24px; border: 1.5px solid var(--gray-200); animation: fadeUp 0.5s ease 0.1s both; }
+  .auth-tabs { display: flex; background: var(--gray-100); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 24px; }
+  .auth-tab { flex: 1; padding: 10px; text-align: center; font-family: 'Fredoka One', sans-serif; font-size: 15px; color: var(--gray-400); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+  .auth-tab.active { background: white; color: var(--orange); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .auth-form { display: flex; flex-direction: column; gap: 14px; }
+  .auth-input { width: 100%; background: var(--gray-100); border: 1.5px solid transparent; border-radius: var(--radius-sm); padding: 13px 16px; font-family: 'Nunito', sans-serif; font-size: 15px; color: var(--gray-800); outline: none; transition: all 0.2s; }
+  .auth-input:focus { background: white; border-color: var(--orange); }
+  .auth-input::placeholder { color: var(--gray-400); }
+  .auth-btn { background: var(--orange); color: white; border: none; border-radius: var(--radius-sm); padding: 15px; font-family: 'Fredoka One', sans-serif; font-size: 18px; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
+  .auth-btn:hover { background: #EA6C0A; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(249,115,22,0.3); }
+  .auth-btn:disabled { background: var(--gray-400); cursor: not-allowed; transform: none; box-shadow: none; }
+  .auth-error { background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #DC2626; display: none; }
+  .auth-error.visible { display: block; }
+  .auth-success { background: var(--green-light); border: 1px solid #6EE7B7; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #065F46; display: none; }
+  .auth-success.visible { display: block; }
 
-  .section-title { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: var(--gray-800); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-  .optional-badge { background: var(--gray-200); color: var(--gray-600); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; font-family: 'Nunito', sans-serif; }
+  /* Nav bar */
+  .nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; background: white; border-top: 1px solid var(--gray-200); display: flex; z-index: 100; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 14px; cursor: pointer; color: var(--gray-400); font-size: 10px; font-weight: 700; border: none; background: none; transition: color 0.2s; }
+  .nav-item.active { color: var(--orange); }
+  .nav-icon { font-size: 22px; }
 
-  .upload-zone { border: 2px dashed var(--orange-mid); border-radius: var(--radius-lg); padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: pointer; transition: all 0.25s ease; position: relative; }
-  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--orange); background: var(--orange-light); }
+  /* Top bar */
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .user-badge { display: flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--gray-200); border-radius: 20px; padding: 6px 14px 6px 8px; }
+  .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--orange-light); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .user-email { font-size: 12px; color: var(--gray-600); font-weight: 700; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .logout-btn { font-size: 12px; color: var(--gray-400); cursor: pointer; border: none; background: none; font-family: 'Nunito', sans-serif; font-weight: 700; }
+  .logout-btn:hover { color: var(--orange); }
+
+  /* Generate page */
+  .section-card { background: white; border-radius: var(--radius-xl); padding: 20px; margin-bottom: 16px; border: 1.5px solid var(--gray-200); animation: fadeUp 0.4s ease both; }
+  .section-title { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: var(--gray-800); margin-bottom: 14px; }
+  .optional-badge { background: var(--gray-200); color: var(--gray-600); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; font-family: 'Nunito', sans-serif; margin-left: 6px; }
+  .upload-zone { border: 2px dashed var(--orange-mid); border-radius: var(--radius-lg); padding: 22px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s; }
+  .upload-zone:hover { border-color: var(--orange); background: var(--orange-light); }
   .upload-zone.has-image { border-style: solid; border-color: var(--orange); background: var(--orange-light); padding: 14px; }
-  .upload-icon { width: 56px; height: 56px; background: var(--orange-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; transition: transform 0.3s; }
-  .upload-zone:hover .upload-icon { transform: scale(1.1) rotate(-5deg); }
-  .upload-title { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: var(--gray-800); }
-  .upload-sub { font-size: 12px; color: var(--gray-400); text-align: center; line-height: 1.5; }
-  .upload-formats { display: flex; gap: 6px; }
-  .format-tag { background: var(--orange-light); color: var(--orange); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .upload-icon { width: 52px; height: 52px; background: var(--orange-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .upload-title { font-family: 'Fredoka One', sans-serif; font-size: 15px; color: var(--gray-800); }
+  .upload-sub { font-size: 12px; color: var(--gray-400); text-align: center; }
   #file-input { display: none; }
-  .preview-wrap { display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+  .preview-wrap { display: none; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
   .preview-wrap.visible { display: flex; }
-  .preview-img { width: 160px; height: 160px; object-fit: cover; border-radius: var(--radius-md); border: 3px solid var(--orange); }
-  .preview-label { font-size: 13px; color: var(--green); font-weight: 700; }
-  .change-btn { background: none; border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 5px 14px; font-family: 'Nunito', sans-serif; font-size: 12px; color: var(--gray-600); cursor: pointer; font-weight: 600; transition: all 0.2s; }
-  .change-btn:hover { border-color: var(--orange); color: var(--orange); }
-
-  .or-divider { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
+  .preview-img { width: 140px; height: 140px; object-fit: cover; border-radius: var(--radius-md); border: 3px solid var(--orange); }
+  .change-btn { background: none; border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 5px 12px; font-family: 'Nunito', sans-serif; font-size: 12px; color: var(--gray-600); cursor: pointer; font-weight: 600; }
+  .or-divider { display: flex; align-items: center; gap: 10px; margin: 12px 0; }
   .or-line { flex: 1; height: 1px; background: var(--gray-200); }
   .or-text { font-size: 12px; color: var(--gray-400); font-weight: 700; }
-
-  .pet-input { width: 100%; background: var(--gray-50, #F9FAFB); border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'Nunito', sans-serif; font-size: 15px; color: var(--gray-800); outline: none; transition: border-color 0.2s; }
-  .pet-input:focus { border-color: var(--orange); background: white; }
+  .pet-input { width: 100%; background: var(--gray-100); border: 1.5px solid transparent; border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'Nunito', sans-serif; font-size: 15px; color: var(--gray-800); outline: none; transition: all 0.2s; }
+  .pet-input:focus { background: white; border-color: var(--orange); }
   .pet-input::placeholder { color: var(--gray-400); }
-  .pet-textarea { width: 100%; background: var(--gray-50, #F9FAFB); border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'Nunito', sans-serif; font-size: 14px; color: var(--gray-800); outline: none; transition: border-color 0.2s; resize: none; height: 86px; line-height: 1.6; }
-  .pet-textarea:focus { border-color: var(--orange); background: white; }
+  .pet-textarea { width: 100%; background: var(--gray-100); border: 1.5px solid transparent; border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'Nunito', sans-serif; font-size: 14px; color: var(--gray-800); outline: none; transition: all 0.2s; resize: none; height: 82px; line-height: 1.6; }
+  .pet-textarea:focus { background: white; border-color: var(--orange); }
   .pet-textarea::placeholder { color: var(--gray-400); }
-
   .style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .style-card { background: var(--gray-50, #F9FAFB); border: 2px solid var(--gray-200); border-radius: var(--radius-md); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; }
-  .style-card:hover { border-color: var(--orange-mid); transform: translateY(-2px); background: var(--orange-light); }
+  .style-card { background: var(--gray-100); border: 2px solid transparent; border-radius: var(--radius-md); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; }
+  .style-card:hover { background: var(--orange-light); transform: translateY(-2px); }
   .style-card.selected { border-color: var(--orange); background: var(--orange-light); }
   .style-emoji { font-size: 26px; }
   .style-name { font-family: 'Fredoka One', sans-serif; font-size: 13px; color: var(--gray-700); }
-  .style-desc { font-size: 10px; color: var(--gray-400); text-align: center; line-height: 1.4; }
-
-  .generate-btn { width: 100%; background: var(--orange); color: white; border: none; border-radius: var(--radius-md); padding: 18px; font-family: 'Fredoka One', sans-serif; font-size: 20px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; letter-spacing: 0.5px; animation: fadeUp 0.5s ease 0.3s both; }
-  .generate-btn:hover { background: #EA6C0A; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(249,115,22,0.35); }
-  .generate-btn:active { transform: scale(0.98); }
-
-  .loading-area { display: none; flex-direction: column; align-items: center; gap: 16px; padding: 60px 0; }
+  .style-desc { font-size: 10px; color: var(--gray-400); text-align: center; }
+  .generate-btn { width: 100%; background: var(--orange); color: white; border: none; border-radius: var(--radius-md); padding: 17px; font-family: 'Fredoka One', sans-serif; font-size: 19px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
+  .generate-btn:hover { background: #EA6C0A; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(249,115,22,0.3); }
+  .loading-area { display: none; flex-direction: column; align-items: center; gap: 14px; padding: 50px 0; }
   .loading-area.visible { display: flex; }
-  .loading-ring { width: 64px; height: 64px; border: 4px solid var(--orange-mid); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.9s linear infinite; }
-  .loading-text { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--gray-800); }
-  .loading-steps { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 260px; margin-top: 8px; }
+  .loading-ring { width: 60px; height: 60px; border: 4px solid var(--orange-mid); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.9s linear infinite; }
+  .loading-text { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); }
+  .loading-steps { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 240px; }
   .loading-step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--gray-400); font-weight: 600; transition: color 0.3s; }
   .loading-step.active { color: var(--orange); }
   .loading-step.done { color: var(--green); }
-  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray-200); flex-shrink: 0; transition: background 0.3s; }
-  .loading-step.active .step-dot { background: var(--orange); animation: pulse 1s ease infinite; }
+  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray-200); flex-shrink: 0; }
+  .loading-step.active .step-dot { background: var(--orange); }
   .loading-step.done .step-dot { background: var(--green); }
-
-  .result-area { display: none; flex-direction: column; align-items: center; gap: 20px; animation: fadeUp 0.5s ease; }
-  .result-area.visible { display: flex; }
-  .result-title { font-family: 'Fredoka One', sans-serif; font-size: 26px; color: var(--gray-800); text-align: center; }
-  .result-sub { font-size: 14px; color: var(--gray-400); margin-top: 4px; text-align: center; }
-  .result-images { display: grid; gap: 16px; width: 100%; }
+  .result-area { display: none; flex-direction: column; align-items: center; gap: 18px; }
+  .result-area.visible { display: flex; animation: fadeUp 0.5s ease; }
+  .result-title { font-family: 'Fredoka One', sans-serif; font-size: 24px; color: var(--gray-800); text-align: center; }
+  .result-images { display: grid; gap: 14px; width: 100%; }
   .result-card { background: white; border-radius: var(--radius-lg); overflow: hidden; border: 2px solid var(--gray-200); }
   .result-card.highlight { border-color: var(--orange); }
   .result-card-img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
-  .result-card-label { padding: 10px 12px; font-size: 12px; font-weight: 700; color: var(--gray-600); text-align: center; }
+  .result-card-label { padding: 8px 12px; font-size: 12px; font-weight: 700; color: var(--gray-600); text-align: center; }
   .result-card.highlight .result-card-label { color: var(--orange); }
-  .result-desc { background: var(--orange-light); border-radius: var(--radius-md); padding: 16px; width: 100%; }
-  .result-desc-title { font-family: 'Fredoka One', sans-serif; font-size: 15px; color: var(--orange); margin-bottom: 8px; }
-  .result-desc-text { font-size: 14px; color: var(--gray-700); line-height: 1.7; }
+  .result-desc { background: var(--orange-light); border-radius: var(--radius-md); padding: 14px; width: 100%; }
+  .result-desc-title { font-family: 'Fredoka One', sans-serif; font-size: 14px; color: var(--orange); margin-bottom: 6px; }
+  .result-desc-text { font-size: 13px; color: var(--gray-700); line-height: 1.7; }
   .result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-  .result-btn { padding: 14px; border-radius: var(--radius-sm); font-family: 'Fredoka One', sans-serif; font-size: 16px; cursor: pointer; border: none; transition: all 0.2s; text-align: center; }
+  .result-btn { padding: 13px; border-radius: var(--radius-sm); font-family: 'Fredoka One', sans-serif; font-size: 15px; cursor: pointer; border: none; transition: all 0.2s; text-align: center; }
   .result-btn.primary { background: var(--orange); color: white; }
   .result-btn.secondary { background: white; color: var(--gray-700); border: 2px solid var(--gray-200); }
+  .result-btn.purple { background: var(--purple); color: white; }
   .result-btn:hover { transform: translateY(-2px); }
-  .result-btn.primary:hover { box-shadow: 0 6px 20px rgba(249,115,22,0.35); }
-  .error-box { background: #FEF2F2; border: 1.5px solid #FCA5A5; border-radius: var(--radius-md); padding: 16px; width: 100%; display: none; }
+  .save-note { font-size: 12px; color: var(--green); font-weight: 700; text-align: center; }
+
+  /* Play page */
+  .play-arena { background: white; border-radius: var(--radius-xl); padding: 24px 20px; border: 1.5px solid var(--gray-200); margin-bottom: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; overflow: hidden; min-height: 220px; cursor: pointer; }
+  .play-pet-emoji { font-size: 90px; animation: float 3s ease-in-out infinite; user-select: none; transition: transform 0.15s; display: block; }
+  .play-pet-emoji:active { transform: scale(1.2) rotate(8deg); animation: none; }
+  .play-pet-name { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); }
+  .play-pet-level { background: var(--purple-light); color: var(--purple); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .play-pet-img { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid var(--orange); animation: float 3s ease-in-out infinite; }
+
+  .status-card { background: white; border-radius: var(--radius-xl); padding: 18px 20px; border: 1.5px solid var(--gray-200); margin-bottom: 16px; }
+  .status-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .status-row:last-child { margin-bottom: 0; }
+  .status-icon { font-size: 18px; width: 24px; text-align: center; }
+  .status-bar-bg { flex: 1; height: 10px; background: var(--gray-100); border-radius: 10px; overflow: hidden; }
+  .status-bar-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
+  .fill-orange { background: var(--orange); }
+  .fill-purple { background: var(--purple); }
+  .fill-pink { background: var(--pink); }
+  .status-val { font-family: 'Fredoka One', sans-serif; font-size: 14px; color: var(--gray-700); width: 32px; text-align: right; }
+
+  .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .action-btn { background: white; border: 1.5px solid var(--gray-200); border-radius: var(--radius-md); padding: 12px 6px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; font-family: 'Nunito', sans-serif; font-size: 11px; color: var(--gray-600); font-weight: 700; transition: all 0.2s; }
+  .action-btn:hover { border-color: var(--orange); color: var(--orange); transform: translateY(-2px); background: var(--orange-light); }
+  .action-btn:active { transform: scale(0.95); }
+  .action-icon { font-size: 24px; }
+
+  .chat-card { background: white; border-radius: var(--radius-xl); padding: 16px; border: 1.5px solid var(--gray-200); }
+  .chat-messages { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; min-height: 80px; max-height: 200px; overflow-y: auto; }
+  .chat-msg { display: flex; gap: 8px; align-items: flex-end; }
+  .chat-msg.user { flex-direction: row-reverse; }
+  .chat-avatar { font-size: 22px; flex-shrink: 0; }
+  .chat-bubble { background: var(--gray-100); border-radius: 14px 14px 14px 4px; padding: 9px 13px; font-size: 13px; color: var(--gray-700); line-height: 1.5; max-width: 75%; }
+  .chat-msg.user .chat-bubble { background: var(--orange); color: white; border-radius: 14px 14px 4px 14px; }
+  .chat-input-row { display: flex; gap: 8px; }
+  .chat-input { flex: 1; background: var(--gray-100); border: 1.5px solid transparent; border-radius: 12px; padding: 10px 14px; font-family: 'Nunito', sans-serif; font-size: 14px; color: var(--gray-800); outline: none; transition: all 0.2s; }
+  .chat-input:focus { background: white; border-color: var(--orange); }
+  .chat-send { background: var(--orange); border: none; border-radius: 12px; padding: 10px 16px; color: white; font-size: 16px; cursor: pointer; transition: all 0.2s; font-family: 'Nunito', sans-serif; font-weight: 700; }
+  .chat-send:hover { background: #EA6C0A; }
+  .chat-typing { font-size: 12px; color: var(--gray-400); font-style: italic; display: none; }
+  .chat-typing.visible { display: block; }
+
+  .heart-float { position: absolute; pointer-events: none; font-size: 20px; animation: floatUp 1s ease-out forwards; }
+  .no-pet-msg { text-align: center; padding: 40px 20px; }
+  .no-pet-title { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--gray-700); margin-bottom: 10px; }
+  .no-pet-sub { font-size: 14px; color: var(--gray-400); margin-bottom: 20px; }
+  .no-pet-btn { background: var(--orange); color: white; border: none; border-radius: var(--radius-md); padding: 14px 28px; font-family: 'Fredoka One', sans-serif; font-size: 16px; cursor: pointer; }
+
+  .error-box { background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: var(--radius-md); padding: 14px; display: none; margin-top: 12px; }
   .error-box.visible { display: block; }
-  .error-title { font-family: 'Fredoka One', sans-serif; font-size: 15px; color: #DC2626; margin-bottom: 6px; }
-  .error-text { font-size: 13px; color: #991B1B; line-height: 1.6; white-space: pre-wrap; }
+  .error-text { font-size: 13px; color: #DC2626; }
 </style>
 </head>
 <body>
-<div class="page">
-  <div class="header">
+
+<!-- AUTH PAGE -->
+<div class="page active" id="page-auth">
+  <div class="auth-header">
     <div class="logo">Paw<span>World</span> 🐾</div>
-    <div class="tagline">上传照片或描述宠物，AI 生成专属卡通形象</div>
+    <div class="auth-tagline">给你的宠物创建专属卡通形象</div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">登录</div>
+      <div class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">注册</div>
+    </div>
+    <div class="auth-form">
+      <input class="auth-input" id="auth-email" type="email" placeholder="邮箱地址">
+      <input class="auth-input" id="auth-password" type="password" placeholder="密码（至少6位）">
+      <div class="auth-error" id="auth-error"></div>
+      <div class="auth-success" id="auth-success"></div>
+      <button class="auth-btn" id="auth-btn" onclick="doAuth()">登录</button>
+    </div>
+  </div>
+</div>
+
+<!-- GENERATE PAGE -->
+<div class="page" id="page-generate">
+  <div class="top-bar">
+    <div class="logo" style="font-size:24px;">Paw<span>World</span></div>
+    <div class="user-badge">
+      <div class="user-avatar">🐾</div>
+      <div class="user-email" id="user-email-display"></div>
+      <button class="logout-btn" onclick="doLogout()">退出</button>
+    </div>
   </div>
 
-  <div id="main-form">
-
-    <!-- 宠物名字 -->
-    <div class="section-card">
+  <div id="gen-form">
+    <div class="section-card" style="animation-delay:0.05s">
       <div class="section-title">🐾 宠物名字</div>
       <input class="pet-input" id="pet-name" type="text" placeholder="例如：小橘、奶茶、豆豆..." maxlength="20">
     </div>
-
-    <!-- 上传照片 -->
-    <div class="section-card">
+    <div class="section-card" style="animation-delay:0.1s">
       <div class="section-title">📷 上传宠物照片 <span class="optional-badge">选填</span></div>
       <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
         <input type="file" id="file-input" accept="image/*" onchange="onFileSelected(event)">
-        <div id="upload-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div id="upload-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px;">
           <div class="upload-icon">📷</div>
           <div class="upload-title">点击或拖拽上传</div>
-          <div class="upload-sub">AI 将分析照片中宠物的外貌特征</div>
-          <div class="upload-formats">
-            <span class="format-tag">JPG</span>
-            <span class="format-tag">PNG</span>
-            <span class="format-tag">WEBP</span>
-          </div>
+          <div class="upload-sub">AI 会分析照片特征</div>
         </div>
         <div class="preview-wrap" id="preview-wrap">
           <img class="preview-img" id="preview-img" src="" alt="预览">
-          <div class="preview-label">✓ 照片已选择</div>
-          <button class="change-btn" onclick="event.stopPropagation(); resetImage()">更换照片</button>
+          <div style="font-size:12px;color:var(--green);font-weight:700;">✓ 照片已选择</div>
+          <button class="change-btn" onclick="event.stopPropagation();resetImage()">更换</button>
         </div>
       </div>
-
-      <div class="or-divider" style="margin-top:14px;">
-        <div class="or-line"></div>
-        <div class="or-text">或者</div>
-        <div class="or-line"></div>
-      </div>
-
-      <div style="margin-top:12px;">
-        <div style="font-size:13px;font-weight:700;color:var(--gray-600);margin-bottom:8px;">✏️ 用文字描述宠物外貌 <span class="optional-badge">选填</span></div>
-        <textarea class="pet-textarea" id="pet-desc" placeholder="例如：橙色柴犬，毛茸茸，大眼睛，耳朵竖起来，很活泼可爱...&#10;照片和描述可以同时填，AI 会结合两者生成更准确的形象！"></textarea>
-      </div>
+      <div class="or-divider"><div class="or-line"></div><div class="or-text">或</div><div class="or-line"></div></div>
+      <div style="font-size:13px;font-weight:700;color:var(--gray-600);margin-bottom:8px;">✏️ 文字描述外貌 <span class="optional-badge">选填</span></div>
+      <textarea class="pet-textarea" id="pet-desc" placeholder="例如：白色博美犬，毛茸茸，大眼睛，超可爱..."></textarea>
     </div>
-
-    <!-- 风格选择 -->
-    <div class="section-card">
-      <div class="section-title">🎨 选择卡通风格</div>
+    <div class="section-card" style="animation-delay:0.15s">
+      <div class="section-title">🎨 卡通风格</div>
       <div class="style-grid">
-        <div class="style-card selected" data-style="chibi" onclick="selectStyle(this)">
-          <div class="style-emoji">🌸</div>
-          <div class="style-name">Q 版萌系</div>
-          <div class="style-desc">大眼睛圆头超可爱</div>
-        </div>
-        <div class="style-card" data-style="pixel" onclick="selectStyle(this)">
-          <div class="style-emoji">👾</div>
-          <div class="style-name">像素风</div>
-          <div class="style-desc">复古游戏机风格</div>
-        </div>
-        <div class="style-card" data-style="watercolor" onclick="selectStyle(this)">
-          <div class="style-emoji">🎨</div>
-          <div class="style-name">水彩插画</div>
-          <div class="style-desc">柔和梦幻艺术感</div>
-        </div>
+        <div class="style-card selected" data-style="chibi" onclick="selectStyle(this)"><div class="style-emoji">🌸</div><div class="style-name">Q 版萌系</div><div class="style-desc">大眼圆头超可爱</div></div>
+        <div class="style-card" data-style="pixel" onclick="selectStyle(this)"><div class="style-emoji">👾</div><div class="style-name">像素风</div><div class="style-desc">复古游戏风格</div></div>
+        <div class="style-card" data-style="watercolor" onclick="selectStyle(this)"><div class="style-emoji">🎨</div><div class="style-name">水彩插画</div><div class="style-desc">柔和梦幻感</div></div>
       </div>
     </div>
-
     <button class="generate-btn" onclick="generate()">✨ 生成卡通形象</button>
+    <div class="error-box" id="gen-error"><div class="error-text" id="gen-error-text"></div></div>
   </div>
 
-  <!-- 加载中 -->
   <div class="loading-area" id="loading-area">
     <div class="loading-ring"></div>
     <div class="loading-text">AI 正在施展魔法...</div>
@@ -195,16 +256,12 @@
       <div class="loading-step active" id="step-1"><div class="step-dot"></div>分析宠物特征</div>
       <div class="loading-step" id="step-2"><div class="step-dot"></div>生成卡通描述</div>
       <div class="loading-step" id="step-3"><div class="step-dot"></div>AI 绘制卡通图</div>
-      <div class="loading-step" id="step-4"><div class="step-dot"></div>完成！</div>
+      <div class="loading-step" id="step-4"><div class="step-dot"></div>保存到账号</div>
     </div>
   </div>
 
-  <!-- 结果 -->
   <div class="result-area" id="result-area">
-    <div>
-      <div class="result-title" id="result-title">🎉 生成成功！</div>
-      <div class="result-sub">专属卡通形象已就绪</div>
-    </div>
+    <div class="result-title" id="result-title">🎉 生成成功！</div>
     <div class="result-images" id="result-images">
       <div class="result-card" id="original-card" style="display:none;">
         <img class="result-card-img" id="original-thumb" src="" alt="原图">
@@ -215,41 +272,227 @@
         <div class="result-card-label">✨ AI 卡通形象</div>
       </div>
     </div>
-    <div class="result-desc">
-      <div class="result-desc-title">🐾 AI 的描述</div>
-      <div class="result-desc-text" id="result-desc-text"></div>
-    </div>
+    <div class="result-desc"><div class="result-desc-title">🐾 AI 的描述</div><div class="result-desc-text" id="result-desc-text"></div></div>
+    <div class="save-note" id="save-note"></div>
     <div class="result-actions">
       <button class="result-btn primary" onclick="downloadImage()">⬇ 保存图片</button>
-      <button class="result-btn secondary" onclick="resetAll()">🔄 重新生成</button>
+      <button class="result-btn purple" onclick="goToPlay()">去互动 →</button>
     </div>
-    <div class="error-box" id="error-box">
-      <div class="error-title">⚠️ 出现问题</div>
-      <div class="error-text" id="error-text"></div>
+    <button class="result-btn secondary" style="width:100%;margin-top:8px;" onclick="resetGenerate()">🔄 重新生成</button>
+  </div>
+</div>
+
+<!-- PLAY PAGE -->
+<div class="page" id="page-play">
+  <div class="top-bar">
+    <div class="logo" style="font-size:24px;">Paw<span>World</span></div>
+    <div class="user-badge">
+      <div class="user-avatar">🐾</div>
+      <div class="user-email" id="user-email-play"></div>
+    </div>
+  </div>
+
+  <div id="no-pet-msg" class="no-pet-msg" style="display:none;">
+    <div style="font-size:60px;margin-bottom:12px;">🐾</div>
+    <div class="no-pet-title">还没有宠物</div>
+    <div class="no-pet-sub">先去生成你的专属卡通宠物吧！</div>
+    <button class="no-pet-btn" onclick="switchPage('generate')">去生成 →</button>
+  </div>
+
+  <div id="pet-play-area" style="display:none;">
+    <div class="play-arena" id="play-arena" onclick="petTapped(event)">
+      <img id="play-cartoon-img" src="" alt="宠物" class="play-pet-img" style="display:none;">
+      <div id="play-pet-emoji" class="play-pet-emoji">🐾</div>
+      <div class="play-pet-name" id="play-pet-name">加载中...</div>
+      <div class="play-pet-level" id="play-pet-level">Lv.1</div>
+    </div>
+
+    <div class="status-card">
+      <div class="status-row">
+        <div class="status-icon">🍖</div>
+        <div class="status-bar-bg"><div class="status-bar-fill fill-orange" id="bar-hunger"></div></div>
+        <div class="status-val" id="val-hunger">80</div>
+      </div>
+      <div class="status-row">
+        <div class="status-icon">⚡</div>
+        <div class="status-bar-bg"><div class="status-bar-fill fill-purple" id="bar-energy"></div></div>
+        <div class="status-val" id="val-energy">80</div>
+      </div>
+      <div class="status-row">
+        <div class="status-icon">😊</div>
+        <div class="status-bar-bg"><div class="status-bar-fill fill-pink" id="bar-mood"></div></div>
+        <div class="status-val" id="val-mood">80</div>
+      </div>
+    </div>
+
+    <div class="action-grid">
+      <button class="action-btn" onclick="doAction('feed')"><div class="action-icon">🍖</div>喂食</button>
+      <button class="action-btn" onclick="doAction('play')"><div class="action-icon">🎾</div>玩耍</button>
+      <button class="action-btn" onclick="doAction('sleep')"><div class="action-icon">💤</div>休息</button>
+      <button class="action-btn" onclick="doAction('bath')"><div class="action-icon">🛁</div>洗澡</button>
+    </div>
+
+    <div class="chat-card">
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-msg">
+          <div class="chat-avatar" id="chat-avatar">🐾</div>
+          <div class="chat-bubble" id="welcome-msg">主人你好！我是你的宠物，点击我或者跟我说话吧！😊</div>
+        </div>
+      </div>
+      <div class="chat-typing" id="chat-typing">宠物正在回复...</div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chat-input" placeholder="跟你的宠物说点什么..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" onclick="sendChat()">发送</button>
+      </div>
     </div>
   </div>
 </div>
 
+<!-- NAV BAR -->
+<div class="nav-bar" id="nav-bar" style="display:none;">
+  <button class="nav-item active" id="nav-generate" onclick="switchPage('generate')">
+    <div class="nav-icon">✨</div>生成
+  </button>
+  <button class="nav-item" id="nav-play" onclick="switchPage('play')">
+    <div class="nav-icon">🎮</div>互动
+  </button>
+</div>
+
 <script>
+// State
+let currentUser = null;
+let currentPet = null;
 let selectedFile = null;
 let selectedStyle = 'chibi';
 let generatedImageUrl = null;
+let chatHistory = [];
 
+// Check saved session
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('pw_session');
+  if (saved) {
+    try {
+      const s = JSON.parse(saved);
+      if (s.user && s.token) {
+        currentUser = s.user;
+        currentUser.token = s.token;
+        showMainApp();
+        loadPet();
+      }
+    } catch {}
+  }
+});
+
+// Auth
+function switchAuthTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+  document.getElementById('auth-btn').textContent = tab === 'login' ? '登录' : '注册';
+  document.getElementById('auth-error').classList.remove('visible');
+  document.getElementById('auth-success').classList.remove('visible');
+}
+
+async function doAuth() {
+  const action = document.getElementById('tab-login').classList.contains('active') ? 'login' : 'signup';
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value.trim();
+  const errEl = document.getElementById('auth-error');
+  const sucEl = document.getElementById('auth-success');
+  errEl.classList.remove('visible');
+  sucEl.classList.remove('visible');
+
+  if (!email || !password) { errEl.textContent = '请填写邮箱和密码'; errEl.classList.add('visible'); return; }
+  if (password.length < 6) { errEl.textContent = '密码至少需要6位'; errEl.classList.add('visible'); return; }
+
+  const btn = document.getElementById('auth-btn');
+  btn.disabled = true;
+  btn.textContent = '处理中...';
+
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '操作失败');
+
+    if (action === 'signup') {
+      sucEl.textContent = '注册成功！请检查邮箱确认后再登录。';
+      sucEl.classList.add('visible');
+    } else {
+      currentUser = data.user;
+      currentUser.token = data.access_token;
+      localStorage.setItem('pw_session', JSON.stringify({ user: data.user, token: data.access_token }));
+      showMainApp();
+      loadPet();
+    }
+  } catch (err) {
+    errEl.textContent = err.message;
+    errEl.classList.add('visible');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = action === 'login' ? '登录' : '注册';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('pw_session');
+  currentUser = null;
+  currentPet = null;
+  chatHistory = [];
+  document.getElementById('nav-bar').style.display = 'none';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-auth').classList.add('active');
+}
+
+function showMainApp() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-generate').classList.add('active');
+  document.getElementById('nav-bar').style.display = 'flex';
+  document.getElementById('user-email-display').textContent = currentUser.email;
+  document.getElementById('user-email-play').textContent = currentUser.email;
+  setActiveNav('generate');
+}
+
+function switchPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  setActiveNav(name);
+  if (name === 'play') renderPlayPage();
+}
+
+function setActiveNav(name) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const el = document.getElementById('nav-' + name);
+  if (el) el.classList.add('active');
+}
+
+// Pet loading
+async function loadPet() {
+  if (!currentUser?.token) return;
+  try {
+    const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + currentUser.token } });
+    const data = await res.json();
+    if (data.pet) {
+      currentPet = data.pet;
+      renderPlayPage();
+    }
+  } catch {}
+}
+
+// Generate
 function selectStyle(el) {
   document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   selectedStyle = el.dataset.style;
 }
 
-function onFileSelected(e) {
-  const file = e.target.files[0];
-  if (file) setPreview(file);
-}
-
+function onFileSelected(e) { const f = e.target.files[0]; if (f) setPreview(f); }
 function setPreview(file) {
   selectedFile = file;
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = e => {
     document.getElementById('preview-img').src = e.target.result;
     document.getElementById('original-thumb').src = e.target.result;
     document.getElementById('upload-placeholder').style.display = 'none';
@@ -258,7 +501,6 @@ function setPreview(file) {
   };
   reader.readAsDataURL(file);
 }
-
 function resetImage() {
   selectedFile = null;
   document.getElementById('file-input').value = '';
@@ -266,14 +508,12 @@ function resetImage() {
   document.getElementById('upload-placeholder').style.display = '';
   document.getElementById('upload-zone').classList.remove('has-image');
 }
-
 function onDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag-over'); }
 function onDragLeave(e) { document.getElementById('upload-zone').classList.remove('drag-over'); }
 function onDrop(e) {
-  e.preventDefault();
-  document.getElementById('upload-zone').classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) setPreview(file);
+  e.preventDefault(); document.getElementById('upload-zone').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) setPreview(f);
 }
 
 function setStep(n) {
@@ -288,19 +528,20 @@ function setStep(n) {
 async function generate() {
   const petName = document.getElementById('pet-name').value.trim();
   const petDesc = document.getElementById('pet-desc').value.trim();
-  if (!petName) { alert('请填入宠物名字！'); return; }
-  if (!selectedFile && !petDesc) { alert('请上传照片或填写宠物描述，至少选一种！'); return; }
+  const errEl = document.getElementById('gen-error');
+  const errText = document.getElementById('gen-error-text');
+  errEl.classList.remove('visible');
 
-  document.getElementById('main-form').style.display = 'none';
+  if (!petName) { errText.textContent = '请填入宠物名字！'; errEl.classList.add('visible'); return; }
+  if (!selectedFile && !petDesc) { errText.textContent = '请上传照片或填写描述，至少一种！'; errEl.classList.add('visible'); return; }
+
+  document.getElementById('gen-form').style.display = 'none';
   document.getElementById('loading-area').classList.add('visible');
   document.getElementById('result-area').classList.remove('visible');
-  document.getElementById('error-box').classList.remove('visible');
 
   try {
     setStep(1);
-    let imageBase64 = null;
-    let mediaType = null;
-
+    let imageBase64 = null, mediaType = null;
     if (selectedFile) {
       const base64 = await fileToBase64(selectedFile);
       imageBase64 = base64.split(',')[1];
@@ -313,20 +554,37 @@ async function generate() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ imageBase64, mediaType, petName, petDesc, style: selectedStyle })
     });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '生成失败');
 
     setStep(3);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || '服务器错误');
-
-    setStep(4);
     generatedImageUrl = data.imageUrl;
-    await new Promise(r => setTimeout(r, 400));
+
+    // Save to DB
+    setStep(4);
+    if (currentUser?.token) {
+      const petRes = await fetch('/api/pet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
+        body: JSON.stringify({
+          user_id: currentUser.id,
+          name: petName,
+          description: petDesc || data.description,
+          cartoon_url: data.imageUrl,
+          style: selectedStyle,
+          hunger: 80, energy: 80, mood: 80, level: 1, exp: 0
+        })
+      });
+      const petData = await petRes.json();
+      if (petData.pet) currentPet = petData.pet;
+    }
 
     document.getElementById('loading-area').classList.remove('visible');
     document.getElementById('result-area').classList.add('visible');
     document.getElementById('result-title').textContent = `🎉 ${petName} 的卡通形象来啦！`;
     document.getElementById('cartoon-img').src = data.imageUrl;
     document.getElementById('result-desc-text').textContent = data.description;
+    document.getElementById('save-note').textContent = '✓ 已自动保存到你的账号';
 
     if (selectedFile) {
       document.getElementById('original-card').style.display = '';
@@ -335,37 +593,189 @@ async function generate() {
       document.getElementById('original-card').style.display = 'none';
       document.getElementById('result-images').style.gridTemplateColumns = '1fr';
     }
-
   } catch (err) {
     document.getElementById('loading-area').classList.remove('visible');
-    document.getElementById('main-form').style.display = '';
-    document.getElementById('error-box').classList.add('visible');
-    document.getElementById('error-text').textContent = err.message;
+    document.getElementById('gen-form').style.display = '';
+    errText.textContent = err.message;
+    errEl.classList.add('visible');
   }
 }
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+function goToPlay() { switchPage('play'); }
 
 function downloadImage() {
   if (!generatedImageUrl) return;
   const a = document.createElement('a');
   a.href = generatedImageUrl;
-  a.download = (document.getElementById('pet-name').value || '我的宠物') + '_卡通形象.png';
-  a.target = '_blank';
-  a.click();
+  a.download = (document.getElementById('pet-name').value || '宠物') + '_卡通.png';
+  a.target = '_blank'; a.click();
 }
 
-function resetAll() {
+function resetGenerate() {
   document.getElementById('result-area').classList.remove('visible');
-  document.getElementById('main-form').style.display = '';
+  document.getElementById('gen-form').style.display = '';
+  resetImage();
   generatedImageUrl = null;
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+// Play page
+function renderPlayPage() {
+  if (!currentPet) {
+    document.getElementById('no-pet-msg').style.display = 'block';
+    document.getElementById('pet-play-area').style.display = 'none';
+    return;
+  }
+  document.getElementById('no-pet-msg').style.display = 'none';
+  document.getElementById('pet-play-area').style.display = 'block';
+  document.getElementById('play-pet-name').textContent = currentPet.name;
+  document.getElementById('play-pet-level').textContent = 'Lv.' + currentPet.level;
+  document.getElementById('chat-avatar').textContent = '🐾';
+  document.getElementById('welcome-msg').textContent = `${currentPet.name}：主人你好！快来陪我玩吧！😊`;
+
+  if (currentPet.cartoon_url) {
+    const img = document.getElementById('play-cartoon-img');
+    img.src = currentPet.cartoon_url;
+    img.style.display = 'block';
+    document.getElementById('play-pet-emoji').style.display = 'none';
+  }
+  updateBars();
+}
+
+function updateBars() {
+  if (!currentPet) return;
+  const h = currentPet.hunger || 80;
+  const e = currentPet.energy || 80;
+  const m = currentPet.mood || 80;
+  document.getElementById('bar-hunger').style.width = h + '%';
+  document.getElementById('bar-energy').style.width = e + '%';
+  document.getElementById('bar-mood').style.width = m + '%';
+  document.getElementById('val-hunger').textContent = h;
+  document.getElementById('val-energy').textContent = e;
+  document.getElementById('val-mood').textContent = m;
+}
+
+async function doAction(type) {
+  if (!currentPet) return;
+  const updates = {};
+  const msgs = {
+    feed: [`${currentPet.name}：好吃好吃！谢谢主人！😋`, `${currentPet.name}：我最喜欢吃东西了！🦴`],
+    play: [`${currentPet.name}：耶！一起玩！🎾`, `${currentPet.name}：我跑得最快！🏃`],
+    sleep: [`${currentPet.name}：呼呼...好困...💤`, `${currentPet.name}：让我眯一下~😴`],
+    bath: [`${currentPet.name}：不要洗澡！😤`, `${currentPet.name}：好吧...香香的~🛁`],
+  };
+  if (type === 'feed') { updates.hunger = Math.min(100, (currentPet.hunger||80) + 20); updates.mood = Math.min(100, (currentPet.mood||80) + 5); }
+  if (type === 'play') { updates.mood = Math.min(100, (currentPet.mood||80) + 20); updates.energy = Math.max(0, (currentPet.energy||80) - 15); updates.exp = (currentPet.exp||0) + 10; }
+  if (type === 'sleep') { updates.energy = Math.min(100, (currentPet.energy||80) + 30); }
+  if (type === 'bath') { updates.mood = Math.min(100, (currentPet.mood||80) + 10); updates.hunger = Math.max(0, (currentPet.hunger||80) - 5); }
+
+  const newExp = updates.exp || currentPet.exp || 0;
+  if (newExp >= currentPet.level * 100) { updates.level = (currentPet.level||1) + 1; updates.exp = 0; }
+
+  Object.assign(currentPet, updates);
+  updateBars();
+  document.getElementById('play-pet-level').textContent = 'Lv.' + currentPet.level;
+  spawnHearts();
+  addChatMsg('pet', msgs[type][Math.floor(Math.random() * 2)]);
+
+  if (currentUser?.token) {
+    fetch('/api/pet', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
+      body: JSON.stringify({ id: currentPet.id, ...updates })
+    }).catch(() => {});
+  }
+}
+
+function petTapped(e) {
+  if (!currentPet) return;
+  spawnHeart(e.clientX, e.clientY);
+  currentPet.mood = Math.min(100, (currentPet.mood||80) + 3);
+  currentPet.exp = (currentPet.exp||0) + 2;
+  updateBars();
+  const taps = [`${currentPet.name}：嘿嘿，主人摸摸我！❤️`, `${currentPet.name}：再摸一下！😊`, `${currentPet.name}：好舒服～✨`];
+  if (Math.random() < 0.3) addChatMsg('pet', taps[Math.floor(Math.random()*3)]);
+}
+
+function spawnHeart(x, y) {
+  const arena = document.getElementById('play-arena');
+  const rect = arena.getBoundingClientRect();
+  const h = document.createElement('div');
+  h.className = 'heart-float';
+  h.textContent = ['❤️','✨','🌟','💕','⭐'][Math.floor(Math.random()*5)];
+  h.style.left = (x - rect.left - 12) + 'px';
+  h.style.top = (y - rect.top - 12) + 'px';
+  arena.appendChild(h);
+  setTimeout(() => h.remove(), 1000);
+}
+
+function spawnHearts() {
+  const arena = document.getElementById('play-arena');
+  const rect = arena.getBoundingClientRect();
+  for (let i = 0; i < 4; i++) {
+    setTimeout(() => {
+      const h = document.createElement('div');
+      h.className = 'heart-float';
+      h.textContent = ['❤️','✨','🌟','💕'][Math.floor(Math.random()*4)];
+      h.style.left = (20 + Math.random() * (rect.width - 40)) + 'px';
+      h.style.top = (rect.height / 2) + 'px';
+      arena.appendChild(h);
+      setTimeout(() => h.remove(), 1000);
+    }, i * 120);
+  }
+}
+
+function addChatMsg(role, text) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg' + (role === 'user' ? ' user' : '');
+  div.innerHTML = role === 'user'
+    ? `<div class="chat-bubble">${text}</div><div class="chat-avatar">👤</div>`
+    : `<div class="chat-avatar">🐾</div><div class="chat-bubble">${text}</div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  if (role === 'assistant') chatHistory.push({ role: 'assistant', content: text });
+  if (role === 'user') chatHistory.push({ role: 'user', content: text });
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg || !currentPet) return;
+  input.value = '';
+  addChatMsg('user', msg);
+  const typing = document.getElementById('chat-typing');
+  typing.classList.add('visible');
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        petName: currentPet.name,
+        hunger: currentPet.hunger || 80,
+        energy: currentPet.energy || 80,
+        mood: currentPet.mood || 80,
+        message: msg,
+        history: chatHistory.slice(-8)
+      })
+    });
+    const data = await res.json();
+    typing.classList.remove('visible');
+    if (data.reply) addChatMsg('pet', `${currentPet.name}：${data.reply}`);
+    else addChatMsg('pet', `${currentPet.name}：...（想了很久说不出话）`);
+  } catch {
+    typing.classList.remove('visible');
+    addChatMsg('pet', `${currentPet.name}：主人，我现在说不了话...🥺`);
+  }
 }
 </script>
 </body>
