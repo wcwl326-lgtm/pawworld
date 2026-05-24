@@ -568,7 +568,7 @@ async function generate() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
         body: JSON.stringify({
-          user_id: currentUser.id,
+          user_id: currentUser.id || currentUser.sub,
           name: petName,
           description: petDesc || data.description,
           cartoon_url: data.imageUrl,
