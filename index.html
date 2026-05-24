@@ -376,6 +376,7 @@ window.addEventListener('load', () => {
       if (s.user && s.token) {
         currentUser = s.user;
         currentUser.token = s.token;
+        urrentUser.id = s.user.id || s.user.sub;
         showMainApp();
         loadPet();
       }
