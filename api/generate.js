@@ -1,4 +1,4 @@
-export const config = { runtime: 'edge' };
+export const config = { runtime: 'edge', maxDuration: 60 };
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
@@ -49,7 +49,7 @@ export default async function handler(req) {
       'anthropic-version': '2023-06-01'
     },
     body: JSON.stringify({
-      model: 'claude-opus-4-5',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 500,
       messages: [{ role: 'user', content: contentParts }]
     })
@@ -67,13 +67,13 @@ export default async function handler(req) {
   const imgPrompt = imgPromptMatch ? imgPromptMatch[1].trim() : `cute cartoon ${petName}, adorable pet`;
   const fullPrompt = `${imgPrompt}, ${stylePrompts[style] || stylePrompts.chibi}, high quality, detailed`;
 
-  // Step 2: Replicate generates image
+  // Step 2: Replicate sync prediction
   const replicateRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + REPLICATE_KEY,
-      'Prefer': 'wait=30'
+      'Prefer': 'wait'
     },
     body: JSON.stringify({
       input: {
@@ -81,33 +81,28 @@ export default async function handler(req) {
         num_outputs: 1,
         aspect_ratio: '1:1',
         output_format: 'webp',
-        output_quality: 80
+        output_quality: 80,
+        num_inference_steps: 4
       }
     })
   });
 
   if (!replicateRes.ok) {
     const err = await replicateRes.json();
-    return new Response(JSON.stringify({ error: 'Replicate error: ' + (err.detail || replicateRes.status) }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Replicate error: ' + (err.detail || JSON.stringify(err)) }), { status: 500 });
   }
 
   const replicateData = await replicateRes.json();
-
-  // If still processing, poll for result
   let imageUrl = replicateData.output?.[0];
 
-  if (!imageUrl && replicateData.id) {
-    // Poll up to 30 seconds
-    for (let i = 0; i < 15; i++) {
+  if (!imageUrl && replicateData.urls?.get) {
+    for (let i = 0; i < 20; i++) {
       await new Promise(r => setTimeout(r, 2000));
-      const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${replicateData.id}`, {
+      const pollRes = await fetch(replicateData.urls.get, {
         headers: { 'Authorization': 'Bearer ' + REPLICATE_KEY }
       });
       const pollData = await pollRes.json();
-      if (pollData.status === 'succeeded') {
-        imageUrl = pollData.output?.[0];
-        break;
-      }
+      if (pollData.status === 'succeeded') { imageUrl = pollData.output?.[0]; break; }
       if (pollData.status === 'failed') {
         return new Response(JSON.stringify({ error: '图片生成失败：' + (pollData.error || '未知错误') }), { status: 500 });
       }
