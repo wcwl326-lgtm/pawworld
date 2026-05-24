@@ -310,6 +310,15 @@
         </div>
         <div class="game-arrow">→</div>
       </div>
+      <div class="game-card" onclick="window.location.href='/game-candy.html'">
+        <div class="game-icon">🍬</div>
+        <div class="game-info">
+          <div class="game-name">萌宠消消乐</div>
+          <div class="game-desc">交换食物消除3个以上，达到目标分数！</div>
+          <div class="game-best" id="best-candy">最高分：0</div>
+        </div>
+        <div class="game-arrow">→</div>
+      </div>
     </div>
   </div>
 </div>
@@ -645,6 +654,7 @@ function updateBestScores() {
   document.getElementById('best-tap').textContent = '最高分：' + scores.tap;
   document.getElementById('best-runner').textContent = '最高分：' + (scores.runner||0);
   document.getElementById('best-fruit').textContent = '最高分：' + (scores.fruit||0);
+  document.getElementById('best-candy').textContent = '最高分：' + (scores.candy||0);
 }
 
 function startGame(type) {
