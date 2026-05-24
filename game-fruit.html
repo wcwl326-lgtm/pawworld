@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PawWorld — 水果忍者</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: #0f0f1a; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; touch-action: none; }
+  #game-wrapper { position: relative; width: 100%; max-width: 420px; }
+  canvas { display: block; width: 100%; touch-action: none; border-radius: 16px; }
+
+  #hud { position: absolute; top: 12px; left: 12px; right: 12px; display: none; justify-content: space-between; align-items: center; pointer-events: none; }
+  .hud-box { background: rgba(0,0,0,0.5); backdrop-filter: blur(6px); border-radius: 20px; padding: 6px 14px; display: flex; align-items: center; gap: 6px; }
+  .hud-val { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: white; }
+  .hud-label { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 700; }
+  .hud-lives { display: flex; gap: 4px; }
+  .life-heart { font-size: 18px; transition: all 0.3s; }
+  .life-heart.lost { opacity: 0.2; filter: grayscale(1); }
+
+  .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; border-radius: 16px; background: rgba(10,10,20,0.9); backdrop-filter: blur(10px); }
+  .game-title { font-family: 'Fredoka One', sans-serif; font-size: 30px; color: white; text-align: center; }
+  .game-sub { font-size: 13px; color: rgba(255,255,255,0.55); text-align: center; line-height: 1.7; max-width: 260px; }
+  .start-btn { background: linear-gradient(135deg, #10B981, #3B82F6); color: white; border: none; border-radius: 16px; padding: 14px 40px; font-family: 'Fredoka One', sans-serif; font-size: 20px; cursor: pointer; box-shadow: 0 6px 20px rgba(16,185,129,0.4); transition: transform 0.15s; }
+  .start-btn:active { transform: scale(0.95); }
+  .score-big { font-family: 'Fredoka One', sans-serif; font-size: 52px; color: #10B981; }
+  .score-best { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: #8B5CF6; }
+
+  #back-btn { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 8px 20px; color: rgba(255,255,255,0.6); font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; display: none; }
+
+  #combo-display { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-family: 'Fredoka One', sans-serif; font-size: 36px; color: #FCD34D; text-shadow: 0 0 20px rgba(252,211,77,0.8); pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 10; }
+</style>
+</head>
+<body>
+<div id="game-wrapper">
+  <canvas id="c"></canvas>
+
+  <div id="hud">
+    <div class="hud-box">
+      <span class="hud-label">分数</span>
+      <span class="hud-val" id="h-score">0</span>
+    </div>
+    <div class="hud-box">
+      <div class="hud-lives">
+        <span class="life-heart" id="life-1">❤️</span>
+        <span class="life-heart" id="life-2">❤️</span>
+        <span class="life-heart" id="life-3">❤️</span>
+      </div>
+    </div>
+    <div class="hud-box">
+      <span class="hud-label">连击</span>
+      <span class="hud-val" id="h-combo">x1</span>
+    </div>
+  </div>
+
+  <div class="overlay" id="start-screen">
+    <div style="font-size:70px;">🍉</div>
+    <div class="game-title">水果忍者</div>
+    <div class="game-sub">
+      用手指划过水果来切断它们<br>
+      🍎🍊🍋🍇🍓 切水果得分<br>
+      💣 切到炸弹失去一条命<br>
+      水果落地也会失去一条命！
+    </div>
+    <button class="start-btn" onclick="startGame()">开始切！</button>
+    <div style="font-size:13px;color:rgba(255,255,255,0.35);">最高分：<span id="best-display">0</span></div>
+  </div>
+
+  <div class="overlay" id="over-screen" style="display:none;">
+    <div style="font-size:60px;" id="over-emoji">🍉</div>
+    <div class="game-title">游戏结束！</div>
+    <div class="score-big" id="final-score">0</div>
+    <div class="score-best" id="final-best">🏆 最高分：0</div>
+    <button class="start-btn" onclick="startGame()">再来一次！</button>
+    <a href="/play.html" id="back-btn" style="display:block;position:relative;transform:none;bottom:auto;left:auto;margin-top:4px;">← 返回互动页</a>
+  </div>
+
+  <div id="combo-display"></div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  const w = Math.min(window.innerWidth, 420);
+  canvas.width = w;
+  canvas.height = Math.min(window.innerHeight, 700);
+}
+resize();
+window.addEventListener('resize', resize);
+
+let bestScore = parseInt(localStorage.getItem('pw_best_fruit') || '0');
+document.getElementById('best-display').textContent = bestScore;
+
+// Pet image
+let petImg = null;
+const session = localStorage.getItem('pw_session');
+if (session) {
+  try {
+    const s = JSON.parse(session);
+    if (s.token) {
+      fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + s.token } })
+        .then(r => r.json()).then(d => {
+          if (d.pet?.cartoon_url) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => { petImg = img; };
+            img.src = d.pet.cartoon_url;
+          }
+        }).catch(() => {});
+    }
+  } catch {}
+}
+
+// Game state
+let running = false, raf = null;
+let score = 0, lives = 3, combo = 1, lastSliceTime = 0, frame = 0;
+let items = [], sliceTrail = [], particles = [];
+let gameOver = false;
+
+const FRUITS = [
+  { emoji: '🍎', color: '#EF4444', pts: 1 },
+  { emoji: '🍊', color: '#F97316', pts: 1 },
+  { emoji: '🍋', color: '#EAB308', pts: 1 },
+  { emoji: '🍇', color: '#8B5CF6', pts: 2 },
+  { emoji: '🍓', color: '#EC4899', pts: 2 },
+  { emoji: '🫐', color: '#3B82F6', pts: 2 },
+  { emoji: '🍑', color: '#FB923C', pts: 2 },
+  { emoji: '🍍', color: '#F59E0B', pts: 3 },
+  { emoji: '🥝', color: '#84CC16', pts: 3 },
+];
+
+// Slice trail
+let mouseX = 0, mouseY = 0, prevMouseX = 0, prevMouseY = 0;
+let isSlicing = false;
+
+canvas.addEventListener('mousedown', e => { isSlicing = true; const r = canvas.getBoundingClientRect(); const scale = canvas.width / r.width; mouseX = (e.clientX - r.left) * scale; mouseY = (e.clientY - r.top) * scale; });
+canvas.addEventListener('mouseup', () => { isSlicing = false; sliceTrail = []; });
+canvas.addEventListener('mousemove', e => {
+  if (!isSlicing || !running) return;
+  const r = canvas.getBoundingClientRect(); const scale = canvas.width / r.width;
+  prevMouseX = mouseX; prevMouseY = mouseY;
+  mouseX = (e.clientX - r.left) * scale; mouseY = (e.clientY - r.top) * scale;
+  sliceTrail.push({ x: mouseX, y: mouseY, age: 0 });
+  if (sliceTrail.length > 18) sliceTrail.shift();
+  checkSlice();
+});
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault(); isSlicing = true;
+  const r = canvas.getBoundingClientRect(); const scale = canvas.width / r.width;
+  const t = e.touches[0];
+  mouseX = (t.clientX - r.left) * scale; mouseY = (t.clientY - r.top) * scale;
+}, { passive: false });
+canvas.addEventListener('touchend', e => { e.preventDefault(); isSlicing = false; sliceTrail = []; }, { passive: false });
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault(); if (!running) return;
+  const r = canvas.getBoundingClientRect(); const scale = canvas.width / r.width;
+  const t = e.touches[0];
+  prevMouseX = mouseX; prevMouseY = mouseY;
+  mouseX = (t.clientX - r.left) * scale; mouseY = (t.clientY - r.top) * scale;
+  sliceTrail.push({ x: mouseX, y: mouseY, age: 0 });
+  if (sliceTrail.length > 18) sliceTrail.shift();
+  checkSlice();
+}, { passive: false });
+
+function checkSlice() {
+  items.forEach(item => {
+    if (item.sliced || item.exploded) return;
+    const dx = mouseX - item.x, dy = mouseY - item.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < item.r + 8) {
+      if (item.isBomb) {
+        item.exploded = true;
+        spawnParticles(item.x, item.y, '#FF4444', 20);
+        loseLife();
+      } else {
+        item.sliced = true;
+        const now = Date.now();
+        if (now - lastSliceTime < 600) { combo = Math.min(combo + 1, 10); }
+        else { combo = 1; }
+        lastSliceTime = now;
+        const pts = item.pts * combo;
+        score += pts;
+        document.getElementById('h-score').textContent = score;
+        document.getElementById('h-combo').textContent = 'x' + combo;
+        spawnParticles(item.x, item.y, item.color, 12);
+        spawnScorePopup(item.x, item.y, '+' + pts);
+        if (combo >= 3) showCombo(combo);
+        // Slice halves
+        item.halfL = { x: item.x - item.r*0.4, y: item.y, vx: -3 - Math.random()*2, vy: item.vy - 2, rot: -0.15, emoji: item.emoji };
+        item.halfR = { x: item.x + item.r*0.4, y: item.y, vx: 3 + Math.random()*2, vy: item.vy - 2, rot: 0.15, emoji: item.emoji };
+      }
+    }
+  });
+}
+
+function loseLife() {
+  lives--;
+  document.getElementById('life-' + (lives + 1)).classList.add('lost');
+  // Screen flash red
+  ctx.fillStyle = 'rgba(239,68,68,0.3)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (lives <= 0) endGame();
+}
+
+function showCombo(n) {
+  const el = document.getElementById('combo-display');
+  el.textContent = n + ' 连击！🔥';
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 700);
+}
+
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 5;
+    particles.push({ x, y, vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed - 2, color, size: 3 + Math.random()*4, life: 1 });
+  }
+}
+
+const scorePopups = [];
+function spawnScorePopup(x, y, text) {
+  scorePopups.push({ x, y, text, life: 1, vy: -2 });
+}
+
+function startGame() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('over-screen').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('life-1').classList.remove('lost');
+  document.getElementById('life-2').classList.remove('lost');
+  document.getElementById('life-3').classList.remove('lost');
+  score = 0; lives = 3; combo = 1; frame = 0;
+  items = []; sliceTrail = []; particles = []; scorePopups.length = 0;
+  running = true; gameOver = false;
+  document.getElementById('h-score').textContent = 0;
+  document.getElementById('h-combo').textContent = 'x1';
+  if (raf) cancelAnimationFrame(raf);
+  loop();
+}
+
+function loop() {
+  if (!running) return;
+  frame++;
+  update();
+  draw();
+  raf = requestAnimationFrame(loop);
+}
+
+function update() {
+  const W = canvas.width, H = canvas.height;
+  const spawnRate = Math.max(55 - Math.floor(frame/300)*4, 28);
+
+  if (frame % spawnRate === 0) {
+    const isBomb = Math.random() < 0.12 + Math.floor(frame/600)*0.02;
+    const lx = 60 + Math.random() * (W - 120);
+    const speed = 10 + Math.random() * 5 + Math.floor(frame/400);
+    if (isBomb) {
+      items.push({ x: lx, y: H + 30, vx: (Math.random()-0.5)*3, vy: -speed, r: 28, isBomb: true, rot: 0, rotV: (Math.random()-0.5)*0.1, sliced: false, exploded: false });
+    } else {
+      const fruit = FRUITS[Math.floor(Math.random()*FRUITS.length)];
+      items.push({ x: lx, y: H + 30, vx: (Math.random()-0.5)*4, vy: -speed, r: 30, isBomb: false, rot: 0, rotV: (Math.random()-0.5)*0.12, sliced: false, exploded: false, emoji: fruit.emoji, color: fruit.color, pts: fruit.pts });
+    }
+  }
+
+  // Update items
+  items = items.filter(item => {
+    item.vy += 0.38;
+    item.x += item.vx; item.y += item.vy;
+    item.rot += item.rotV;
+    if (item.halfL) { item.halfL.x += item.halfL.vx; item.halfL.y += item.halfL.vy; item.halfL.vy += 0.5; item.halfL.rot += 0.1; }
+    if (item.halfR) { item.halfR.x += item.halfR.vx; item.halfR.y += item.halfR.vy; item.halfR.vy += 0.5; item.halfR.rot -= 0.1; }
+    // Missed fruit
+    if (!item.sliced && !item.exploded && item.y > H + 40) {
+      if (!item.isBomb) loseLife();
+      return false;
+    }
+    // Remove off screen sliced/exploded
+    if ((item.sliced || item.exploded) && item.y > H + 80) return false;
+    return true;
+  });
+
+  // Update particles
+  particles = particles.filter(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= 0.04; p.size *= 0.96; return p.life > 0; });
+
+  // Update score popups
+  for (let i = scorePopups.length - 1; i >= 0; i--) {
+    scorePopups[i].y += scorePopups[i].vy; scorePopups[i].life -= 0.035;
+    if (scorePopups[i].life <= 0) scorePopups.splice(i, 1);
+  }
+
+  // Update slice trail
+  sliceTrail.forEach(p => p.age++);
+  sliceTrail = sliceTrail.filter(p => p.age < 16);
+}
+
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, H);
+  grad.addColorStop(0, '#1a1a3e');
+  grad.addColorStop(1, '#0a0a14');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Pet image as faded background
+  if (petImg) {
+    ctx.save();
+    ctx.globalAlpha = 0.07;
+    const size = Math.min(W, H) * 0.7;
+    ctx.drawImage(petImg, W/2 - size/2, H/2 - size/2, size, size);
+    ctx.restore();
+  }
+
+  // Decorative circles
+  ctx.strokeStyle = 'rgba(16,185,129,0.06)';
+  ctx.lineWidth = 1;
+  for (let r = 80; r < W; r += 80) {
+    ctx.beginPath(); ctx.arc(W/2, H/2, r, 0, Math.PI*2); ctx.stroke();
+  }
+
+  // Draw items
+  items.forEach(item => {
+    ctx.save();
+
+    if (!item.sliced && !item.exploded) {
+      ctx.translate(item.x, item.y);
+      ctx.rotate(item.rot);
+      if (item.isBomb) {
+        // Bomb
+        ctx.beginPath();
+        ctx.arc(0, 0, item.r, 0, Math.PI*2);
+        const bg = ctx.createRadialGradient(-8, -8, 2, 0, 0, item.r);
+        bg.addColorStop(0, '#4a4a4a');
+        bg.addColorStop(1, '#1a1a1a');
+        ctx.fillStyle = bg;
+        ctx.fill();
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.font = '30px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('💣', 0, 11);
+      } else {
+        // Fruit glow
+        ctx.shadowColor = item.color;
+        ctx.shadowBlur = 15;
+        ctx.font = '44px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.emoji, 0, 16);
+      }
+    } else if (item.sliced) {
+      // Draw halves
+      if (item.halfL) {
+        ctx.save(); ctx.translate(item.halfL.x, item.halfL.y); ctx.rotate(item.halfL.rot);
+        ctx.globalAlpha = 0.8;
+        ctx.font = '34px serif'; ctx.textAlign = 'center'; ctx.fillText(item.halfL.emoji, 0, 12);
+        ctx.restore();
+      }
+      if (item.halfR) {
+        ctx.save(); ctx.translate(item.halfR.x, item.halfR.y); ctx.rotate(item.halfR.rot);
+        ctx.globalAlpha = 0.8;
+        ctx.font = '34px serif'; ctx.textAlign = 'center'; ctx.fillText(item.halfR.emoji, 0, 12);
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+  });
+
+  // Particles
+  particles.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+
+  // Score popups
+  scorePopups.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.font = 'bold 20px Fredoka One, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FCD34D';
+    ctx.shadowColor = '#F59E0B';
+    ctx.shadowBlur = 10;
+    ctx.fillText(p.text, p.x, p.y);
+    ctx.restore();
+  });
+
+  // Slice trail
+  if (sliceTrail.length > 2) {
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (let i = 1; i < sliceTrail.length; i++) {
+      const a = sliceTrail[i-1], b = sliceTrail[i];
+      const progress = i / sliceTrail.length;
+      const alpha = progress * 0.9;
+      const width = progress * 5;
+      ctx.beginPath();
+      ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+      ctx.lineWidth = width;
+      ctx.shadowColor = 'rgba(255,255,255,0.8)';
+      ctx.shadowBlur = 6;
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+function endGame() {
+  running = false;
+  if (raf) cancelAnimationFrame(raf);
+  document.getElementById('hud').style.display = 'none';
+
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem('pw_best_fruit', bestScore);
+    document.getElementById('best-display').textContent = bestScore;
+  }
+
+  document.getElementById('final-score').textContent = score;
+  document.getElementById('final-best').textContent = '🏆 最高分：' + bestScore;
+  document.getElementById('over-emoji').textContent = score > 50 ? '🏆' : score > 20 ? '🎉' : '🍉';
+  document.getElementById('over-screen').style.display = 'flex';
+
+  // Update scores
+  const scores = JSON.parse(localStorage.getItem('pw_scores') || '{}');
+  if (score > (scores.fruit||0)) { scores.fruit = score; localStorage.setItem('pw_scores', JSON.stringify(scores)); }
+
+  // Save pet exp
+  if (session) {
+    try {
+      const s = JSON.parse(session);
+      if (s.token) {
+        fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + s.token } })
+          .then(r => r.json()).then(d => {
+            if (d.pet) {
+              fetch('/api/pet', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.token }, body: JSON.stringify({ id: d.pet.id, exp: Math.min((d.pet.exp||0) + Math.floor(score/2), d.pet.level*100-1), mood: Math.min(100,(d.pet.mood||80)+8) }) }).catch(()=>{});
+            }
+          }).catch(()=>{});
+      }
+    } catch {}
+  }
+}
+</script>
+</body>
+</html>
