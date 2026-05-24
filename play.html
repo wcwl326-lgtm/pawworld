@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PawWorld — 互动</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #F97316; --orange-light: #FFF7ED; --orange-mid: #FED7AA;
+    --purple: #8B5CF6; --purple-light: #EDE9FE;
+    --green: #10B981; --green-light: #ECFDF5;
+    --blue: #3B82F6; --pink: #EC4899;
+    --gray-100: #F3F4F6; --gray-200: #E5E7EB; --gray-400: #9CA3AF;
+    --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937;
+    --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px; --radius-xl: 32px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Nunito', sans-serif; background: #FFF9F5; min-height: 100vh; overflow-x: hidden; transition: background 0.8s ease; }
+  body.sleeping { background: #0F172A; }
+  body::before { content: ''; position: fixed; top: -120px; right: -120px; width: 400px; height: 400px; background: radial-gradient(circle, #FED7AA 0%, transparent 70%); z-index: 0; pointer-events: none; transition: opacity 0.8s; }
+  body.sleeping::before { opacity: 0; }
+
+  .page { max-width: 560px; margin: 0 auto; padding: 20px 16px 100px; position: relative; z-index: 1; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes floatUp { 0% { opacity:1; transform:translateY(0) scale(1); } 100% { opacity:0; transform:translateY(-70px) scale(0.5); } }
+  @keyframes shake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-6px); } 75% { transform:translateX(6px); } }
+  @keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes stars { 0% { opacity:0; transform:translateY(0) scale(0); } 50% { opacity:1; } 100% { opacity:0; transform:translateY(-40px) scale(1.5); } }
+
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .logo { font-family: 'Fredoka One', sans-serif; font-size: 22px; color: var(--orange); }
+  .logo span { color: var(--purple); }
+  .back-btn { background: white; border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; color: var(--gray-600); cursor: pointer; text-decoration: none; display: inline-block; }
+  .back-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+  /* Pet arena */
+  .pet-arena { background: white; border-radius: var(--radius-xl); padding: 20px; border: 1.5px solid var(--gray-200); margin-bottom: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; overflow: hidden; min-height: 200px; transition: all 0.8s ease; cursor: pointer; }
+  .pet-arena.sleeping-mode { background: #1E293B; border-color: #334155; }
+  .pet-arena.bath-mode { background: linear-gradient(180deg, #EFF6FF 0%, #BFDBFE 100%); border-color: #93C5FD; }
+  .pet-img { width: 130px; height: 130px; object-fit: cover; border-radius: 50%; border: 3px solid var(--orange); animation: float 3s ease-in-out infinite; transition: all 0.5s ease; }
+  .pet-img.sleeping { border-color: #4B5563; filter: brightness(0.7); animation: none; }
+  .pet-img.in-bath { border-radius: var(--radius-lg); border-color: #3B82F6; width: 120px; height: 120px; }
+  .pet-emoji-fallback { font-size: 80px; animation: float 3s ease-in-out infinite; }
+  .pet-name-label { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); transition: color 0.5s; }
+  .sleeping-mode .pet-name-label { color: #94A3B8; }
+  .pet-level { background: var(--purple-light); color: var(--purple); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .sleep-overlay { display: none; position: absolute; inset: 0; background: rgba(15,23,42,0.7); align-items: center; justify-content: center; flex-direction: column; gap: 8px; border-radius: var(--radius-xl); }
+  .sleep-overlay.visible { display: flex; }
+  .sleep-text { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: #94A3B8; }
+  .sleep-zzz { font-size: 36px; animation: float 2s ease-in-out infinite; }
+  .stars-container { position: absolute; top: 10px; right: 10px; pointer-events: none; }
+  .star { position: absolute; font-size: 14px; animation: stars 2s ease-out infinite; }
+  .bath-bubbles { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(0deg, #BFDBFE, transparent); border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
+  .heart-float { position: absolute; pointer-events: none; font-size: 20px; animation: floatUp 1s ease-out forwards; }
+
+  /* Status bars */
+  .status-card { background: white; border-radius: var(--radius-xl); padding: 16px 18px; border: 1.5px solid var(--gray-200); margin-bottom: 14px; transition: all 0.5s; }
+  .sleeping-mode-card { background: #1E293B; border-color: #334155; }
+  .status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .status-row:last-child { margin-bottom: 0; }
+  .status-icon { font-size: 16px; width: 22px; text-align: center; }
+  .status-bar-bg { flex: 1; height: 9px; background: var(--gray-100); border-radius: 10px; overflow: hidden; }
+  .status-bar-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
+  .fill-orange { background: var(--orange); }
+  .fill-purple { background: var(--purple); }
+  .fill-pink { background: var(--pink); }
+  .status-val { font-family: 'Fredoka One', sans-serif; font-size: 13px; color: var(--gray-700); width: 28px; text-align: right; }
+
+  /* Action buttons */
+  .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; transition: all 0.3s; }
+  .action-btn { background: white; border: 1.5px solid var(--gray-200); border-radius: var(--radius-md); padding: 12px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-family: 'Nunito', sans-serif; font-size: 11px; color: var(--gray-600); font-weight: 700; transition: all 0.2s; user-select: none; }
+  .action-btn:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-light); transform: translateY(-2px); }
+  .action-btn:active { transform: scale(0.93); }
+  .action-icon { font-size: 24px; }
+  .wakeup-btn { width: 100%; background: #1E293B; color: #94A3B8; border: 1.5px solid #334155; border-radius: var(--radius-md); padding: 16px; font-family: 'Fredoka One', sans-serif; font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; transition: all 0.2s; }
+  .wakeup-btn:hover { background: #334155; color: white; }
+  .wakeup-btn.visible { display: flex; }
+
+  /* Modal overlay */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; padding-bottom: 0; }
+  .modal-overlay.visible { display: flex; }
+  .modal-sheet { background: white; border-radius: 24px 24px 0 0; padding: 20px 16px 40px; width: 100%; max-width: 560px; animation: slideUp 0.3s ease; max-height: 85vh; overflow-y: auto; }
+  @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  .modal-title { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--gray-800); margin-bottom: 16px; text-align: center; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: var(--gray-100); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+  /* Food grid */
+  .food-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .food-item { background: var(--gray-100); border: 2px solid transparent; border-radius: var(--radius-md); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; }
+  .food-item:hover { background: var(--orange-light); border-color: var(--orange-mid); transform: translateY(-2px); }
+  .food-item:active { transform: scale(0.95); }
+  .food-emoji { font-size: 32px; }
+  .food-name { font-family: 'Fredoka One', sans-serif; font-size: 12px; color: var(--gray-700); }
+  .food-stat { font-size: 10px; color: var(--green); font-weight: 700; }
+
+  /* Bath items */
+  .bath-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .bath-item { background: var(--blue-light, #EFF6FF); border: 2px solid transparent; border-radius: var(--radius-md); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; }
+  .bath-item:hover { border-color: #93C5FD; transform: translateY(-2px); }
+  .bath-item:active { transform: scale(0.95); }
+  .bath-emoji { font-size: 32px; }
+  .bath-name { font-family: 'Fredoka One', sans-serif; font-size: 12px; color: var(--gray-700); }
+  .bath-stat { font-size: 10px; color: var(--blue); font-weight: 700; }
+  .bath-used { opacity: 0.4; pointer-events: none; }
+
+  /* Games modal */
+  .game-list { display: flex; flex-direction: column; gap: 10px; }
+  .game-card { background: var(--gray-100); border-radius: var(--radius-md); padding: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+  .game-card:hover { background: var(--purple-light); border-color: var(--purple); transform: translateX(4px); }
+  .game-icon { font-size: 36px; }
+  .game-info { flex: 1; }
+  .game-name { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: var(--gray-800); }
+  .game-desc { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+  .game-best { font-size: 11px; color: var(--purple); font-weight: 700; margin-top: 4px; }
+  .game-arrow { font-size: 20px; color: var(--gray-400); }
+
+  /* Game screens */
+  .game-screen { display: none; position: fixed; inset: 0; background: white; z-index: 300; flex-direction: column; }
+  .game-screen.visible { display: flex; }
+  .game-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--gray-200); }
+  .game-title { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); }
+  .game-score { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: var(--orange); }
+  .game-exit { background: var(--gray-100); border: none; border-radius: 10px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; color: var(--gray-600); cursor: pointer; }
+  .game-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow: hidden; }
+
+  /* Dodge game */
+  #dodge-canvas { border: 2px solid var(--gray-200); border-radius: var(--radius-lg); touch-action: none; cursor: pointer; max-width: 100%; }
+  .game-tap-hint { font-size: 13px; color: var(--gray-400); margin-top: 8px; font-weight: 600; }
+  .game-start-overlay { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .game-start-title { font-family: 'Fredoka One', sans-serif; font-size: 24px; color: var(--gray-800); }
+  .game-start-sub { font-size: 14px; color: var(--gray-400); text-align: center; }
+  .game-start-btn { background: var(--orange); color: white; border: none; border-radius: var(--radius-md); padding: 14px 36px; font-family: 'Fredoka One', sans-serif; font-size: 18px; cursor: pointer; transition: all 0.2s; }
+  .game-start-btn:hover { transform: scale(1.05); }
+  .game-over-overlay { display: none; flex-direction: column; align-items: center; gap: 12px; }
+  .game-over-title { font-family: 'Fredoka One', sans-serif; font-size: 28px; color: var(--gray-800); }
+  .game-over-score { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--orange); }
+  .game-over-best { font-size: 14px; color: var(--purple); font-weight: 700; }
+
+  /* Memory game */
+  .memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 340px; }
+  .memory-card { aspect-ratio: 1; background: var(--purple); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; transition: all 0.3s; border: none; user-select: none; }
+  .memory-card.flipped { background: white; border: 2px solid var(--purple); }
+  .memory-card.matched { background: var(--green-light); border: 2px solid var(--green); pointer-events: none; }
+  .memory-card.hidden-face { color: transparent; }
+  .memory-info { display: flex; gap: 20px; margin-bottom: 16px; }
+  .memory-stat { text-align: center; }
+  .memory-stat-val { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--orange); }
+  .memory-stat-label { font-size: 11px; color: var(--gray-400); font-weight: 700; }
+
+  /* Tap game */
+  .tap-area { width: 100%; max-width: 340px; height: 340px; background: var(--gray-100); border-radius: var(--radius-xl); position: relative; overflow: hidden; cursor: pointer; border: 2px solid var(--gray-200); user-select: none; }
+  .tap-target { position: absolute; transition: all 0.15s; cursor: pointer; user-select: none; font-size: 70px; transform: translate(-50%, -50%); }
+  .tap-info { display: flex; gap: 24px; margin-bottom: 16px; }
+  .tap-countdown { font-family: 'Fredoka One', sans-serif; font-size: 48px; color: var(--orange); }
+
+  /* Notification toast */
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 700; z-index: 500; display: none; animation: fadeUp 0.3s ease; font-family: 'Nunito', sans-serif; }
+  .toast.visible { display: block; }
+
+  .nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; background: white; border-top: 1px solid var(--gray-200); display: flex; z-index: 100; transition: all 0.5s; }
+  .nav-bar.dark { background: #1E293B; border-color: #334155; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 14px; cursor: pointer; color: var(--gray-400); font-size: 10px; font-weight: 700; border: none; background: none; transition: color 0.2s; font-family: 'Nunito', sans-serif; }
+  .nav-item.active { color: var(--orange); }
+  .nav-icon { font-size: 22px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top-bar">
+    <div class="logo">Paw<span>World</span></div>
+    <a href="/" class="back-btn">← 返回</a>
+  </div>
+
+  <!-- Pet Arena -->
+  <div class="pet-arena" id="pet-arena" onclick="arenaTap(event)">
+    <img id="pet-display-img" src="" alt="宠物" class="pet-img" style="display:none;">
+    <div id="pet-display-emoji" class="pet-emoji-fallback">🐾</div>
+    <div class="pet-name-label" id="pet-arena-name">加载中...</div>
+    <div class="pet-level" id="pet-arena-level">Lv.1</div>
+    <div class="sleep-overlay" id="sleep-overlay">
+      <div class="sleep-zzz">😴</div>
+      <div class="sleep-text" id="sleep-text">正在睡觉...</div>
+    </div>
+    <div class="stars-container" id="stars-container" style="display:none;">
+      <div class="star" style="animation-delay:0s;">⭐</div>
+      <div class="star" style="animation-delay:0.5s; left:20px;">✨</div>
+      <div class="star" style="animation-delay:1s; left:-10px; top:20px;">🌟</div>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="status-card" id="status-card">
+    <div class="status-row"><div class="status-icon">🍖</div><div class="status-bar-bg"><div class="status-bar-fill fill-orange" id="bar-hunger"></div></div><div class="status-val" id="val-hunger">80</div></div>
+    <div class="status-row"><div class="status-icon">⚡</div><div class="status-bar-bg"><div class="status-bar-fill fill-purple" id="bar-energy"></div></div><div class="status-val" id="val-energy">80</div></div>
+    <div class="status-row"><div class="status-icon">😊</div><div class="status-bar-bg"><div class="status-bar-fill fill-pink" id="bar-mood"></div></div><div class="status-val" id="val-mood">80</div></div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-grid" id="action-grid">
+    <button class="action-btn" onclick="openFood()"><div class="action-icon">🍖</div>喂食</button>
+    <button class="action-btn" onclick="openGames()"><div class="action-icon">🎮</div>玩耍</button>
+    <button class="action-btn" onclick="startSleep()"><div class="action-icon">💤</div>休息</button>
+    <button class="action-btn" onclick="openBath()"><div class="action-icon">🛁</div>洗澡</button>
+  </div>
+
+  <!-- Wakeup Button -->
+  <button class="wakeup-btn" id="wakeup-btn" onclick="wakeUp()">🌅 起床啦！</button>
+
+  <!-- Chat -->
+  <div class="status-card" style="padding:14px 16px;">
+    <div id="chat-messages" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;min-height:60px;max-height:160px;overflow-y:auto;"></div>
+    <div id="chat-typing" style="font-size:12px;color:var(--gray-400);font-style:italic;display:none;margin-bottom:8px;">宠物正在回复...</div>
+    <div style="display:flex;gap:8px;">
+      <input id="chat-input" placeholder="跟你的宠物说话..." style="flex:1;background:var(--gray-100);border:1.5px solid transparent;border-radius:12px;padding:9px 13px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--gray-800);outline:none;" onkeydown="if(event.key==='Enter')sendChat()">
+      <button onclick="sendChat()" style="background:var(--orange);border:none;border-radius:12px;padding:9px 14px;color:white;font-size:15px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;">发送</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOD MODAL -->
+<div class="modal-overlay" id="food-modal">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('food-modal')">✕</button>
+    <div class="modal-title">🍖 选择食物</div>
+    <div class="food-grid">
+      <div class="food-item" onclick="feedPet('🍖','肉骨头',25,5,8)"><div class="food-emoji">🍖</div><div class="food-name">肉骨头</div><div class="food-stat">饱食+25 心情+8</div></div>
+      <div class="food-item" onclick="feedPet('🐟','小鱼干',20,0,10)"><div class="food-emoji">🐟</div><div class="food-name">小鱼干</div><div class="food-stat">饱食+20 心情+10</div></div>
+      <div class="food-item" onclick="feedPet('🍎','苹果',12,3,5)"><div class="food-emoji">🍎</div><div class="food-name">苹果</div><div class="food-stat">饱食+12 活力+3</div></div>
+      <div class="food-item" onclick="feedPet('🍌','香蕉',15,8,3)"><div class="food-emoji">🍌</div><div class="food-name">香蕉</div><div class="food-stat">饱食+15 活力+8</div></div>
+      <div class="food-item" onclick="feedPet('🧁','小蛋糕',10,0,20)"><div class="food-emoji">🧁</div><div class="food-name">小蛋糕</div><div class="food-stat">饱食+10 心情+20</div></div>
+      <div class="food-item" onclick="feedPet('🥛','牛奶',8,12,5)"><div class="food-emoji">🥛</div><div class="food-name">牛奶</div><div class="food-stat">饱食+8 活力+12</div></div>
+      <div class="food-item" onclick="feedPet('🍣','寿司',30,5,12)"><div class="food-emoji">🍣</div><div class="food-name">寿司</div><div class="food-stat">饱食+30 心情+12</div></div>
+      <div class="food-item" onclick="feedPet('🍪','饼干',8,0,15)"><div class="food-emoji">🍪</div><div class="food-name">饼干</div><div class="food-stat">饱食+8 心情+15</div></div>
+      <div class="food-item" onclick="feedPet('🥩','牛排',35,10,15)"><div class="food-emoji">🥩</div><div class="food-name">牛排</div><div class="food-stat">饱食+35 全属性+</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- BATH MODAL -->
+<div class="modal-overlay" id="bath-modal">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="endBath()">✕</button>
+    <div class="modal-title">🛁 给宠物洗澡</div>
+    <div style="text-align:center;margin-bottom:14px;font-size:13px;color:var(--gray-400);">使用所有清洁用品，洗澡完成！</div>
+    <div class="bath-grid" id="bath-grid">
+      <div class="bath-item" id="bath-soap" onclick="useBathItem(this,'🧼','肥皂',0,0,15,'bath-soap')"><div class="bath-emoji">🧼</div><div class="bath-name">肥皂</div><div class="bath-stat">清洁+心情+15</div></div>
+      <div class="bath-item" id="bath-shampoo" onclick="useBathItem(this,'🧴','洗发水',0,5,10,'bath-shampoo')"><div class="bath-emoji">🧴</div><div class="bath-name">洗发水</div><div class="bath-stat">清洁+活力+5</div></div>
+      <div class="bath-item" id="bath-brush" onclick="useBathItem(this,'🪥','毛刷',0,3,12,'bath-brush')"><div class="bath-emoji">🪥</div><div class="bath-name">毛刷</div><div class="bath-stat">清洁+心情+12</div></div>
+      <div class="bath-item" id="bath-towel" onclick="useBathItem(this,'🪣','花洒',0,8,8,'bath-towel')"><div class="bath-emoji">🪣</div><div class="bath-name">花洒</div><div class="bath-stat">清洁+活力+8</div></div>
+      <div class="bath-item" id="bath-perfume" onclick="useBathItem(this,'🌸','香水',0,0,20,'bath-perfume')"><div class="bath-emoji">🌸</div><div class="bath-name">香水</div><div class="bath-stat">心情+20</div></div>
+      <div class="bath-item" id="bath-dryer" onclick="useBathItem(this,'💨','吹风机',0,10,5,'bath-dryer')"><div class="bath-emoji">💨</div><div class="bath-name">吹风机</div><div class="bath-stat">活力+10</div></div>
+    </div>
+    <div style="margin-top:14px;background:var(--gray-100);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--gray-600);font-weight:600;">
+      进度：<span id="bath-progress">0</span>/6 件物品使用完毕
+    </div>
+  </div>
+</div>
+
+<!-- GAMES MODAL -->
+<div class="modal-overlay" id="games-modal">
+  <div class="modal-sheet" style="position:relative;">
+    <button class="modal-close" onclick="closeModal('games-modal')">✕</button>
+    <div class="modal-title">🎮 选择游戏</div>
+    <div class="game-list">
+      <div class="game-card" onclick="startGame('dodge')">
+        <div class="game-icon">🏃</div>
+        <div class="game-info">
+          <div class="game-name">闪避大师</div>
+          <div class="game-desc">点击屏幕让宠物跳跃，躲避障碍物</div>
+          <div class="game-best" id="best-dodge">最高分：0</div>
+        </div>
+        <div class="game-arrow">→</div>
+      </div>
+      <div class="game-card" onclick="startGame('memory')">
+        <div class="game-icon">🃏</div>
+        <div class="game-info">
+          <div class="game-name">记忆配对</div>
+          <div class="game-desc">翻开卡片，找到所有配对</div>
+          <div class="game-best" id="best-memory">最高分：0</div>
+        </div>
+        <div class="game-arrow">→</div>
+      </div>
+      <div class="game-card" onclick="startGame('tap')">
+        <div class="game-icon">👆</div>
+        <div class="game-info">
+          <div class="game-name">快速点击</div>
+          <div class="game-desc">10秒内尽量多点击宠物！</div>
+          <div class="game-best" id="best-tap">最高分：0</div>
+        </div>
+        <div class="game-arrow">→</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DODGE GAME -->
+<div class="game-screen" id="game-dodge">
+  <div class="game-header">
+    <div class="game-title">🏃 闪避大师</div>
+    <div class="game-score">分数：<span id="dodge-score">0</span></div>
+    <button class="game-exit" onclick="exitGame('dodge')">退出</button>
+  </div>
+  <div class="game-body">
+    <div id="dodge-start" class="game-start-overlay">
+      <div style="font-size:60px;">🏃</div>
+      <div class="game-start-title">闪避大师</div>
+      <div class="game-start-sub">点击屏幕让宠物跳跃<br>躲避迎面而来的障碍物！</div>
+      <button class="game-start-btn" onclick="startDodge()">开始游戏</button>
+    </div>
+    <div id="dodge-game" style="display:none;flex-direction:column;align-items:center;gap:8px;width:100%;">
+      <canvas id="dodge-canvas" width="340" height="240"></canvas>
+      <div class="game-tap-hint">点击屏幕跳跃</div>
+    </div>
+    <div id="dodge-over" class="game-over-overlay">
+      <div style="font-size:60px;">💥</div>
+      <div class="game-over-title">游戏结束！</div>
+      <div class="game-over-score">得分：<span id="dodge-final-score">0</span></div>
+      <div class="game-over-best" id="dodge-best-text"></div>
+      <button class="game-start-btn" onclick="startDodge()">再玩一次</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEMORY GAME -->
+<div class="game-screen" id="game-memory">
+  <div class="game-header">
+    <div class="game-title">🃏 记忆配对</div>
+    <div class="game-score">步数：<span id="memory-moves">0</span></div>
+    <button class="game-exit" onclick="exitGame('memory')">退出</button>
+  </div>
+  <div class="game-body">
+    <div id="memory-start" class="game-start-overlay">
+      <div style="font-size:60px;">🃏</div>
+      <div class="game-start-title">记忆配对</div>
+      <div class="game-start-sub">翻开卡片找到配对<br>步数越少分数越高！</div>
+      <button class="game-start-btn" onclick="startMemory()">开始游戏</button>
+    </div>
+    <div id="memory-game" style="display:none;flex-direction:column;align-items:center;gap:12px;width:100%;">
+      <div class="memory-info">
+        <div class="memory-stat"><div class="memory-stat-val" id="memory-pairs">0/8</div><div class="memory-stat-label">配对</div></div>
+        <div class="memory-stat"><div class="memory-stat-val" id="memory-moves-display">0</div><div class="memory-stat-label">步数</div></div>
+        <div class="memory-stat"><div class="memory-stat-val" id="memory-time">0</div><div class="memory-stat-label">秒</div></div>
+      </div>
+      <div class="memory-grid" id="memory-grid"></div>
+    </div>
+    <div id="memory-over" class="game-over-overlay">
+      <div style="font-size:60px;">🎉</div>
+      <div class="game-over-title">配对完成！</div>
+      <div class="game-over-score">得分：<span id="memory-final-score">0</span></div>
+      <div class="game-over-best" id="memory-best-text"></div>
+      <button class="game-start-btn" onclick="startMemory()">再玩一次</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAP GAME -->
+<div class="game-screen" id="game-tap">
+  <div class="game-header">
+    <div class="game-title">👆 快速点击</div>
+    <div class="game-score">点击：<span id="tap-score">0</span></div>
+    <button class="game-exit" onclick="exitGame('tap')">退出</button>
+  </div>
+  <div class="game-body">
+    <div id="tap-start" class="game-start-overlay">
+      <div style="font-size:60px;">👆</div>
+      <div class="game-start-title">快速点击</div>
+      <div class="game-start-sub">10秒内尽量多点击<br>随机出现的宠物！</div>
+      <button class="game-start-btn" onclick="startTap()">开始游戏</button>
+    </div>
+    <div id="tap-game" style="display:none;flex-direction:column;align-items:center;gap:12px;width:100%;">
+      <div class="tap-info">
+        <div class="memory-stat"><div class="tap-countdown" id="tap-timer">10</div><div class="memory-stat-label">剩余秒数</div></div>
+        <div class="memory-stat"><div class="memory-stat-val" id="tap-count" style="font-size:32px;">0</div><div class="memory-stat-label">点击次数</div></div>
+      </div>
+      <div class="tap-area" id="tap-area">
+        <div class="tap-target" id="tap-target">🐾</div>
+      </div>
+    </div>
+    <div id="tap-over" class="game-over-overlay">
+      <div style="font-size:60px;">🏆</div>
+      <div class="game-over-title">时间到！</div>
+      <div class="game-over-score">点击次数：<span id="tap-final-score">0</span></div>
+      <div class="game-over-best" id="tap-best-text"></div>
+      <button class="game-start-btn" onclick="startTap()">再玩一次</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="nav-bar" id="nav-bar">
+  <button class="nav-item" onclick="window.location.href='/'"><div class="nav-icon">✨</div>生成</button>
+  <button class="nav-item active"><div class="nav-icon">🎮</div>互动</button>
+</div>
+
+<script>
+// State
+let pet = null;
+let chatHistory = [];
+let isSleeping = false;
+let isBathing = false;
+let bathItemsUsed = 0;
+const BATH_TOTAL = 6;
+let scores = JSON.parse(localStorage.getItem('pw_scores') || '{"dodge":0,"memory":0,"tap":0}');
+
+// Load pet from session
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('pw_session');
+  if (!saved) { window.location.href = '/'; return; }
+  try {
+    const s = JSON.parse(saved);
+    if (s.user && s.token) {
+      loadPet(s.token);
+      updateBestScores();
+    } else { window.location.href = '/'; }
+  } catch { window.location.href = '/'; }
+});
+
+async function loadPet(token) {
+  try {
+    const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    if (data.pet) {
+      pet = data.pet;
+      renderPet();
+      addChatMsg('pet', `${pet.name}：主人来啦！好开心！😊`);
+    }
+  } catch {}
+}
+
+function renderPet() {
+  if (!pet) return;
+  document.getElementById('pet-arena-name').textContent = pet.name;
+  document.getElementById('pet-arena-level').textContent = 'Lv.' + pet.level;
+  if (pet.cartoon_url) {
+    const img = document.getElementById('pet-display-img');
+    img.src = pet.cartoon_url;
+    img.style.display = 'block';
+    document.getElementById('pet-display-emoji').style.display = 'none';
+    document.getElementById('tap-target').innerHTML = `<img src="${pet.cartoon_url}" style="width:70px;height:70px;object-fit:cover;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">`;
+  }
+  updateBars();
+}
+
+function updateBars() {
+  if (!pet) return;
+  ['hunger','energy','mood'].forEach(k => {
+    const v = Math.max(0, Math.min(100, pet[k] || 80));
+    document.getElementById('bar-' + k).style.width = v + '%';
+    document.getElementById('val-' + k).textContent = v;
+  });
+}
+
+function savePet() {
+  const saved = localStorage.getItem('pw_session');
+  if (!saved) return;
+  try {
+    const s = JSON.parse(saved);
+    if (s.token && pet?.id) {
+      fetch('/api/pet', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.token },
+        body: JSON.stringify({ id: pet.id, hunger: pet.hunger, energy: pet.energy, mood: pet.mood, level: pet.level, exp: pet.exp })
+      }).catch(() => {});
+    }
+  } catch {}
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 2000);
+}
+
+function arenaTap(e) {
+  if (isSleeping || isBathing) return;
+  if (!pet) return;
+  spawnHeart(e.clientX, e.clientY);
+  pet.mood = Math.min(100, (pet.mood||80) + 2);
+  pet.exp = (pet.exp||0) + 1;
+  updateBars();
+  if (Math.random() < 0.25) {
+    const msgs = [`${pet.name}：嘿嘿，摸摸我！❤️`, `${pet.name}：再来一下！✨`, `${pet.name}：好舒服～😊`];
+    addChatMsg('pet', msgs[Math.floor(Math.random()*3)]);
+  }
+}
+
+function spawnHeart(x, y) {
+  const arena = document.getElementById('pet-arena');
+  const rect = arena.getBoundingClientRect();
+  const h = document.createElement('div');
+  h.className = 'heart-float';
+  h.textContent = ['❤️','✨','🌟','💕','⭐'][Math.floor(Math.random()*5)];
+  h.style.left = (x - rect.left - 12) + 'px';
+  h.style.top = (y - rect.top - 12) + 'px';
+  arena.appendChild(h);
+  setTimeout(() => h.remove(), 1000);
+}
+
+// FOOD
+function openFood() {
+  if (isSleeping || isBathing) return;
+  document.getElementById('food-modal').classList.add('visible');
+}
+
+function feedPet(emoji, name, hunger, energy, mood) {
+  if (!pet) return;
+  pet.hunger = Math.min(100, (pet.hunger||80) + hunger);
+  pet.energy = Math.min(100, (pet.energy||80) + energy);
+  pet.mood = Math.min(100, (pet.mood||80) + mood);
+  pet.exp = (pet.exp||0) + 5;
+  checkLevelUp();
+  updateBars();
+  savePet();
+  closeModal('food-modal');
+  addChatMsg('pet', `${pet.name}：${emoji} 好吃！谢谢主人！😋`);
+  showToast(`${emoji} 喂了${name}！`);
+}
+
+// SLEEP
+function startSleep() {
+  if (isBathing) return;
+  isSleeping = true;
+  const arena = document.getElementById('pet-arena');
+  arena.classList.add('sleeping-mode');
+  document.getElementById('sleep-overlay').classList.add('visible');
+  document.getElementById('stars-container').style.display = 'block';
+  document.getElementById('action-grid').style.display = 'none';
+  document.getElementById('wakeup-btn').classList.add('visible');
+  document.getElementById('nav-bar').classList.add('dark');
+  document.body.classList.add('sleeping');
+  document.getElementById('status-card').classList.add('sleeping-mode-card');
+  const img = document.getElementById('pet-display-img');
+  if (img.src) img.classList.add('sleeping');
+  addChatMsg('pet', `${pet?.name || '宠物'}：呼呼...💤 晚安主人...`);
+  // Slowly restore energy while sleeping
+  window._sleepInterval = setInterval(() => {
+    if (!pet || !isSleeping) return;
+    pet.energy = Math.min(100, (pet.energy||80) + 2);
+    updateBars();
+  }, 3000);
+}
+
+function wakeUp() {
+  isSleeping = false;
+  clearInterval(window._sleepInterval);
+  const arena = document.getElementById('pet-arena');
+  arena.classList.remove('sleeping-mode');
+  document.getElementById('sleep-overlay').classList.remove('visible');
+  document.getElementById('stars-container').style.display = 'none';
+  document.getElementById('action-grid').style.display = 'grid';
+  document.getElementById('wakeup-btn').classList.remove('visible');
+  document.getElementById('nav-bar').classList.remove('dark');
+  document.body.classList.remove('sleeping');
+  document.getElementById('status-card').classList.remove('sleeping-mode-card');
+  const img = document.getElementById('pet-display-img');
+  img.classList.remove('sleeping');
+  if (pet) {
+    pet.mood = Math.min(100, (pet.mood||80) + 10);
+    updateBars();
+    savePet();
+  }
+  addChatMsg('pet', `${pet?.name || '宠物'}：早安主人！☀️ 睡得好香！`);
+  showToast('☀️ 宠物醒来啦！');
+}
+
+// BATH
+function openBath() {
+  if (isSleeping) return;
+  isBathing = true;
+  bathItemsUsed = 0;
+  document.getElementById('bath-progress').textContent = '0';
+  document.querySelectorAll('.bath-item').forEach(el => el.classList.remove('bath-used'));
+  document.getElementById('bath-modal').classList.add('visible');
+  document.getElementById('pet-arena').classList.add('bath-mode');
+  const img = document.getElementById('pet-display-img');
+  if (img.src) img.classList.add('in-bath');
+  addChatMsg('pet', `${pet?.name || '宠物'}：洗澡时间！🛁`);
+}
+
+function useBathItem(el, emoji, name, hunger, energy, mood, id) {
+  el.classList.add('bath-used');
+  bathItemsUsed++;
+  document.getElementById('bath-progress').textContent = bathItemsUsed;
+  if (pet) {
+    pet.energy = Math.min(100, (pet.energy||80) + energy);
+    pet.mood = Math.min(100, (pet.mood||80) + mood);
+    updateBars();
+  }
+  showToast(`${emoji} 使用了${name}！`);
+  if (bathItemsUsed >= BATH_TOTAL) {
+    setTimeout(() => endBath(), 500);
+  }
+}
+
+function endBath() {
+  isBathing = false;
+  closeModal('bath-modal');
+  document.getElementById('pet-arena').classList.remove('bath-mode');
+  const img = document.getElementById('pet-display-img');
+  img.classList.remove('in-bath');
+  if (pet && bathItemsUsed > 0) {
+    pet.mood = Math.min(100, (pet.mood||80) + 5);
+    savePet();
+  }
+  updateBars();
+  if (bathItemsUsed >= BATH_TOTAL) {
+    addChatMsg('pet', `${pet?.name || '宠物'}：洗完澡好香香！✨ 谢谢主人！`);
+    showToast('🛁 洗澡完成！心情大涨！');
+  }
+}
+
+// GAMES
+function openGames() {
+  if (isSleeping || isBathing) return;
+  document.getElementById('games-modal').classList.add('visible');
+}
+
+function updateBestScores() {
+  document.getElementById('best-dodge').textContent = '最高分：' + scores.dodge;
+  document.getElementById('best-memory').textContent = '最高分：' + scores.memory;
+  document.getElementById('best-tap').textContent = '最高分：' + scores.tap;
+}
+
+function startGame(type) {
+  closeModal('games-modal');
+  document.getElementById('game-' + type).classList.add('visible');
+}
+
+function exitGame(type) {
+  document.getElementById('game-' + type).classList.remove('visible');
+  if (type === 'dodge') stopDodge();
+  if (type === 'memory') stopMemory();
+  if (type === 'tap') stopTap();
+  openGames();
+}
+
+// --- DODGE GAME ---
+let dodgeRunning = false, dodgeScore = 0, dodgeRAF = null;
+let petY = 180, petVY = 0, isJumping = false;
+let obstacles = [], dodgeFrame = 0;
+
+function startDodge() {
+  document.getElementById('dodge-start').style.display = 'none';
+  document.getElementById('dodge-over').style.display = 'none';
+  document.getElementById('dodge-game').style.display = 'flex';
+  dodgeScore = 0; dodgeFrame = 0; obstacles = [];
+  petY = 180; petVY = 0; isJumping = false;
+  dodgeRunning = true;
+  document.getElementById('dodge-score').textContent = 0;
+  const canvas = document.getElementById('dodge-canvas');
+  canvas.onclick = jumpPet;
+  canvas.ontouchstart = (e) => { e.preventDefault(); jumpPet(); };
+  dodgeLoop();
+}
+
+function jumpPet() {
+  if (!dodgeRunning) return;
+  if (!isJumping) { petVY = -12; isJumping = true; }
+}
+
+function dodgeLoop() {
+  if (!dodgeRunning) return;
+  const canvas = document.getElementById('dodge-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const ground = H - 40;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#FFF9F5';
+  ctx.fillRect(0, 0, W, H);
+
+  // Ground
+  ctx.fillStyle = '#FED7AA';
+  ctx.fillRect(0, ground, W, 4);
+
+  // Pet
+  petVY += 0.7;
+  petY += petVY;
+  if (petY >= ground - 30) { petY = ground - 30; petVY = 0; isJumping = false; }
+
+  const petImg = document.getElementById('pet-display-img');
+  if (petImg.src && petImg.complete) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(60, petY, 28, 0, Math.PI*2);
+    ctx.clip();
+    ctx.drawImage(petImg, 32, petY-28, 56, 56);
+    ctx.restore();
+  } else {
+    ctx.font = '44px serif';
+    ctx.fillText('🐾', 36, petY+16);
+  }
+
+  // Obstacles
+  dodgeFrame++;
+  const speed = 4 + Math.floor(dodgeScore/10) * 0.5;
+  if (dodgeFrame % Math.max(60 - Math.floor(dodgeScore/5)*3, 30) === 0) {
+    obstacles.push({ x: W, h: 20 + Math.random()*30 });
+  }
+
+  let hit = false;
+  obstacles = obstacles.filter(o => {
+    o.x -= speed;
+    ctx.fillStyle = '#F97316';
+    ctx.beginPath();
+    ctx.roundRect(o.x, ground - o.h, 24, o.h, 4);
+    ctx.fill();
+    ctx.fillStyle = '#10B981';
+    ctx.font = '20px serif';
+    ctx.fillText('🌵', o.x - 2, ground - o.h);
+
+    if (o.x < 90 && o.x > 35 && petY + 28 > ground - o.h) hit = true;
+    return o.x > -30;
+  });
+
+  if (!hit) {
+    dodgeScore++;
+    document.getElementById('dodge-score').textContent = dodgeScore;
+    ctx.fillStyle = '#374151';
+    ctx.font = 'bold 14px Nunito, sans-serif';
+    ctx.fillText('分数: ' + dodgeScore, 10, 22);
+    dodgeRAF = requestAnimationFrame(dodgeLoop);
+  } else {
+    dodgeRunning = false;
+    if (dodgeScore > scores.dodge) { scores.dodge = dodgeScore; localStorage.setItem('pw_scores', JSON.stringify(scores)); updateBestScores(); }
+    document.getElementById('dodge-final-score').textContent = dodgeScore;
+    document.getElementById('dodge-best-text').textContent = '最高分：' + scores.dodge;
+    document.getElementById('dodge-game').style.display = 'none';
+    document.getElementById('dodge-over').style.display = 'flex';
+    if (pet) { pet.exp = (pet.exp||0) + Math.floor(dodgeScore/5); pet.mood = Math.min(100,(pet.mood||80)+10); updateBars(); savePet(); }
+    addChatMsg('pet', `${pet?.name||'宠物'}：哎呀撞到了！得了${dodgeScore}分～🏃`);
+  }
+}
+
+function stopDodge() {
+  dodgeRunning = false;
+  if (dodgeRAF) cancelAnimationFrame(dodgeRAF);
+}
+
+// --- MEMORY GAME ---
+const EMOJIS = ['🐶','🐱','🐰','🐸','🦊','🐼','🐨','🦁'];
+let memCards = [], memFlipped = [], memMatched = 0, memMoves = 0, memTimer = null, memSeconds = 0, memLocked = false;
+
+function startMemory() {
+  document.getElementById('memory-start').style.display = 'none';
+  document.getElementById('memory-over').style.display = 'none';
+  document.getElementById('memory-game').style.display = 'flex';
+  memFlipped = []; memMatched = 0; memMoves = 0; memSeconds = 0; memLocked = false;
+  memCards = [...EMOJIS,...EMOJIS].sort(() => Math.random()-0.5);
+  document.getElementById('memory-moves').textContent = 0;
+  document.getElementById('memory-moves-display').textContent = 0;
+  document.getElementById('memory-pairs').textContent = '0/8';
+  document.getElementById('memory-time').textContent = 0;
+  if (memTimer) clearInterval(memTimer);
+  memTimer = setInterval(() => { memSeconds++; document.getElementById('memory-time').textContent = memSeconds; }, 1000);
+
+  const grid = document.getElementById('memory-grid');
+  grid.innerHTML = '';
+  memCards.forEach((emoji, i) => {
+    const card = document.createElement('button');
+    card.className = 'memory-card hidden-face';
+    card.dataset.emoji = emoji;
+    card.dataset.index = i;
+    card.textContent = emoji;
+    card.onclick = () => flipCard(card, i);
+    grid.appendChild(card);
+  });
+}
+
+function flipCard(card, idx) {
+  if (memLocked || memFlipped.includes(idx) || card.classList.contains('matched')) return;
+  card.classList.add('flipped');
+  card.classList.remove('hidden-face');
+  memFlipped.push(idx);
+  if (memFlipped.length === 2) {
+    memLocked = true; memMoves++;
+    document.getElementById('memory-moves').textContent = memMoves;
+    document.getElementById('memory-moves-display').textContent = memMoves;
+    const [a, b] = memFlipped;
+    const cards = document.getElementById('memory-grid').querySelectorAll('.memory-card');
+    if (memCards[a] === memCards[b]) {
+      cards[a].classList.add('matched'); cards[b].classList.add('matched');
+      memMatched++;
+      document.getElementById('memory-pairs').textContent = memMatched + '/8';
+      memFlipped = []; memLocked = false;
+      if (memMatched === 8) {
+        clearInterval(memTimer);
+        const score = Math.max(0, 1000 - memMoves * 10 - memSeconds * 5);
+        if (score > scores.memory) { scores.memory = score; localStorage.setItem('pw_scores', JSON.stringify(scores)); updateBestScores(); }
+        document.getElementById('memory-final-score').textContent = score;
+        document.getElementById('memory-best-text').textContent = '最高分：' + scores.memory;
+        document.getElementById('memory-game').style.display = 'none';
+        document.getElementById('memory-over').style.display = 'flex';
+        if (pet) { pet.exp=(pet.exp||0)+score/10; pet.mood=Math.min(100,(pet.mood||80)+15); updateBars(); savePet(); }
+        addChatMsg('pet', `${pet?.name||'宠物'}：太厉害了！全部找到啦！🎉`);
+      }
+    } else {
+      setTimeout(() => {
+        cards[a].classList.remove('flipped'); cards[a].classList.add('hidden-face');
+        cards[b].classList.remove('flipped'); cards[b].classList.add('hidden-face');
+        memFlipped = []; memLocked = false;
+      }, 900);
+    }
+  }
+}
+
+function stopMemory() { if (memTimer) clearInterval(memTimer); }
+
+// --- TAP GAME ---
+let tapRunning = false, tapCount = 0, tapTimerInterval = null, tapTimeLeft = 10;
+
+function startTap() {
+  document.getElementById('tap-start').style.display = 'none';
+  document.getElementById('tap-over').style.display = 'none';
+  document.getElementById('tap-game').style.display = 'flex';
+  tapCount = 0; tapTimeLeft = 10; tapRunning = true;
+  document.getElementById('tap-score').textContent = 0;
+  document.getElementById('tap-count').textContent = 0;
+  document.getElementById('tap-timer').textContent = 10;
+  moveTapTarget();
+  tapTimerInterval = setInterval(() => {
+    tapTimeLeft--;
+    document.getElementById('tap-timer').textContent = tapTimeLeft;
+    if (tapTimeLeft <= 0) endTap();
+  }, 1000);
+
+  const target = document.getElementById('tap-target');
+  target.onclick = () => {
+    if (!tapRunning) return;
+    tapCount++;
+    document.getElementById('tap-score').textContent = tapCount;
+    document.getElementById('tap-count').textContent = tapCount;
+    moveTapTarget();
+  };
+  target.ontouchstart = (e) => { e.preventDefault(); if (!tapRunning) return; tapCount++; document.getElementById('tap-score').textContent = tapCount; document.getElementById('tap-count').textContent = tapCount; moveTapTarget(); };
+}
+
+function moveTapTarget() {
+  const area = document.getElementById('tap-area');
+  const target = document.getElementById('tap-target');
+  const maxX = area.offsetWidth - 80;
+  const maxY = area.offsetHeight - 80;
+  target.style.left = (40 + Math.random() * maxX) + 'px';
+  target.style.top = (40 + Math.random() * maxY) + 'px';
+}
+
+function endTap() {
+  tapRunning = false;
+  clearInterval(tapTimerInterval);
+  if (tapCount > scores.tap) { scores.tap = tapCount; localStorage.setItem('pw_scores', JSON.stringify(scores)); updateBestScores(); }
+  document.getElementById('tap-final-score').textContent = tapCount;
+  document.getElementById('tap-best-text').textContent = '最高分：' + scores.tap;
+  document.getElementById('tap-game').style.display = 'none';
+  document.getElementById('tap-over').style.display = 'flex';
+  if (pet) { pet.exp=(pet.exp||0)+tapCount; pet.mood=Math.min(100,(pet.mood||80)+12); updateBars(); savePet(); }
+  addChatMsg('pet', `${pet?.name||'宠物'}：好好玩！点了${tapCount}下！😄`);
+}
+
+function stopTap() { tapRunning = false; clearInterval(tapTimerInterval); }
+
+// UTILS
+function closeModal(id) { document.getElementById(id).classList.remove('visible'); }
+
+function checkLevelUp() {
+  if (!pet) return;
+  if ((pet.exp||0) >= pet.level * 100) {
+    pet.level = (pet.level||1) + 1;
+    pet.exp = 0;
+    document.getElementById('pet-arena-level').textContent = 'Lv.' + pet.level;
+    showToast('🎉 升级了！现在是 Lv.' + pet.level);
+    addChatMsg('pet', `${pet.name}：我升级了！现在是 Lv.${pet.level}！🎉`);
+  }
+}
+
+// CHAT
+function addChatMsg(role, text) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  const isUser = role === 'user';
+  div.style.cssText = `display:flex;gap:8px;align-items:flex-end;${isUser?'flex-direction:row-reverse;':''}`;
+  div.innerHTML = isUser
+    ? `<div style="background:var(--orange);color:white;border-radius:14px 14px 4px 14px;padding:8px 12px;font-size:13px;max-width:75%;">${text}</div><div style="font-size:20px;">👤</div>`
+    : `<div style="font-size:20px;">🐾</div><div style="background:var(--gray-100);border-radius:14px 14px 14px 4px;padding:8px 12px;font-size:13px;max-width:75%;color:var(--gray-700);">${text}</div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  if (role === 'assistant') chatHistory.push({ role: 'assistant', content: text });
+  if (role === 'user') chatHistory.push({ role: 'user', content: text });
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg || !pet) return;
+  input.value = '';
+  addChatMsg('user', msg);
+  const typing = document.getElementById('chat-typing');
+  typing.style.display = 'block';
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ petName: pet.name, hunger: pet.hunger||80, energy: pet.energy||80, mood: pet.mood||80, message: msg, history: chatHistory.slice(-8) })
+    });
+    const data = await res.json();
+    typing.style.display = 'none';
+    addChatMsg('pet', data.reply ? `${pet.name}：${data.reply}` : `${pet.name}：...🥺`);
+  } catch {
+    typing.style.display = 'none';
+    addChatMsg('pet', `${pet.name}：主人，我现在说不了话...🥺`);
+  }
+}
+</script>
+</body>
+</html>
