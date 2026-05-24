@@ -421,8 +421,9 @@ async function doAuth() {
       sucEl.textContent = '注册成功！请检查邮箱确认后再登录。';
       sucEl.classList.add('visible');
     } else {
-      currentUser = data.user;
-      currentUser.token = data.access_token;
+ currentUser = data.user;
+currentUser.token = data.access_token;
+currentUser.id = data.user.id || data.user.sub;
       localStorage.setItem('pw_session', JSON.stringify({ user: data.user, token: data.access_token }));
       showMainApp();
       loadPet();
