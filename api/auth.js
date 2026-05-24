@@ -22,7 +22,7 @@ export default async function handler(req) {
       body: JSON.stringify({ email, password })
     });
     const data = await res.json();
-    if (!res.ok) return new Response(JSON.stringify({ error: data.msg || data.error_description || '注册失败' }), { status: 400 });
+    if (!res.ok) return new Response(JSON.stringify({ error: data.msg || data.error_description || data.message || JSON.stringify(data) }), { status: 400 });
     return new Response(JSON.stringify({ user: data.user, session: data.session }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
 
