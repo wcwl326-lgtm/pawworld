@@ -292,6 +292,15 @@
         </div>
         <div class="game-arrow">→</div>
       </div>
+      <div class="game-card" onclick="window.location.href='/game-runner.html'">
+        <div class="game-icon">🏄</div>
+        <div class="game-info">
+          <div class="game-name">跑酷大冒险</div>
+          <div class="game-desc">三条跑道滑动换道，躲障碍收金币！</div>
+          <div class="game-best" id="best-runner">最高分：0</div>
+        </div>
+        <div class="game-arrow">→</div>
+      </div>
     </div>
   </div>
 </div>
@@ -625,6 +634,7 @@ function updateBestScores() {
   document.getElementById('best-dodge').textContent = '最高分：' + scores.dodge;
   document.getElementById('best-memory').textContent = '最高分：' + scores.memory;
   document.getElementById('best-tap').textContent = '最高分：' + scores.tap;
+  document.getElementById('best-runner').textContent = '最高分：' + (scores.runner||0);
 }
 
 function startGame(type) {
