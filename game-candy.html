@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PawWorld — 萌宠消消乐</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: #0f0a1e; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Nunito', sans-serif; overflow: hidden; }
+  #game-wrapper { position: relative; width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; padding: 16px; gap: 12px; }
+
+  /* HUD */
+  .hud-row { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .hud-card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 8px 16px; text-align: center; flex: 1; }
+  .hud-val { font-family: 'Fredoka One', sans-serif; font-size: 22px; color: white; }
+  .hud-label { font-size: 10px; color: rgba(255,255,255,0.45); font-weight: 700; margin-top: 2px; }
+  .moves-bar { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+  .moves-fill { height: 100%; background: linear-gradient(90deg, #10B981, #3B82F6); border-radius: 10px; transition: width 0.3s; }
+
+  /* Board */
+  #board-container { position: relative; width: 100%; }
+  #board { display: grid; gap: 4px; width: 100%; touch-action: none; }
+  .cell { aspect-ratio: 1; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; transition: transform 0.1s; position: relative; user-select: none; border: 2px solid transparent; }
+  .cell:active { transform: scale(0.9); }
+  .cell.selected { border-color: white; box-shadow: 0 0 0 3px rgba(255,255,255,0.4); transform: scale(1.08); }
+  .cell.matched { animation: matchPop 0.35s ease forwards; }
+  .cell.hint { animation: hintPulse 0.6s ease infinite; }
+  @keyframes matchPop { 0% { transform:scale(1); opacity:1; } 50% { transform:scale(1.3); opacity:0.7; } 100% { transform:scale(0); opacity:0; } }
+  @keyframes hintPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.12); box-shadow:0 0 12px rgba(255,255,255,0.5); } }
+  @keyframes fallIn { from { opacity:0; transform:translateY(-40px); } to { opacity:1; transform:translateY(0); } }
+  .cell.falling { animation: fallIn 0.3s ease; }
+
+  /* Score popup */
+  .score-popup { position: absolute; font-family: 'Fredoka One', sans-serif; font-size: 22px; color: #FCD34D; pointer-events: none; z-index: 20; text-shadow: 0 2px 8px rgba(0,0,0,0.5); animation: scoreFloat 0.9s ease forwards; }
+  @keyframes scoreFloat { 0% { opacity:1; transform:translateY(0) scale(1); } 100% { opacity:0; transform:translateY(-60px) scale(1.3); } }
+
+  /* Overlays */
+  .overlay { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(10,5,25,0.92); backdrop-filter: blur(12px); z-index: 100; }
+  .game-title { font-family: 'Fredoka One', sans-serif; font-size: 32px; color: white; text-align: center; }
+  .game-sub { font-size: 13px; color: rgba(255,255,255,0.5); text-align: center; line-height: 1.8; max-width: 280px; }
+  .start-btn { background: linear-gradient(135deg, #8B5CF6, #EC4899); color: white; border: none; border-radius: 16px; padding: 14px 44px; font-family: 'Fredoka One', sans-serif; font-size: 20px; cursor: pointer; box-shadow: 0 6px 24px rgba(139,92,246,0.5); transition: transform 0.15s; }
+  .start-btn:active { transform: scale(0.95); }
+  .score-big { font-family: 'Fredoka One', sans-serif; font-size: 56px; color: #FCD34D; }
+  .score-best { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: #8B5CF6; }
+
+  /* Level complete */
+  .level-badge { background: linear-gradient(135deg, #FCD34D, #F97316); color: white; font-family: 'Fredoka One', sans-serif; font-size: 14px; padding: 6px 16px; border-radius: 20px; }
+</style>
+</head>
+<body>
+<div id="game-wrapper">
+  <!-- HUD -->
+  <div class="hud-row" id="hud" style="display:none;">
+    <div class="hud-card">
+      <div class="hud-val" id="h-score">0</div>
+      <div class="hud-label">分数</div>
+    </div>
+    <div class="hud-card">
+      <div class="hud-val" id="h-target">🎯 500</div>
+      <div class="hud-label">目标</div>
+    </div>
+    <div class="hud-card">
+      <div class="hud-val" id="h-moves">20</div>
+      <div class="hud-label">剩余步数</div>
+    </div>
+  </div>
+  <div class="hud-row" id="moves-bar-wrap" style="display:none;">
+    <div class="moves-bar"><div class="moves-fill" id="moves-fill" style="width:100%;"></div></div>
+  </div>
+  <div class="hud-row" id="level-row" style="display:none; justify-content:center;">
+    <div class="level-badge" id="level-badge">第 1 关</div>
+  </div>
+
+  <!-- Board -->
+  <div id="board-container">
+    <div id="board"></div>
+  </div>
+</div>
+
+<!-- Start screen -->
+<div class="overlay" id="start-screen">
+  <div style="font-size:72px;">🍬</div>
+  <div class="game-title">萌宠消消乐</div>
+  <div class="game-sub">
+    交换相邻宠物食物<br>
+    消除3个或以上相同的！<br>
+    🍎🍊🍋🍇🍓🫐<br>
+    在规定步数内达到目标分数
+  </div>
+  <button class="start-btn" onclick="startGame()">开始消除！</button>
+  <div style="font-size:13px;color:rgba(255,255,255,0.3);">最高分：<span id="best-display">0</span></div>
+</div>
+
+<!-- Level complete screen -->
+<div class="overlay" id="level-screen" style="display:none;">
+  <div style="font-size:72px;">🎉</div>
+  <div class="game-title">关卡完成！</div>
+  <div class="score-big" id="level-score">0</div>
+  <div style="font-size:14px;color:rgba(255,255,255,0.5);">剩余步数奖励：<span id="bonus-score" style="color:#FCD34D;font-weight:800;">+0</span></div>
+  <button class="start-btn" onclick="nextLevel()">下一关 →</button>
+</div>
+
+<!-- Game over screen -->
+<div class="overlay" id="over-screen" style="display:none;">
+  <div style="font-size:72px;">😢</div>
+  <div class="game-title">步数用完了！</div>
+  <div class="score-big" id="final-score">0</div>
+  <div class="score-best" id="final-best">🏆 最高分：0</div>
+  <button class="start-btn" onclick="startGame()">再来一次！</button>
+  <a href="/play.html" style="font-size:13px;color:rgba(255,255,255,0.35);text-decoration:none;margin-top:4px;">← 返回互动页</a>
+</div>
+
+<script>
+const GEMS = ['🍎','🍊','🍋','🍇','🍓','🫐'];
+const GEM_COLORS = {
+  '🍎': 'rgba(239,68,68,0.35)',
+  '🍊': 'rgba(249,115,22,0.35)',
+  '🍋': 'rgba(234,179,8,0.35)',
+  '🍇': 'rgba(139,92,246,0.35)',
+  '🍓': 'rgba(236,72,153,0.35)',
+  '🫐': 'rgba(59,130,246,0.35)',
+};
+
+const COLS = 7, ROWS = 7;
+let board = [], selected = null;
+let score = 0, moves = 20, targetScore = 500, level = 1;
+let bestScore = parseInt(localStorage.getItem('pw_best_candy') || '0');
+let busy = false, running = false;
+document.getElementById('best-display').textContent = bestScore;
+
+function randGem() { return GEMS[Math.floor(Math.random() * GEMS.length)]; }
+
+function initBoard() {
+  board = [];
+  for (let r = 0; r < ROWS; r++) {
+    board[r] = [];
+    for (let c = 0; c < COLS; c++) {
+      let gem;
+      do {
+        gem = randGem();
+      } while (
+        (c >= 2 && board[r][c-1] === gem && board[r][c-2] === gem) ||
+        (r >= 2 && board[r-1][c] === gem && board[r-2][c] === gem)
+      );
+      board[r][c] = gem;
+    }
+  }
+}
+
+function renderBoard() {
+  const container = document.getElementById('board');
+  const size = Math.min(document.getElementById('game-wrapper').offsetWidth - 32, 380);
+  container.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+  container.style.width = size + 'px';
+  container.style.margin = '0 auto';
+  container.innerHTML = '';
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      cell.textContent = board[r][c];
+      cell.style.background = GEM_COLORS[board[r][c]] || 'rgba(255,255,255,0.08)';
+      cell.addEventListener('click', () => onCellClick(r, c));
+      // Touch swipe
+      let tx = 0, ty = 0;
+      cell.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+      cell.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - tx;
+        const dy = e.changedTouches[0].clientY - ty;
+        if (Math.abs(dx) < 10 && Math.abs(dy) < 10) { onCellClick(r, c); return; }
+        if (Math.abs(dx) > Math.abs(dy)) {
+          if (dx > 15) trySwap(r, c, r, c+1);
+          else if (dx < -15) trySwap(r, c, r, c-1);
+        } else {
+          if (dy > 15) trySwap(r, c, r+1, c);
+          else if (dy < -15) trySwap(r, c, r-1, c);
+        }
+      }, { passive: true });
+      container.appendChild(cell);
+    }
+  }
+}
+
+function getCell(r, c) {
+  return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+}
+
+function onCellClick(r, c) {
+  if (busy || !running) return;
+  if (selected === null) {
+    selected = { r, c };
+    getCell(r, c)?.classList.add('selected');
+  } else {
+    const { r: sr, c: sc } = selected;
+    getCell(sr, sc)?.classList.remove('selected');
+    if (sr === r && sc === c) { selected = null; return; }
+    const dr = Math.abs(r - sr), dc = Math.abs(c - sc);
+    if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
+      trySwap(sr, sc, r, c);
+    } else {
+      selected = { r, c };
+      getCell(r, c)?.classList.add('selected');
+      return;
+    }
+    selected = null;
+  }
+}
+
+async function trySwap(r1, c1, r2, c2) {
+  if (busy || !running) return;
+  if (r2 < 0 || r2 >= ROWS || c2 < 0 || c2 >= COLS) return;
+  busy = true;
+  selected = null;
+  document.querySelectorAll('.cell.selected').forEach(el => el.classList.remove('selected'));
+
+  // Swap
+  [board[r1][c1], board[r2][c2]] = [board[r2][c2], board[r1][c1]];
+  animateSwap(r1, c1, r2, c2);
+  await sleep(180);
+
+  const matches = findMatches();
+  if (matches.length === 0) {
+    // Swap back
+    [board[r1][c1], board[r2][c2]] = [board[r2][c2], board[r1][c1]];
+    animateSwap(r1, c1, r2, c2);
+    await sleep(180);
+    renderBoard();
+    busy = false;
+    return;
+  }
+
+  moves--;
+  document.getElementById('h-moves').textContent = moves;
+  document.getElementById('moves-fill').style.width = (moves / (10 + level * 5)) * 100 + '%';
+
+  await processMatches();
+  busy = false;
+  checkGameState();
+}
+
+function animateSwap(r1, c1, r2, c2) {
+  renderBoard();
+}
+
+async function processMatches() {
+  let matches;
+  let chain = 0;
+  while ((matches = findMatches()).length > 0) {
+    chain++;
+    const pts = matches.length * 10 * chain;
+    score += pts;
+    document.getElementById('h-score').textContent = score;
+    showScorePopup(pts, chain);
+    await markAndRemove(matches);
+    await sleep(300);
+    await dropGems();
+    await sleep(200);
+    renderBoard();
+    await sleep(150);
+  }
+}
+
+function findMatches() {
+  const matched = new Set();
+  // Horizontal
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS - 2; c++) {
+      const gem = board[r][c];
+      if (gem && gem === board[r][c+1] && gem === board[r][c+2]) {
+        let len = 3;
+        while (c + len < COLS && board[r][c+len] === gem) len++;
+        for (let i = 0; i < len; i++) matched.add(r * COLS + c + i);
+      }
+    }
+  }
+  // Vertical
+  for (let c = 0; c < COLS; c++) {
+    for (let r = 0; r < ROWS - 2; r++) {
+      const gem = board[r][c];
+      if (gem && gem === board[r+1][c] && gem === board[r+2][c]) {
+        let len = 3;
+        while (r + len < ROWS && board[r+len][c] === gem) len++;
+        for (let i = 0; i < len; i++) matched.add((r+i) * COLS + c);
+      }
+    }
+  }
+  return [...matched].map(idx => ({ r: Math.floor(idx/COLS), c: idx%COLS }));
+}
+
+async function markAndRemove(matches) {
+  matches.forEach(({ r, c }) => {
+    const cell = getCell(r, c);
+    if (cell) cell.classList.add('matched');
+  });
+  await sleep(350);
+  matches.forEach(({ r, c }) => { board[r][c] = null; });
+  renderBoard();
+}
+
+async function dropGems() {
+  for (let c = 0; c < COLS; c++) {
+    let empty = ROWS - 1;
+    for (let r = ROWS - 1; r >= 0; r--) {
+      if (board[r][c] !== null) {
+        board[empty][c] = board[r][c];
+        if (empty !== r) board[r][c] = null;
+        empty--;
+      }
+    }
+    for (let r = empty; r >= 0; r--) {
+      let gem;
+      do { gem = randGem(); } while (r >= 2 && board[r-1][c] === gem && board[r-2][c] === gem);
+      board[r][c] = gem;
+    }
+  }
+}
+
+function showScorePopup(pts, chain) {
+  const container = document.getElementById('board-container');
+  const popup = document.createElement('div');
+  popup.className = 'score-popup';
+  popup.textContent = (chain > 1 ? chain + '连击! ' : '') + '+' + pts;
+  popup.style.left = (Math.random() * 60 + 20) + '%';
+  popup.style.top = (Math.random() * 40 + 20) + '%';
+  container.appendChild(popup);
+  setTimeout(() => popup.remove(), 900);
+}
+
+function checkGameState() {
+  if (score >= targetScore) {
+    showLevelComplete();
+  } else if (moves <= 0) {
+    showGameOver();
+  }
+}
+
+function showLevelComplete() {
+  running = false;
+  const bonus = moves * 50;
+  score += bonus;
+  document.getElementById('level-score').textContent = score;
+  document.getElementById('bonus-score').textContent = '+' + bonus;
+  document.getElementById('level-screen').style.display = 'flex';
+}
+
+function nextLevel() {
+  level++;
+  moves = 10 + level * 5;
+  targetScore = 500 * level;
+  document.getElementById('level-screen').style.display = 'none';
+  document.getElementById('h-target').textContent = '🎯 ' + targetScore;
+  document.getElementById('h-moves').textContent = moves;
+  document.getElementById('level-badge').textContent = '第 ' + level + ' 关';
+  document.getElementById('moves-fill').style.width = '100%';
+  initBoard();
+  renderBoard();
+  running = true;
+}
+
+function showGameOver() {
+  running = false;
+  if (score > bestScore) {
+    bestScore = score;
+    localStorage.setItem('pw_best_candy', bestScore);
+    document.getElementById('best-display').textContent = bestScore;
+  }
+  document.getElementById('final-score').textContent = score;
+  document.getElementById('final-best').textContent = '🏆 最高分：' + bestScore;
+  document.getElementById('over-screen').style.display = 'flex';
+
+  // Save scores
+  const scores = JSON.parse(localStorage.getItem('pw_scores') || '{}');
+  if (score > (scores.candy||0)) { scores.candy = score; localStorage.setItem('pw_scores', JSON.stringify(scores)); }
+
+  // Save pet exp
+  const session = localStorage.getItem('pw_session');
+  if (session) {
+    try {
+      const s = JSON.parse(session);
+      if (s.token) {
+        fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + s.token } })
+          .then(r => r.json()).then(d => {
+            if (d.pet) {
+              fetch('/api/pet', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.token }, body: JSON.stringify({ id: d.pet.id, exp: Math.min((d.pet.exp||0) + Math.floor(score/20), d.pet.level*100-1), mood: Math.min(100,(d.pet.mood||80)+10) }) }).catch(()=>{});
+            }
+          }).catch(()=>{});
+      }
+    } catch {}
+  }
+}
+
+function startGame() {
+  level = 1; score = 0; moves = 20; targetScore = 500;
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('over-screen').style.display = 'none';
+  document.getElementById('level-screen').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('moves-bar-wrap').style.display = 'flex';
+  document.getElementById('level-row').style.display = 'flex';
+  document.getElementById('h-score').textContent = 0;
+  document.getElementById('h-moves').textContent = moves;
+  document.getElementById('h-target').textContent = '🎯 ' + targetScore;
+  document.getElementById('level-badge').textContent = '第 1 关';
+  document.getElementById('moves-fill').style.width = '100%';
+  initBoard(); renderBoard();
+  running = true; busy = false;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
