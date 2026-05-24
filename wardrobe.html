@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PawWorld — 换装衣橱</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #F97316; --orange-light: #FFF7ED; --orange-mid: #FED7AA;
+    --purple: #8B5CF6; --purple-light: #EDE9FE;
+    --green: #10B981; --green-light: #ECFDF5;
+    --pink: #EC4899; --pink-light: #FDF2F8;
+    --gray-100: #F3F4F6; --gray-200: #E5E7EB; --gray-400: #9CA3AF;
+    --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937;
+    --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Nunito', sans-serif; background: #FFF9F5; min-height: 100vh; }
+  body::before { content: ''; position: fixed; top: -100px; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, #FED7AA 0%, transparent 70%); z-index: 0; pointer-events: none; }
+  body::after { content: ''; position: fixed; bottom: -80px; left: -80px; width: 300px; height: 300px; background: radial-gradient(circle, #DDD6FE 0%, transparent 70%); z-index: 0; pointer-events: none; }
+  .page { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 16px 16px 100px; }
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
+  @keyframes sparkle { 0%,100% { opacity:0; transform:scale(0); } 50% { opacity:1; transform:scale(1); } }
+
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .logo { font-family: 'Fredoka One', sans-serif; font-size: 22px; color: var(--orange); }
+  .logo span { color: var(--purple); }
+  .back-btn { background: white; border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; color: var(--gray-600); cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.2s; }
+  .back-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+  /* Coins bar */
+  .coins-bar { background: white; border-radius: var(--radius-md); padding: 12px 16px; border: 1.5px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; animation: fadeUp 0.4s ease; }
+  .coins-left { display: flex; align-items: center; gap: 8px; }
+  .coins-icon { font-size: 24px; }
+  .coins-val { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--orange); }
+  .coins-label { font-size: 12px; color: var(--gray-400); font-weight: 700; }
+  .earn-btn { background: var(--purple-light); color: var(--purple); border: none; border-radius: 10px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; }
+  .earn-btn:hover { background: var(--purple); color: white; }
+
+  /* Pet preview */
+  .preview-card { background: white; border-radius: var(--radius-lg); padding: 20px; border: 1.5px solid var(--gray-200); display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 14px; animation: fadeUp 0.4s ease 0.05s both; position: relative; overflow: hidden; }
+  .preview-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #FFF7ED 0%, #EDE9FE 100%); opacity: 0.4; }
+  .pet-preview-wrap { position: relative; width: 160px; height: 160px; animation: float 3s ease-in-out infinite; }
+  .pet-preview-img { width: 160px; height: 160px; object-fit: cover; border-radius: 50%; border: 3px solid var(--orange); position: relative; z-index: 1; }
+  .pet-preview-emoji { font-size: 100px; display: flex; align-items: center; justify-content: center; width: 160px; height: 160px; }
+
+  /* Accessory overlay layers */
+  .acc-layer { position: absolute; z-index: 2; pointer-events: none; }
+  .acc-hat { top: -18px; left: 50%; transform: translateX(-50%); font-size: 52px; }
+  .acc-glasses { top: 38px; left: 50%; transform: translateX(-50%); font-size: 36px; }
+  .acc-neck { bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 34px; }
+  .acc-bg { position: absolute; inset: -10px; z-index: 0; display: flex; align-items: center; justify-content: center; font-size: 140px; opacity: 0.15; }
+
+  .pet-preview-name { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); position: relative; z-index: 1; }
+  .pet-preview-level { background: var(--purple-light); color: var(--purple); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; position: relative; z-index: 1; }
+
+  .equipped-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; position: relative; z-index: 1; }
+  .equipped-tag { background: var(--orange-light); color: var(--orange); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
+  .remove-tag { cursor: pointer; font-size: 13px; color: var(--gray-400); }
+  .remove-tag:hover { color: #EF4444; }
+
+  /* Category tabs */
+  .cat-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 12px; animation: fadeUp 0.4s ease 0.1s both; }
+  .cat-tab { background: white; border: 1.5px solid var(--gray-200); border-radius: 20px; padding: 7px 16px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; color: var(--gray-600); cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.2s; }
+  .cat-tab.active { background: var(--orange); border-color: var(--orange); color: white; }
+
+  /* Items grid */
+  .items-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; animation: fadeUp 0.4s ease 0.15s both; }
+  .item-card { background: white; border: 2px solid var(--gray-200); border-radius: var(--radius-md); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; position: relative; }
+  .item-card:hover { transform: translateY(-2px); border-color: var(--orange-mid); }
+  .item-card.equipped { border-color: var(--orange); background: var(--orange-light); }
+  .item-card.locked { opacity: 0.75; cursor: default; }
+  .item-card.locked:hover { transform: none; border-color: var(--gray-200); }
+  .item-emoji { font-size: 36px; }
+  .item-name { font-family: 'Fredoka One', sans-serif; font-size: 12px; color: var(--gray-700); text-align: center; }
+  .item-cost { font-size: 11px; font-weight: 700; }
+  .item-cost.free { color: var(--green); }
+  .item-cost.coins { color: var(--orange); }
+  .item-cost.equipped-label { color: var(--orange); }
+  .lock-overlay { position: absolute; top: 6px; right: 6px; font-size: 14px; }
+  .item-card.new-badge::after { content: 'NEW'; position: absolute; top: 6px; left: 6px; background: #EF4444; color: white; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 8px; }
+
+  /* Equipped checkmark */
+  .check-badge { position: absolute; top: 6px; right: 6px; background: var(--orange); color: white; font-size: 11px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+
+  /* Unlock modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.visible { display: flex; }
+  .modal-sheet { background: white; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 560px; animation: slideUp 0.3s ease; }
+  @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  .modal-title { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--gray-800); margin-bottom: 6px; text-align: center; }
+  .modal-sub { font-size: 13px; color: var(--gray-400); text-align: center; margin-bottom: 20px; }
+  .modal-item-preview { font-size: 64px; text-align: center; margin-bottom: 12px; }
+  .modal-cost { font-family: 'Fredoka One', sans-serif; font-size: 22px; color: var(--orange); text-align: center; margin-bottom: 20px; }
+  .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-btn { padding: 14px; border-radius: var(--radius-sm); font-family: 'Fredoka One', sans-serif; font-size: 16px; cursor: pointer; border: none; transition: all 0.2s; text-align: center; }
+  .modal-btn.primary { background: var(--orange); color: white; }
+  .modal-btn.secondary { background: var(--gray-100); color: var(--gray-700); }
+  .modal-btn:hover { transform: translateY(-1px); }
+  .modal-btn:disabled { background: var(--gray-200); color: var(--gray-400); cursor: not-allowed; transform: none; }
+  .not-enough { background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #DC2626; text-align: center; margin-bottom: 12px; display: none; }
+  .not-enough.visible { display: block; }
+
+  /* Toast */
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 700; z-index: 500; display: none; font-family: 'Nunito', sans-serif; }
+  .toast.visible { display: block; }
+
+  .nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; background: white; border-top: 1px solid var(--gray-200); display: flex; z-index: 100; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 14px; cursor: pointer; color: var(--gray-400); font-size: 10px; font-weight: 700; border: none; background: none; font-family: 'Nunito', sans-serif; text-decoration: none; transition: color 0.2s; }
+  .nav-item.active { color: var(--orange); }
+  .nav-icon { font-size: 22px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top-bar">
+    <div class="logo">Paw<span>World</span></div>
+    <a href="/play.html" class="back-btn">← 返回</a>
+  </div>
+
+  <!-- Coins bar -->
+  <div class="coins-bar">
+    <div class="coins-left">
+      <div class="coins-icon">🪙</div>
+      <div>
+        <div class="coins-val" id="coins-display">0</div>
+        <div class="coins-label">游戏积分</div>
+      </div>
+    </div>
+    <a href="/play.html" class="earn-btn">🎮 去玩游戏赚积分</a>
+  </div>
+
+  <!-- Pet preview -->
+  <div class="preview-card">
+    <div class="pet-preview-wrap" id="pet-preview-wrap">
+      <div class="acc-bg" id="acc-bg"></div>
+      <img class="pet-preview-img" id="pet-preview-img" src="" alt="宠物" style="display:none;">
+      <div class="pet-preview-emoji" id="pet-preview-emoji">🐾</div>
+      <div class="acc-layer acc-hat" id="acc-hat" style="display:none;"></div>
+      <div class="acc-layer acc-glasses" id="acc-glasses" style="display:none;"></div>
+      <div class="acc-layer acc-neck" id="acc-neck" style="display:none;"></div>
+    </div>
+    <div class="pet-preview-name" id="pet-preview-name">加载中...</div>
+    <div class="pet-preview-level" id="pet-preview-level">Lv.1</div>
+    <div class="equipped-tags" id="equipped-tags"></div>
+  </div>
+
+  <!-- Category tabs -->
+  <div class="cat-tabs">
+    <div class="cat-tab active" onclick="switchCat('all', this)">全部</div>
+    <div class="cat-tab" onclick="switchCat('hat', this)">🎩 帽子</div>
+    <div class="cat-tab" onclick="switchCat('glasses', this)">👓 眼镜</div>
+    <div class="cat-tab" onclick="switchCat('neck', this)">📿 颈饰</div>
+    <div class="cat-tab" onclick="switchCat('bg', this)">✨ 背景</div>
+  </div>
+
+  <!-- Items grid -->
+  <div class="items-grid" id="items-grid"></div>
+</div>
+
+<!-- Unlock modal -->
+<div class="modal-overlay" id="unlock-modal">
+  <div class="modal-sheet">
+    <div class="modal-item-preview" id="modal-emoji"></div>
+    <div class="modal-title" id="modal-name"></div>
+    <div class="modal-sub" id="modal-desc"></div>
+    <div class="modal-cost" id="modal-cost"></div>
+    <div class="not-enough" id="not-enough">积分不足！去玩游戏赚更多积分吧 🎮</div>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="closeModal()">取消</button>
+      <button class="modal-btn primary" id="unlock-btn" onclick="confirmUnlock()">解锁</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="nav-bar">
+  <a href="/" class="nav-item"><div class="nav-icon">✨</div>生成</a>
+  <a href="/play.html" class="nav-item"><div class="nav-icon">🎮</div>互动</a>
+  <a href="/wardrobe.html" class="nav-item active"><div class="nav-icon">👗</div>衣橱</a>
+</div>
+
+<script>
+// All items catalogue
+const ITEMS = [
+  // Hats
+  { id: 'hat_crown',    cat: 'hat', emoji: '👑', name: '皇冠',     cost: 0,    desc: '高贵的金色皇冠' },
+  { id: 'hat_party',    cat: 'hat', emoji: '🎉', name: '派对帽',   cost: 50,   desc: '欢乐派对必备' },
+  { id: 'hat_cowboy',   cat: 'hat', emoji: '🤠', name: '牛仔帽',   cost: 80,   desc: '西部牛仔风格' },
+  { id: 'hat_witch',    cat: 'hat', emoji: '🧙', name: '女巫帽',   cost: 120,  desc: '神秘魔法师' },
+  { id: 'hat_santa',    cat: 'hat', emoji: '🎅', name: '圣诞帽',   cost: 150,  desc: '节日限定' },
+  { id: 'hat_chef',     cat: 'hat', emoji: '👨‍🍳', name: '厨师帽',   cost: 100,  desc: '小小厨神' },
+  // Glasses
+  { id: 'gl_star',      cat: 'glasses', emoji: '🌟', name: '星星框',   cost: 0,   desc: '闪亮亮的星星眼镜' },
+  { id: 'gl_cool',      cat: 'glasses', emoji: '😎', name: '酷炫墨镜', cost: 60,  desc: '超级酷的墨镜' },
+  { id: 'gl_heart',     cat: 'glasses', emoji: '🥰', name: '爱心眼镜', cost: 80,  desc: '充满爱意' },
+  { id: 'gl_monocle',   cat: 'glasses', emoji: '🧐', name: '单片眼镜', cost: 100, desc: '绅士优雅风' },
+  { id: 'gl_rainbow',   cat: 'glasses', emoji: '🌈', name: '彩虹框',   cost: 130, desc: '七彩绚丽' },
+  // Neck
+  { id: 'nk_bow',       cat: 'neck', emoji: '🎀', name: '蝴蝶结',   cost: 0,   desc: '可爱蝴蝶结' },
+  { id: 'nk_tie',       cat: 'neck', emoji: '👔', name: '领带',     cost: 70,  desc: '正式商务风' },
+  { id: 'nk_necklace',  cat: 'neck', emoji: '📿', name: '珍珠项链', cost: 100, desc: '优雅高贵' },
+  { id: 'nk_medal',     cat: 'neck', emoji: '🥇', name: '金牌',     cost: 150, desc: '冠军专属' },
+  { id: 'nk_flower',    cat: 'neck', emoji: '🌸', name: '花环',     cost: 80,  desc: '清新田园风' },
+  // Background
+  { id: 'bg_star',      cat: 'bg', emoji: '⭐', name: '星星背景',   cost: 0,   desc: '闪亮星空' },
+  { id: 'bg_rainbow',   cat: 'bg', emoji: '🌈', name: '彩虹背景',   cost: 60,  desc: '七彩绚丽' },
+  { id: 'bg_fire',      cat: 'bg', emoji: '🔥', name: '火焰背景',   cost: 100, desc: '热情燃烧' },
+  { id: 'bg_sparkle',   cat: 'bg', emoji: '✨', name: '闪光背景',   cost: 80,  desc: '魔法闪耀' },
+  { id: 'bg_heart',     cat: 'bg', emoji: '💕', name: '爱心背景',   cost: 120, desc: '满满爱意' },
+];
+
+let pet = null;
+let coins = 0;
+let unlocked = new Set();
+let equipped = { hat: null, glasses: null, neck: null, bg: null };
+let currentCat = 'all';
+let pendingItem = null;
+
+window.addEventListener('load', () => {
+  loadData();
+});
+
+async function loadData() {
+  // Load coins & unlocked from localStorage
+  const saved = localStorage.getItem('pw_wardrobe');
+  if (saved) {
+    try {
+      const d = JSON.parse(saved);
+      coins = d.coins || 0;
+      unlocked = new Set(d.unlocked || ['hat_crown','gl_star','nk_bow','bg_star']);
+      equipped = d.equipped || { hat: null, glasses: null, neck: null, bg: null };
+    } catch {
+      unlocked = new Set(['hat_crown','gl_star','nk_bow','bg_star']);
+    }
+  } else {
+    unlocked = new Set(['hat_crown','gl_star','nk_bow','bg_star']);
+  }
+
+  // Sync coins from game scores
+  const scores = JSON.parse(localStorage.getItem('pw_scores') || '{}');
+  const totalGameCoins = (scores.dodge||0) + (scores.memory||0) + (scores.tap||0) + (scores.runner||0) + Math.floor((scores.fruit||0)*2) + Math.floor((scores.candy||0)/10);
+  const savedCoins = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}').spentCoins || 0;
+  coins = Math.max(coins, totalGameCoins - savedCoins);
+
+  // Load pet
+  const session = localStorage.getItem('pw_session');
+  if (session) {
+    try {
+      const s = JSON.parse(session);
+      if (s.token) {
+        const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + s.token } });
+        const data = await res.json();
+        if (data.pet) pet = data.pet;
+      }
+    } catch {}
+  }
+
+  renderAll();
+}
+
+function saveData() {
+  const saved = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}');
+  localStorage.setItem('pw_wardrobe', JSON.stringify({
+    coins,
+    unlocked: [...unlocked],
+    equipped,
+    spentCoins: saved.spentCoins || 0
+  }));
+}
+
+function renderAll() {
+  // Coins
+  document.getElementById('coins-display').textContent = coins;
+
+  // Pet preview
+  if (pet) {
+    document.getElementById('pet-preview-name').textContent = pet.name;
+    document.getElementById('pet-preview-level').textContent = 'Lv.' + pet.level;
+    if (pet.cartoon_url) {
+      const img = document.getElementById('pet-preview-img');
+      img.src = pet.cartoon_url;
+      img.style.display = 'block';
+      document.getElementById('pet-preview-emoji').style.display = 'none';
+    }
+  }
+
+  renderEquipped();
+  renderItems();
+}
+
+function renderEquipped() {
+  // Apply accessories
+  ['hat','glasses','neck'].forEach(cat => {
+    const el = document.getElementById('acc-' + cat);
+    if (equipped[cat]) {
+      const item = ITEMS.find(i => i.id === equipped[cat]);
+      if (item) { el.textContent = item.emoji; el.style.display = 'block'; }
+    } else { el.style.display = 'none'; }
+  });
+
+  // Background
+  const bgEl = document.getElementById('acc-bg');
+  if (equipped.bg) {
+    const item = ITEMS.find(i => i.id === equipped.bg);
+    if (item) { bgEl.textContent = item.emoji; bgEl.style.display = 'flex'; }
+  } else { bgEl.style.display = 'none'; }
+
+  // Equipped tags
+  const tags = document.getElementById('equipped-tags');
+  tags.innerHTML = '';
+  Object.entries(equipped).forEach(([cat, id]) => {
+    if (!id) return;
+    const item = ITEMS.find(i => i.id === id);
+    if (!item) return;
+    const tag = document.createElement('div');
+    tag.className = 'equipped-tag';
+    tag.innerHTML = `${item.emoji} ${item.name} <span class="remove-tag" onclick="unequip('${cat}')">✕</span>`;
+    tags.appendChild(tag);
+  });
+  if (!Object.values(equipped).some(Boolean)) {
+    tags.innerHTML = '<div style="font-size:12px;color:var(--gray-400);">点击配件来装扮你的宠物！</div>';
+  }
+}
+
+function renderItems() {
+  const grid = document.getElementById('items-grid');
+  grid.innerHTML = '';
+  const filtered = currentCat === 'all' ? ITEMS : ITEMS.filter(i => i.cat === currentCat);
+
+  filtered.forEach(item => {
+    const isUnlocked = unlocked.has(item.id);
+    const isEquipped = Object.values(equipped).includes(item.id);
+    const card = document.createElement('div');
+    card.className = 'item-card' + (isEquipped ? ' equipped' : '') + (!isUnlocked ? ' locked' : '');
+
+    let costHtml = '';
+    if (isEquipped) costHtml = `<div class="item-cost equipped-label">✓ 已装备</div>`;
+    else if (isUnlocked) costHtml = `<div class="item-cost free">✓ 已解锁</div>`;
+    else if (item.cost === 0) costHtml = `<div class="item-cost free">免费</div>`;
+    else costHtml = `<div class="item-cost coins">🪙 ${item.cost}</div>`;
+
+    card.innerHTML = `
+      ${isEquipped ? '<div class="check-badge">✓</div>' : ''}
+      ${!isUnlocked ? '<div class="lock-overlay">🔒</div>' : ''}
+      <div class="item-emoji">${item.emoji}</div>
+      <div class="item-name">${item.name}</div>
+      ${costHtml}
+    `;
+    card.onclick = () => onItemClick(item);
+    grid.appendChild(card);
+  });
+}
+
+function onItemClick(item) {
+  const isUnlocked = unlocked.has(item.id);
+  const isEquipped = Object.values(equipped).includes(item.id);
+
+  if (isEquipped) {
+    unequip(item.cat);
+    return;
+  }
+  if (isUnlocked) {
+    equipItem(item);
+    return;
+  }
+  // Show unlock modal
+  pendingItem = item;
+  document.getElementById('modal-emoji').textContent = item.emoji;
+  document.getElementById('modal-name').textContent = item.name;
+  document.getElementById('modal-desc').textContent = item.desc;
+  document.getElementById('not-enough').classList.remove('visible');
+
+  if (item.cost === 0) {
+    document.getElementById('modal-cost').textContent = '免费解锁！';
+    document.getElementById('unlock-btn').disabled = false;
+    document.getElementById('unlock-btn').textContent = '免费获取';
+  } else {
+    document.getElementById('modal-cost').textContent = `🪙 ${item.cost} 积分`;
+    const hasEnough = coins >= item.cost;
+    document.getElementById('unlock-btn').disabled = !hasEnough;
+    document.getElementById('unlock-btn').textContent = hasEnough ? '解锁' : '积分不足';
+    if (!hasEnough) document.getElementById('not-enough').classList.add('visible');
+  }
+  document.getElementById('unlock-modal').classList.add('visible');
+}
+
+function confirmUnlock() {
+  if (!pendingItem) return;
+  const item = pendingItem;
+  if (item.cost > 0) {
+    if (coins < item.cost) return;
+    coins -= item.cost;
+    const saved = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}');
+    saved.spentCoins = (saved.spentCoins || 0) + item.cost;
+    localStorage.setItem('pw_wardrobe', JSON.stringify(saved));
+  }
+  unlocked.add(item.id);
+  saveData();
+  closeModal();
+  equipItem(item);
+  showToast(`🎉 ${item.emoji} ${item.name} 已解锁！`);
+}
+
+function equipItem(item) {
+  equipped[item.cat] = item.id;
+  saveData();
+  renderAll();
+  showToast(`✨ ${item.emoji} ${item.name} 已装备！`);
+}
+
+function unequip(cat) {
+  equipped[cat] = null;
+  saveData();
+  renderAll();
+}
+
+function closeModal() {
+  document.getElementById('unlock-modal').classList.remove('visible');
+  pendingItem = null;
+}
+
+function switchCat(cat, el) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderItems();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 2000);
+}
+</script>
+</body>
+</html>
