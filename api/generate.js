@@ -6,9 +6,9 @@ export default async function handler(req) {
   }
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
-  const TOGETHER_KEY = process.env.TOGETHER_API_KEY;
+  const REPLICATE_KEY = process.env.REPLICATE_API_KEY;
 
-  if (!ANTHROPIC_KEY || !TOGETHER_KEY) {
+  if (!ANTHROPIC_KEY || !REPLICATE_KEY) {
     return new Response(JSON.stringify({ error: 'API keys not configured' }), { status: 500 });
   }
 
@@ -29,22 +29,16 @@ export default async function handler(req) {
     watercolor: 'soft watercolor illustration, dreamy artistic style, gentle color washes, painterly texture, white background'
   };
 
-  let chineseDesc = '';
-  let imgPrompt = '';
-
-  // Build Claude message content
+  // Step 1: Claude analyzes photo and/or description
   const contentParts = [];
-
   if (imageBase64 && mediaType) {
     contentParts.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } });
   }
-
   let textPrompt = `宠物名字叫"${petName}"。`;
   if (petDesc) textPrompt += `主人描述：${petDesc}。`;
   if (imageBase64) textPrompt += `请结合照片和描述，`;
   else textPrompt += `请根据描述，`;
   textPrompt += `用中文2-3句话描述这只宠物的外貌特征，然后用英文写一段适合AI图片生成的提示词，将这只宠物画成${styleNames[style]}风格的卡通形象。格式：\n中文描述：[描述]\nImage prompt: [英文prompt]`;
-
   contentParts.push({ type: 'text', text: textPrompt });
 
   const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -68,35 +62,60 @@ export default async function handler(req) {
 
   const claudeData = await claudeRes.json();
   const claudeText = claudeData.content[0].text;
-  chineseDesc = claudeText.match(/中文描述[：:]\s*(.+?)(?:\n|Image)/s)?.[1]?.trim() || claudeText.slice(0, 150);
+  const chineseDesc = claudeText.match(/中文描述[：:]\s*(.+?)(?:\n|Image)/s)?.[1]?.trim() || claudeText.slice(0, 150);
   const imgPromptMatch = claudeText.match(/Image prompt[：:]\s*(.+)/si);
-  imgPrompt = imgPromptMatch ? imgPromptMatch[1].trim() : `cute cartoon ${petName}`;
-
+  const imgPrompt = imgPromptMatch ? imgPromptMatch[1].trim() : `cute cartoon ${petName}, adorable pet`;
   const fullPrompt = `${imgPrompt}, ${stylePrompts[style] || stylePrompts.chibi}, high quality, detailed`;
 
-  // Generate image with Together AI
-  const togetherRes = await fetch('https://api.together.xyz/v1/images/generations', {
+  // Step 2: Replicate generates image
+  const replicateRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + TOGETHER_KEY
+      'Authorization': 'Bearer ' + REPLICATE_KEY,
+      'Prefer': 'wait=30'
     },
     body: JSON.stringify({
-      model: 'black-forest-labs/FLUX.1-schnell-Free',
-      prompt: fullPrompt,
-      width: 512, height: 512, steps: 4, n: 1
+      input: {
+        prompt: fullPrompt,
+        num_outputs: 1,
+        aspect_ratio: '1:1',
+        output_format: 'webp',
+        output_quality: 80
+      }
     })
   });
 
-  if (!togetherRes.ok) {
-    const err = await togetherRes.json();
-    return new Response(JSON.stringify({ error: 'Image error: ' + (err.error?.message || togetherRes.status) }), { status: 500 });
+  if (!replicateRes.ok) {
+    const err = await replicateRes.json();
+    return new Response(JSON.stringify({ error: 'Replicate error: ' + (err.detail || replicateRes.status) }), { status: 500 });
   }
 
-  const togetherData = await togetherRes.json();
-  const imageUrl = togetherData.data?.[0]?.url;
+  const replicateData = await replicateRes.json();
+
+  // If still processing, poll for result
+  let imageUrl = replicateData.output?.[0];
+
+  if (!imageUrl && replicateData.id) {
+    // Poll up to 30 seconds
+    for (let i = 0; i < 15; i++) {
+      await new Promise(r => setTimeout(r, 2000));
+      const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${replicateData.id}`, {
+        headers: { 'Authorization': 'Bearer ' + REPLICATE_KEY }
+      });
+      const pollData = await pollRes.json();
+      if (pollData.status === 'succeeded') {
+        imageUrl = pollData.output?.[0];
+        break;
+      }
+      if (pollData.status === 'failed') {
+        return new Response(JSON.stringify({ error: '图片生成失败：' + (pollData.error || '未知错误') }), { status: 500 });
+      }
+    }
+  }
+
   if (!imageUrl) {
-    return new Response(JSON.stringify({ error: '图片生成失败，请重试' }), { status: 500 });
+    return new Response(JSON.stringify({ error: '图片生成超时，请重试' }), { status: 500 });
   }
 
   return new Response(JSON.stringify({ imageUrl, description: chineseDesc }), {
