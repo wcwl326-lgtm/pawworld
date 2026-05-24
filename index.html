@@ -274,8 +274,9 @@ async function generate() {
     });
 
     setStep(3);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || '服务器错误');
+const data = await res.json();
+console.log('API 返回：', JSON.stringify(data));
+if (!res.ok) throw new Error(data.error || '服务器错误，状态码：' + res.status);
 
     setStep(4);
     generatedImageUrl = data.imageUrl;
