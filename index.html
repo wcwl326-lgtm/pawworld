@@ -26,55 +26,73 @@
   .logo { font-family: 'Fredoka One', sans-serif; font-size: 38px; color: var(--orange); letter-spacing: 1px; line-height: 1; }
   .logo span { color: var(--purple); }
   .tagline { margin-top: 8px; font-size: 15px; color: var(--gray-600); font-weight: 600; }
-  .upload-zone { background: white; border: 2.5px dashed var(--orange-mid); border-radius: var(--radius-xl); padding: 36px 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: pointer; transition: all 0.25s ease; position: relative; overflow: hidden; animation: fadeUp 0.5s ease 0.1s both; }
-  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--orange); background: var(--orange-light); transform: scale(1.01); }
-  .upload-zone.has-image { border-style: solid; border-color: var(--orange); padding: 16px; }
-  .upload-icon { width: 72px; height: 72px; background: var(--orange-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; transition: transform 0.3s ease; }
+
+  .section-card { background: white; border-radius: var(--radius-xl); padding: 20px; margin-bottom: 16px; border: 1.5px solid var(--gray-200); animation: fadeUp 0.5s ease both; }
+  .section-card:nth-child(1) { animation-delay: 0.1s; }
+  .section-card:nth-child(2) { animation-delay: 0.15s; }
+  .section-card:nth-child(3) { animation-delay: 0.2s; }
+  .section-card:nth-child(4) { animation-delay: 0.25s; }
+
+  .section-title { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: var(--gray-800); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .optional-badge { background: var(--gray-200); color: var(--gray-600); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; font-family: 'Nunito', sans-serif; }
+
+  .upload-zone { border: 2px dashed var(--orange-mid); border-radius: var(--radius-lg); padding: 24px 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: pointer; transition: all 0.25s ease; position: relative; }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--orange); background: var(--orange-light); }
+  .upload-zone.has-image { border-style: solid; border-color: var(--orange); background: var(--orange-light); padding: 14px; }
+  .upload-icon { width: 56px; height: 56px; background: var(--orange-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; transition: transform 0.3s; }
   .upload-zone:hover .upload-icon { transform: scale(1.1) rotate(-5deg); }
-  .upload-title { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--gray-800); }
-  .upload-sub { font-size: 13px; color: var(--gray-400); text-align: center; line-height: 1.6; }
-  .upload-formats { display: flex; gap: 8px; }
-  .format-tag { background: var(--orange-light); color: var(--orange); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .upload-title { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: var(--gray-800); }
+  .upload-sub { font-size: 12px; color: var(--gray-400); text-align: center; line-height: 1.5; }
+  .upload-formats { display: flex; gap: 6px; }
+  .format-tag { background: var(--orange-light); color: var(--orange); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
   #file-input { display: none; }
-  .preview-wrap { display: none; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+  .preview-wrap { display: none; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
   .preview-wrap.visible { display: flex; }
-  .preview-img { width: 200px; height: 200px; object-fit: cover; border-radius: var(--radius-lg); border: 3px solid var(--orange); }
-  .preview-label { font-size: 13px; color: var(--gray-600); font-weight: 600; }
-  .change-btn { background: none; border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 6px 16px; font-family: 'Nunito', sans-serif; font-size: 13px; color: var(--gray-600); cursor: pointer; font-weight: 600; transition: all 0.2s; }
+  .preview-img { width: 160px; height: 160px; object-fit: cover; border-radius: var(--radius-md); border: 3px solid var(--orange); }
+  .preview-label { font-size: 13px; color: var(--green); font-weight: 700; }
+  .change-btn { background: none; border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 5px 14px; font-family: 'Nunito', sans-serif; font-size: 12px; color: var(--gray-600); cursor: pointer; font-weight: 600; transition: all 0.2s; }
   .change-btn:hover { border-color: var(--orange); color: var(--orange); }
-  .input-group { margin-top: 20px; animation: fadeUp 0.5s ease 0.2s both; }
-  .input-label { font-size: 13px; font-weight: 700; color: var(--gray-600); margin-bottom: 8px; display: block; }
-  .pet-input { width: 100%; background: white; border: 2px solid var(--gray-200); border-radius: var(--radius-sm); padding: 13px 16px; font-family: 'Nunito', sans-serif; font-size: 16px; color: var(--gray-800); outline: none; transition: border-color 0.2s; }
-  .pet-input:focus { border-color: var(--orange); }
+
+  .or-divider { display: flex; align-items: center; gap: 10px; margin: 4px 0; }
+  .or-line { flex: 1; height: 1px; background: var(--gray-200); }
+  .or-text { font-size: 12px; color: var(--gray-400); font-weight: 700; }
+
+  .pet-input { width: 100%; background: var(--gray-50, #F9FAFB); border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'Nunito', sans-serif; font-size: 15px; color: var(--gray-800); outline: none; transition: border-color 0.2s; }
+  .pet-input:focus { border-color: var(--orange); background: white; }
   .pet-input::placeholder { color: var(--gray-400); }
-  .style-group { margin-top: 20px; animation: fadeUp 0.5s ease 0.25s both; }
-  .style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-  .style-card { background: white; border: 2px solid var(--gray-200); border-radius: var(--radius-md); padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; }
-  .style-card:hover { border-color: var(--orange-mid); transform: translateY(-2px); }
+  .pet-textarea { width: 100%; background: var(--gray-50, #F9FAFB); border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'Nunito', sans-serif; font-size: 14px; color: var(--gray-800); outline: none; transition: border-color 0.2s; resize: none; height: 86px; line-height: 1.6; }
+  .pet-textarea:focus { border-color: var(--orange); background: white; }
+  .pet-textarea::placeholder { color: var(--gray-400); }
+
+  .style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .style-card { background: var(--gray-50, #F9FAFB); border: 2px solid var(--gray-200); border-radius: var(--radius-md); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; }
+  .style-card:hover { border-color: var(--orange-mid); transform: translateY(-2px); background: var(--orange-light); }
   .style-card.selected { border-color: var(--orange); background: var(--orange-light); }
-  .style-emoji { font-size: 28px; }
+  .style-emoji { font-size: 26px; }
   .style-name { font-family: 'Fredoka One', sans-serif; font-size: 13px; color: var(--gray-700); }
   .style-desc { font-size: 10px; color: var(--gray-400); text-align: center; line-height: 1.4; }
-  .generate-btn { margin-top: 24px; width: 100%; background: var(--orange); color: white; border: none; border-radius: var(--radius-md); padding: 18px; font-family: 'Fredoka One', sans-serif; font-size: 20px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; animation: fadeUp 0.5s ease 0.3s both; letter-spacing: 0.5px; }
+
+  .generate-btn { width: 100%; background: var(--orange); color: white; border: none; border-radius: var(--radius-md); padding: 18px; font-family: 'Fredoka One', sans-serif; font-size: 20px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; letter-spacing: 0.5px; animation: fadeUp 0.5s ease 0.3s both; }
   .generate-btn:hover { background: #EA6C0A; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(249,115,22,0.35); }
   .generate-btn:active { transform: scale(0.98); }
-  .generate-btn:disabled { background: var(--gray-400); cursor: not-allowed; transform: none; box-shadow: none; }
-  .loading-area { display: none; flex-direction: column; align-items: center; gap: 16px; padding: 40px 0; animation: fadeUp 0.4s ease; }
+
+  .loading-area { display: none; flex-direction: column; align-items: center; gap: 16px; padding: 60px 0; }
   .loading-area.visible { display: flex; }
   .loading-ring { width: 64px; height: 64px; border: 4px solid var(--orange-mid); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.9s linear infinite; }
-  .loading-text { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); text-align: center; }
-  .loading-steps { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 280px; }
+  .loading-text { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--gray-800); }
+  .loading-steps { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 260px; margin-top: 8px; }
   .loading-step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--gray-400); font-weight: 600; transition: color 0.3s; }
   .loading-step.active { color: var(--orange); }
   .loading-step.done { color: var(--green); }
   .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray-200); flex-shrink: 0; transition: background 0.3s; }
   .loading-step.active .step-dot { background: var(--orange); animation: pulse 1s ease infinite; }
   .loading-step.done .step-dot { background: var(--green); }
+
   .result-area { display: none; flex-direction: column; align-items: center; gap: 20px; animation: fadeUp 0.5s ease; }
   .result-area.visible { display: flex; }
-  .result-title { font-family: 'Fredoka One', sans-serif; font-size: 24px; color: var(--gray-800); text-align: center; }
+  .result-title { font-family: 'Fredoka One', sans-serif; font-size: 26px; color: var(--gray-800); text-align: center; }
   .result-sub { font-size: 14px; color: var(--gray-400); margin-top: 4px; text-align: center; }
-  .result-images { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; }
+  .result-images { display: grid; gap: 16px; width: 100%; }
   .result-card { background: white; border-radius: var(--radius-lg); overflow: hidden; border: 2px solid var(--gray-200); }
   .result-card.highlight { border-color: var(--orange); }
   .result-card-img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
@@ -99,38 +117,54 @@
 <div class="page">
   <div class="header">
     <div class="logo">Paw<span>World</span> 🐾</div>
-    <div class="tagline">上传宠物照片，AI 生成专属卡通形象</div>
+    <div class="tagline">上传照片或描述宠物，AI 生成专属卡通形象</div>
   </div>
 
   <div id="main-form">
-    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
-      <input type="file" id="file-input" accept="image/*" onchange="onFileSelected(event)">
-      <div id="upload-placeholder">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+
+    <!-- 宠物名字 -->
+    <div class="section-card">
+      <div class="section-title">🐾 宠物名字</div>
+      <input class="pet-input" id="pet-name" type="text" placeholder="例如：小橘、奶茶、豆豆..." maxlength="20">
+    </div>
+
+    <!-- 上传照片 -->
+    <div class="section-card">
+      <div class="section-title">📷 上传宠物照片 <span class="optional-badge">选填</span></div>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <input type="file" id="file-input" accept="image/*" onchange="onFileSelected(event)">
+        <div id="upload-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:10px;">
           <div class="upload-icon">📷</div>
-          <div class="upload-title">点击上传宠物照片</div>
-          <div class="upload-sub">支持拖拽上传<br>建议使用清晰的正脸照</div>
+          <div class="upload-title">点击或拖拽上传</div>
+          <div class="upload-sub">AI 将分析照片中宠物的外貌特征</div>
           <div class="upload-formats">
             <span class="format-tag">JPG</span>
             <span class="format-tag">PNG</span>
             <span class="format-tag">WEBP</span>
           </div>
         </div>
+        <div class="preview-wrap" id="preview-wrap">
+          <img class="preview-img" id="preview-img" src="" alt="预览">
+          <div class="preview-label">✓ 照片已选择</div>
+          <button class="change-btn" onclick="event.stopPropagation(); resetImage()">更换照片</button>
+        </div>
       </div>
-      <div class="preview-wrap" id="preview-wrap">
-        <img class="preview-img" id="preview-img" src="" alt="预览">
-        <div class="preview-label">照片已选择 ✓</div>
-        <button class="change-btn" onclick="event.stopPropagation(); resetImage()">更换照片</button>
+
+      <div class="or-divider" style="margin-top:14px;">
+        <div class="or-line"></div>
+        <div class="or-text">或者</div>
+        <div class="or-line"></div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--gray-600);margin-bottom:8px;">✏️ 用文字描述宠物外貌 <span class="optional-badge">选填</span></div>
+        <textarea class="pet-textarea" id="pet-desc" placeholder="例如：橙色柴犬，毛茸茸，大眼睛，耳朵竖起来，很活泼可爱...&#10;照片和描述可以同时填，AI 会结合两者生成更准确的形象！"></textarea>
       </div>
     </div>
 
-    <div class="input-group">
-      <label class="input-label">🐾 宠物名字</label>
-      <input class="pet-input" id="pet-name" type="text" placeholder="例如：小橘、奶茶、豆豆..." maxlength="20">
-    </div>
-
-    <div class="style-group">
-      <label class="input-label">🎨 卡通风格</label>
+    <!-- 风格选择 -->
+    <div class="section-card">
+      <div class="section-title">🎨 选择卡通风格</div>
       <div class="style-grid">
         <div class="style-card selected" data-style="chibi" onclick="selectStyle(this)">
           <div class="style-emoji">🌸</div>
@@ -150,29 +184,29 @@
       </div>
     </div>
 
-    <button class="generate-btn" id="generate-btn" onclick="generate()">
-      ✨ 生成卡通形象
-    </button>
+    <button class="generate-btn" onclick="generate()">✨ 生成卡通形象</button>
   </div>
 
+  <!-- 加载中 -->
   <div class="loading-area" id="loading-area">
     <div class="loading-ring"></div>
     <div class="loading-text">AI 正在施展魔法...</div>
     <div class="loading-steps">
-      <div class="loading-step active" id="step-1"><div class="step-dot"></div>分析宠物照片特征</div>
-      <div class="loading-step" id="step-2"><div class="step-dot"></div>生成卡通形象描述</div>
-      <div class="loading-step" id="step-3"><div class="step-dot"></div>AI 绘制卡通图片</div>
-      <div class="loading-step" id="step-4"><div class="step-dot"></div>生成完毕，准备展示</div>
+      <div class="loading-step active" id="step-1"><div class="step-dot"></div>分析宠物特征</div>
+      <div class="loading-step" id="step-2"><div class="step-dot"></div>生成卡通描述</div>
+      <div class="loading-step" id="step-3"><div class="step-dot"></div>AI 绘制卡通图</div>
+      <div class="loading-step" id="step-4"><div class="step-dot"></div>完成！</div>
     </div>
   </div>
 
+  <!-- 结果 -->
   <div class="result-area" id="result-area">
     <div>
       <div class="result-title" id="result-title">🎉 生成成功！</div>
       <div class="result-sub">专属卡通形象已就绪</div>
     </div>
-    <div class="result-images">
-      <div class="result-card">
+    <div class="result-images" id="result-images">
+      <div class="result-card" id="original-card" style="display:none;">
         <img class="result-card-img" id="original-thumb" src="" alt="原图">
         <div class="result-card-label">📷 原始照片</div>
       </div>
@@ -182,7 +216,7 @@
       </div>
     </div>
     <div class="result-desc">
-      <div class="result-desc-title">🐾 AI 对宠物的描述</div>
+      <div class="result-desc-title">🐾 AI 的描述</div>
       <div class="result-desc-text" id="result-desc-text"></div>
     </div>
     <div class="result-actions">
@@ -252,8 +286,10 @@ function setStep(n) {
 }
 
 async function generate() {
-  const petName = document.getElementById('pet-name').value.trim() || '我的宠物';
-  if (!selectedFile) { alert('请先上传宠物照片！'); return; }
+  const petName = document.getElementById('pet-name').value.trim();
+  const petDesc = document.getElementById('pet-desc').value.trim();
+  if (!petName) { alert('请填入宠物名字！'); return; }
+  if (!selectedFile && !petDesc) { alert('请上传照片或填写宠物描述，至少选一种！'); return; }
 
   document.getElementById('main-form').style.display = 'none';
   document.getElementById('loading-area').classList.add('visible');
@@ -262,25 +298,29 @@ async function generate() {
 
   try {
     setStep(1);
-    const base64 = await fileToBase64(selectedFile);
-    const imageBase64 = base64.split(',')[1];
-    const mediaType = selectedFile.type;
+    let imageBase64 = null;
+    let mediaType = null;
+
+    if (selectedFile) {
+      const base64 = await fileToBase64(selectedFile);
+      imageBase64 = base64.split(',')[1];
+      mediaType = selectedFile.type;
+    }
 
     setStep(2);
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64, mediaType, petName, style: selectedStyle })
+      body: JSON.stringify({ imageBase64, mediaType, petName, petDesc, style: selectedStyle })
     });
 
     setStep(3);
-const data = await res.json();
-console.log('API 返回：', JSON.stringify(data));
-if (!res.ok) throw new Error(data.error || '服务器错误，状态码：' + res.status);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '服务器错误');
 
     setStep(4);
     generatedImageUrl = data.imageUrl;
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 400));
 
     document.getElementById('loading-area').classList.remove('visible');
     document.getElementById('result-area').classList.add('visible');
@@ -288,12 +328,19 @@ if (!res.ok) throw new Error(data.error || '服务器错误，状态码：' + re
     document.getElementById('cartoon-img').src = data.imageUrl;
     document.getElementById('result-desc-text').textContent = data.description;
 
+    if (selectedFile) {
+      document.getElementById('original-card').style.display = '';
+      document.getElementById('result-images').style.gridTemplateColumns = '1fr 1fr';
+    } else {
+      document.getElementById('original-card').style.display = 'none';
+      document.getElementById('result-images').style.gridTemplateColumns = '1fr';
+    }
+
   } catch (err) {
     document.getElementById('loading-area').classList.remove('visible');
     document.getElementById('main-form').style.display = '';
     document.getElementById('error-box').classList.add('visible');
     document.getElementById('error-text').textContent = err.message;
-    console.error(err);
   }
 }
 
@@ -318,7 +365,6 @@ function downloadImage() {
 function resetAll() {
   document.getElementById('result-area').classList.remove('visible');
   document.getElementById('main-form').style.display = '';
-  resetImage();
   generatedImageUrl = null;
 }
 </script>
