@@ -240,9 +240,9 @@
     <div class="section-card" style="animation-delay:0.15s">
       <div class="section-title">🎨 卡通风格</div>
       <div class="style-grid">
-        <div class="style-card selected" data-style="chibi" onclick="selectStyle(this)"><div class="style-emoji">🌸</div><div class="style-name">Q 版萌系</div><div class="style-desc">大眼圆头超可爱</div></div>
-        <div class="style-card" data-style="pixel" onclick="selectStyle(this)"><div class="style-emoji">👾</div><div class="style-name">像素风</div><div class="style-desc">复古游戏风格</div></div>
-        <div class="style-card" data-style="watercolor" onclick="selectStyle(this)"><div class="style-emoji">🎨</div><div class="style-name">水彩插画</div><div class="style-desc">柔和梦幻感</div></div>
+        <div class="style-card selected" data-style="pixar" onclick="selectStyle(this)"><div class="style-emoji">🎬</div><div class="style-name">皮克斯风</div><div class="style-desc">迪士尼3D质感</div></div>
+        <div class="style-card" data-style="realistic3d" onclick="selectStyle(this)"><div class="style-emoji">💎</div><div class="style-name">写实3D</div><div class="style-desc">超真实毛发渲染</div></div>
+        <div class="style-card" data-style="chibi" onclick="selectStyle(this)"><div class="style-emoji">🌸</div><div class="style-name">Q版3D</div><div class="style-desc">圆润可爱3D感</div></div>
       </div>
     </div>
     <button class="generate-btn" onclick="generate()">✨ 生成卡通形象</button>
@@ -363,7 +363,7 @@
 let currentUser = null;
 let currentPet = null;
 let selectedFile = null;
-let selectedStyle = 'chibi';
+let selectedStyle = 'pixar';
 let generatedImageUrl = null;
 let chatHistory = [];
 
