@@ -376,7 +376,6 @@ window.addEventListener('load', () => {
       if (s.user && s.token) {
         currentUser = s.user;
         currentUser.token = s.token;
-        urrentUser.id = s.user.id || s.user.sub;
         showMainApp();
         loadPet();
       }
@@ -422,9 +421,8 @@ async function doAuth() {
       sucEl.textContent = '注册成功！请检查邮箱确认后再登录。';
       sucEl.classList.add('visible');
     } else {
- currentUser = data.user;
-currentUser.token = data.access_token;
-currentUser.id = data.user.id || data.user.sub;
+      currentUser = data.user;
+      currentUser.token = data.access_token;
       localStorage.setItem('pw_session', JSON.stringify({ user: data.user, token: data.access_token }));
       showMainApp();
       loadPet();
@@ -551,15 +549,37 @@ async function generate() {
     }
 
     setStep(2);
-    const res = await fetch('/api/generate', {
+    const initRes = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ imageBase64, mediaType, petName, petDesc, style: selectedStyle })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || '生成失败');
+    const initData = await initRes.json();
+    if (!initRes.ok) throw new Error(initData.error || '生成失败');
 
     setStep(3);
+    // Poll for result
+    let imageUrl = null;
+    let description = initData.description || '';
+    const predictionId = initData.predictionId;
+    if (!predictionId) throw new Error('生成启动失败，请重试');
+
+    for (let i = 0; i < 40; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      const pollRes = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pollId: predictionId, petName, style: selectedStyle })
+      });
+      const pollData = await pollRes.json();
+      if (pollData.status === 'done' && pollData.imageUrl) {
+        imageUrl = pollData.imageUrl;
+        break;
+      }
+      if (pollData.status === 'failed') throw new Error(pollData.error || '图片生成失败');
+    }
+    if (!imageUrl) throw new Error('生成超时，请重试');
+    const data = { imageUrl, description };
     generatedImageUrl = data.imageUrl;
 
     // Save to DB
@@ -569,7 +589,7 @@ async function generate() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
         body: JSON.stringify({
-          user_id: currentUser.id || currentUser.sub,
+          user_id: currentUser.id,
           name: petName,
           description: petDesc || data.description,
           cartoon_url: data.imageUrl,
