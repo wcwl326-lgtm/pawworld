@@ -1,14 +1,14 @@
-export const config = { runtime: 'edge' }; // v2
+export const config = { runtime: 'edge' };
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
   }
 
-  const GEMINI_KEY = process.env.GEMINI_API_KEY;
+  const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
   const TOGETHER_KEY = process.env.TOGETHER_API_KEY;
 
-  if (!GEMINI_KEY || !TOGETHER_KEY) {
+  if (!OPENROUTER_KEY || !TOGETHER_KEY) {
     return new Response(JSON.stringify({ error: 'API keys not configured on server' }), { status: 500 });
   }
 
@@ -29,32 +29,36 @@ export default async function handler(req) {
     watercolor: 'soft watercolor illustration, dreamy artistic style, gentle color washes, painterly texture, white background'
   };
 
-  // Step 1: Gemini analyzes photo
-  const geminiRes = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { inline_data: { mime_type: mediaType, data: imageBase64 } },
-            { text: `这是一张宠物照片，宠物名字叫"${petName}"。请用中文简短描述这只宠物的外貌特征（颜色、毛发、体型、表情、品种等），2-3句话。同时用英文输出AI图片生成提示词，描述这只宠物的卡通版本，风格为${styleNames[style] || style}。格式：\n中文描述：[描述]\nImage prompt: [英文prompt]` }
-          ]
-        }]
-      })
-    }
-  );
+  // Step 1: OpenRouter analyzes photo
+  const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + OPENROUTER_KEY,
+      'HTTP-Referer': 'https://pawworld-delta.vercel.app',
+      'X-Title': 'PawWorld'
+    },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-3.2-11b-vision-instruct:free',
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:${mediaType};base64,${imageBase64}` } },
+          { type: 'text', text: `这是一张宠物照片，宠物名字叫"${petName}"。请用中文简短描述这只宠物的外貌特征（颜色、毛发、体型、表情、品种等），2-3句话。同时用英文输出AI图片生成提示词，描述这只宠物的卡通版本，风格为${styleNames[style] || style}。格式：\n中文描述：[描述]\nImage prompt: [英文prompt]` }
+        ]
+      }]
+    })
+  });
 
-  if (!geminiRes.ok) {
-    const err = await geminiRes.json();
-    return new Response(JSON.stringify({ error: 'Gemini error: ' + (err.error?.message || geminiRes.status) }), { status: 500 });
+  if (!orRes.ok) {
+    const err = await orRes.json();
+    return new Response(JSON.stringify({ error: 'OpenRouter error: ' + (err.error?.message || orRes.status) }), { status: 500 });
   }
 
-  const geminiData = await geminiRes.json();
-  const geminiText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  const chineseDesc = geminiText.match(/中文描述[：:]\s*(.+?)(?:\n|Image)/s)?.[1]?.trim() || geminiText.slice(0, 100);
-  const imgPromptMatch = geminiText.match(/Image prompt[：:]\s*(.+)/si);
+  const orData = await orRes.json();
+  const orText = orData.choices?.[0]?.message?.content || '';
+  const chineseDesc = orText.match(/中文描述[：:]\s*(.+?)(?:\n|Image)/s)?.[1]?.trim() || orText.slice(0, 150);
+  const imgPromptMatch = orText.match(/Image prompt[：:]\s*(.+)/si);
   const imgPrompt = imgPromptMatch ? imgPromptMatch[1].trim() : `cute cartoon ${petName}, adorable pet`;
   const fullPrompt = `${imgPrompt}, ${stylePrompts[style] || stylePrompts.chibi}, high quality`;
 
