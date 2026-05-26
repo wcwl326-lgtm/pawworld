@@ -176,8 +176,15 @@
 
   <!-- Pet Arena -->
   <div class="pet-arena" id="pet-arena" onclick="arenaTap(event)">
-    <img id="pet-display-img" src="" alt="宠物" class="pet-img" style="display:none;">
-    <div id="pet-display-emoji" class="pet-emoji-fallback">🐾</div>
+    <div id="pet-wrap" style="position:relative;display:inline-block;">
+      <img id="pet-display-img" src="" alt="宠物" class="pet-img" style="display:none;">
+      <div id="pet-display-emoji" class="pet-emoji-fallback">🐾</div>
+      <!-- Accessory layers -->
+      <div id="play-acc-bg" style="display:none;position:absolute;inset:0;z-index:0;display:flex;align-items:center;justify-content:center;font-size:120px;opacity:0.12;border-radius:20px;overflow:hidden;"></div>
+      <div id="play-acc-hat" style="display:none;position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:44px;z-index:3;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2));"></div>
+      <div id="play-acc-glasses" style="display:none;position:absolute;top:22%;left:50%;transform:translateX(-50%);font-size:30px;z-index:3;pointer-events:none;"></div>
+      <div id="play-acc-neck" style="display:none;position:absolute;top:36%;left:50%;transform:translateX(-50%);font-size:28px;z-index:3;pointer-events:none;"></div>
+    </div>
     <div class="pet-name-label" id="pet-arena-name">加载中...</div>
     <div class="pet-level" id="pet-arena-level">Lv.1</div>
     <div class="sleep-overlay" id="sleep-overlay">
@@ -483,9 +490,38 @@ async function loadPet(token) {
     if (data.pet) {
       pet = data.pet;
       renderPet();
+      renderAccessories();
       addChatMsg('pet', `${pet.name}：主人来啦！好开心！😊`);
     }
   } catch {}
+}
+
+function renderAccessories() {
+  const wardrobe = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}');
+  const equipped = wardrobe.equipped || {};
+  const ITEMS = [
+    {id:'hat_crown',cat:'hat',emoji:'👑'},{id:'hat_party',cat:'hat',emoji:'🎉'},{id:'hat_cowboy',cat:'hat',emoji:'🤠'},
+    {id:'hat_witch',cat:'hat',emoji:'🧙'},{id:'hat_santa',cat:'hat',emoji:'🎅'},{id:'hat_chef',cat:'hat',emoji:'👨‍🍳'},
+    {id:'gl_star',cat:'glasses',emoji:'🌟'},{id:'gl_cool',cat:'glasses',emoji:'😎'},{id:'gl_heart',cat:'glasses',emoji:'🥰'},
+    {id:'gl_monocle',cat:'glasses',emoji:'🧐'},{id:'gl_rainbow',cat:'glasses',emoji:'🌈'},
+    {id:'nk_bow',cat:'neck',emoji:'🎀'},{id:'nk_tie',cat:'neck',emoji:'👔'},{id:'nk_necklace',cat:'neck',emoji:'📿'},
+    {id:'nk_medal',cat:'neck',emoji:'🥇'},{id:'nk_flower',cat:'neck',emoji:'🌸'},
+    {id:'bg_star',cat:'bg',emoji:'⭐'},{id:'bg_rainbow',cat:'bg',emoji:'🌈'},{id:'bg_fire',cat:'bg',emoji:'🔥'},
+    {id:'bg_sparkle',cat:'bg',emoji:'✨'},{id:'bg_heart',cat:'bg',emoji:'💕'},
+  ];
+  const getEmoji = (id) => ITEMS.find(i => i.id === id)?.emoji || '';
+
+  const setAcc = (elId, emoji) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (emoji) { el.textContent = emoji; el.style.display = 'block'; }
+    else { el.style.display = 'none'; }
+  };
+
+  setAcc('play-acc-hat', getEmoji(equipped.hat));
+  setAcc('play-acc-glasses', getEmoji(equipped.glasses));
+  setAcc('play-acc-neck', getEmoji(equipped.neck));
+  setAcc('play-acc-bg', getEmoji(equipped.bg));
 }
 
 function renderPet() {
