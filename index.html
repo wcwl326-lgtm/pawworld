@@ -847,6 +847,7 @@ async function confirmSave() {
     window._pendingPet = null;
     closeConfirm();
     updateGenerateNavVisibility();
+    renderPlayPage();
     switchPage('play');
   } catch (err) {
     btn.textContent = '确认保存！';
