@@ -55,10 +55,13 @@ export default async function handler(req) {
     realistic3d: '写实3D渲染风格',
     chibi: 'Q版萌系卡通风格'
   };
+  // Fixed pose for accurate accessory layering
+  const POSE = 'full body standing upright, facing forward, arms relaxed at sides, centered in frame, plain white background, full character visible from head to toe';
+
   const stylePrompts = {
-    pixar: 'Pixar 3D animation style, adorable fluffy character, vibrant expressive eyes, smooth glossy fur, soft studio lighting, depth of field, ultra detailed 3D render, white background, Disney Pixar quality',
-    realistic3d: 'photorealistic 3D render, cute pet character, studio lighting, subsurface scattering fur, high detail, octane render, soft shadows, white background, professional CGI quality',
-    chibi: 'chibi 3D render, super cute proportions, big sparkling eyes, smooth rounded shapes, pastel colors, soft lighting, white background, adorable kawaii 3D style'
+    pixar: 'Pixar 3D animation style, adorable fluffy character, vibrant expressive eyes, smooth glossy fur, soft studio lighting, ultra detailed 3D render, ' + POSE + ', Disney Pixar quality',
+    realistic3d: 'photorealistic 3D render, cute pet character, studio lighting, subsurface scattering fur, high detail, octane render, soft shadows, ' + POSE + ', professional CGI quality',
+    chibi: 'chibi 3D render, super cute proportions, big sparkling eyes, smooth rounded shapes, pastel colors, soft lighting, ' + POSE + ', adorable kawaii 3D style'
   };
 
   // Step 1: Claude analyzes
@@ -102,7 +105,7 @@ export default async function handler(req) {
       input: {
         prompt: fullPrompt,
         num_outputs: 1,
-        aspect_ratio: '1:1',
+        aspect_ratio: '2:3',
         output_format: 'webp',
         output_quality: 85,
         num_inference_steps: 28,
