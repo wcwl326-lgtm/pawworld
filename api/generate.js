@@ -56,7 +56,7 @@ export default async function handler(req) {
     chibi: 'Q版萌系卡通风格'
   };
   // Fixed pose for accurate accessory layering
-  const POSE = 'full body standing upright, facing forward, arms relaxed at sides, centered in frame, plain white background, full character visible from head to toe';
+  const POSE = 'full body portrait, standing upright on two legs facing camera, both feet visible at bottom, head at top, arms/wings relaxed at sides, centered in frame, pure white background, no branches no perch no sitting, entire body from head to feet must be visible';
 
   const stylePrompts = {
     pixar: 'Pixar 3D animation style, adorable fluffy character, vibrant expressive eyes, smooth glossy fur, soft studio lighting, ultra detailed 3D render, ' + POSE + ', Disney Pixar quality',
