@@ -381,15 +381,24 @@ let selectedStyle = 'pixar';
 let generatedImageUrl = null;
 let chatHistory = [];
 
+// Decode JWT to get user ID reliably
+function getUserIdFromToken(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.sub;
+  } catch { return null; }
+}
+
 // Check saved session
-window.addEventListener('load', () => {
-  const saved = localStorage.getItem('pw_session');
+window.addEventListener("load", () => {
+  const saved = localStorage.getItem("pw_session");
   if (saved) {
     try {
       const s = JSON.parse(saved);
       if (s.user && s.token) {
         currentUser = s.user;
         currentUser.token = s.token;
+        currentUser.id = getUserIdFromToken(s.token) || s.user.id || s.user.sub;
         showMainApp();
         loadPet();
       }
@@ -847,7 +856,6 @@ async function confirmSave() {
     window._pendingPet = null;
     closeConfirm();
     updateGenerateNavVisibility();
-    renderPlayPage();
     switchPage('play');
   } catch (err) {
     btn.textContent = '确认保存！';
