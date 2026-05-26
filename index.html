@@ -446,6 +446,7 @@ async function doAuth() {
     } else {
       currentUser = data.user;
       currentUser.token = data.access_token;
+      currentUser.id = getUserIdFromToken(data.access_token) || data.user.id || data.user.sub;
       localStorage.setItem('pw_session', JSON.stringify({ user: data.user, token: data.access_token }));
       showMainApp();
       loadPet();
@@ -848,19 +849,21 @@ async function confirmSave() {
       })
     });
     const petData = await petRes.json();
-    if (petData.pet) {
-      allPets.push(petData.pet);
-      currentPet = petData.pet;
-      activePetIdx = allPets.length - 1;
+    if (!petRes.ok || !petData.pet) {
+      throw new Error(petData.error || '保存失败，user_id=' + (currentUser.id || 'undefined'));
     }
+    allPets.push(petData.pet);
+    currentPet = petData.pet;
+    activePetIdx = allPets.length - 1;
     window._pendingPet = null;
     closeConfirm();
     updateGenerateNavVisibility();
+    renderPlayPage();
     switchPage('play');
   } catch (err) {
     btn.textContent = '确认保存！';
     btn.disabled = false;
-    alert('保存失败，请重试：' + err.message);
+    alert('保存失败：' + err.message);
   }
 }
 
