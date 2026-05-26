@@ -275,10 +275,11 @@
     <div class="result-desc"><div class="result-desc-title">🐾 AI 的描述</div><div class="result-desc-text" id="result-desc-text"></div></div>
     <div class="save-note" id="save-note"></div>
     <div class="result-actions">
-      <button class="result-btn primary" onclick="downloadImage()">⬇ 保存图片</button>
-      <button class="result-btn purple" onclick="goToPlay()">去互动 →</button>
+      <button class="result-btn secondary" onclick="downloadImage()">⬇ 下载图片</button>
+      <button class="result-btn purple" onclick="resetGenerate()">🔄 重新生成</button>
     </div>
-    <button class="result-btn secondary" style="width:100%;margin-top:8px;" onclick="resetGenerate()">🔄 重新生成</button>
+    <button class="result-btn primary" style="width:100%;margin-top:8px;font-size:18px;padding:16px;" onclick="showConfirmSave()">✅ 确认保存这个形象</button>
+    <div style="font-size:11px;color:var(--gray-400);text-align:center;margin-top:6px;">⚠️ 保存后将无法更改宠物形象</div>
   </div>
 </div>
 
@@ -348,12 +349,25 @@
   </div>
 </div>
 
+<!-- CONFIRM SAVE MODAL -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center;">
+  <div style="background:white;border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:560px;animation:slideUp 0.3s ease;">
+    <div style="font-size:48px;text-align:center;margin-bottom:10px;" id="confirm-pet-emoji">🐾</div>
+    <div style="font-family:Fredoka One,sans-serif;font-size:20px;color:#1F2937;text-align:center;margin-bottom:6px;" id="confirm-pet-name"></div>
+    <div style="font-size:13px;color:#9CA3AF;text-align:center;margin-bottom:20px;line-height:1.6;">确定要保存这个形象和名字吗？<br><strong style="color:#F97316;">保存后将无法更改形象</strong>，请确认满意再保存！</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <button onclick="closeConfirm()" style="padding:14px;border-radius:12px;border:2px solid #E5E7EB;background:white;font-family:Fredoka One,sans-serif;font-size:16px;cursor:pointer;color:#374151;">再想想</button>
+      <button onclick="confirmSave()" id="confirm-save-btn" style="padding:14px;border-radius:12px;border:none;background:#F97316;color:white;font-family:Fredoka One,sans-serif;font-size:16px;cursor:pointer;">确认保存！</button>
+    </div>
+  </div>
+</div>
+
 <!-- NAV BAR -->
 <div class="nav-bar" id="nav-bar" style="display:none;">
-  <button class="nav-item active" id="nav-generate" onclick="switchPage('generate')">
-    <div class="nav-icon">✨</div>生成
+  <button class="nav-item" id="nav-generate" onclick="goToGenerate()" style="display:none;">
+    <div class="nav-icon">✨</div>新宠物
   </button>
-  <button class="nav-item" id="nav-play" onclick="switchPage('play')">
+  <button class="nav-item active" id="nav-play" onclick="switchPage('play')">
     <div class="nav-icon">🎮</div>互动
   </button>
 </div>
@@ -447,11 +461,12 @@ function doLogout() {
 }
 
 function showMainApp() {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-generate').classList.add('active');
   document.getElementById('nav-bar').style.display = 'flex';
   document.getElementById('user-email-display').textContent = currentUser.email;
   document.getElementById('user-email-play').textContent = currentUser.email;
+  // Default to generate page; loadPet() will redirect if pet exists
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-generate').classList.add('active');
   setActiveNav('generate');
 }
 
@@ -469,16 +484,50 @@ function setActiveNav(name) {
 }
 
 // Pet loading
+let allPets = [];
+let activePetIdx = 0;
+
 async function loadPet() {
   if (!currentUser?.token) return;
   try {
     const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + currentUser.token } });
     const data = await res.json();
     if (data.pet) {
-      currentPet = data.pet;
+      // Load all pets
+      const allRes = await fetch('/api/pets-all', { headers: { 'Authorization': 'Bearer ' + currentUser.token } });
+      if (allRes.ok) {
+        const allData = await allRes.json();
+        allPets = allData.pets || [data.pet];
+      } else {
+        allPets = [data.pet];
+      }
+      currentPet = allPets[activePetIdx] || allPets[0];
+      // Has pet: go directly to play page
+      showPlayDirect();
       renderPlayPage();
+      updateGenerateNavVisibility();
     }
+    // No pet: stay on generate page (default)
   } catch {}
+}
+
+function showPlayDirect() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-play').classList.add('active');
+  setActiveNav('play');
+}
+
+function canAddNewPet() {
+  const MAX_PETS = 3;
+  const UNLOCK_LEVELS = [1, 5, 8]; // level needed for each slot
+  if (allPets.length >= MAX_PETS) return { can: false, reason: '已达到最多 3 只宠物的上限' };
+  const highestPet = allPets.reduce((a, b) => (a.level||1) > (b.level||1) ? a : b, allPets[0]);
+  const neededLevel = UNLOCK_LEVELS[allPets.length];
+  const currentLevel = highestPet?.level || 1;
+  if (currentLevel < neededLevel) {
+    return { can: false, reason: `第 ${allPets.length + 1} 只宠物需要任意宠物达到 Lv.${neededLevel}（当前最高 Lv.${currentLevel}）` };
+  }
+  return { can: true };
 }
 
 // Generate
@@ -582,31 +631,15 @@ async function generate() {
     const data = { imageUrl, description };
     generatedImageUrl = data.imageUrl;
 
-    // Save to DB
     setStep(4);
-    if (currentUser?.token) {
-      const petRes = await fetch('/api/pet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
-        body: JSON.stringify({
-          user_id: currentUser.id,
-          name: petName,
-          description: petDesc || data.description,
-          cartoon_url: data.imageUrl,
-          style: selectedStyle,
-          hunger: 80, energy: 80, mood: 80, level: 1, exp: 0
-        })
-      });
-      const petData = await petRes.json();
-      if (petData.pet) currentPet = petData.pet;
-    }
-
+    // Show result — don't save yet, wait for confirmation
     document.getElementById('loading-area').classList.remove('visible');
     document.getElementById('result-area').classList.add('visible');
     document.getElementById('result-title').textContent = `🎉 ${petName} 的卡通形象来啦！`;
     document.getElementById('cartoon-img').src = data.imageUrl;
     document.getElementById('result-desc-text').textContent = data.description;
-    document.getElementById('save-note').textContent = '✓ 已自动保存到你的账号';
+    document.getElementById('save-note').textContent = '👆 满意就点下方「确认保存」按钮！';
+    document.getElementById('save-note').style.color = 'var(--orange)';
 
     if (selectedFile) {
       document.getElementById('original-card').style.display = '';
@@ -615,6 +648,8 @@ async function generate() {
       document.getElementById('original-card').style.display = 'none';
       document.getElementById('result-images').style.gridTemplateColumns = '1fr';
     }
+    // Store pending data for confirmation
+    window._pendingPet = { petName, petDesc: petDesc || data.description, imageUrl: data.imageUrl };
   } catch (err) {
     document.getElementById('loading-area').classList.remove('visible');
     document.getElementById('gen-form').style.display = '';
@@ -766,6 +801,77 @@ function addChatMsg(role, text) {
   container.scrollTop = container.scrollHeight;
   if (role === 'assistant') chatHistory.push({ role: 'assistant', content: text });
   if (role === 'user') chatHistory.push({ role: 'user', content: text });
+}
+
+function showConfirmSave() {
+  if (!window._pendingPet) return;
+  const modal = document.getElementById('confirm-modal');
+  document.getElementById('confirm-pet-name').textContent = window._pendingPet.petName;
+  document.getElementById('confirm-pet-emoji').textContent = '🐾';
+  modal.style.display = 'flex';
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-modal').style.display = 'none';
+}
+
+async function confirmSave() {
+  const btn = document.getElementById('confirm-save-btn');
+  btn.textContent = '保存中...';
+  btn.disabled = true;
+  const { petName, petDesc, imageUrl } = window._pendingPet;
+  try {
+    const petRes = await fetch('/api/pet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
+      body: JSON.stringify({
+        user_id: currentUser.id || currentUser.sub,
+        name: petName,
+        description: petDesc,
+        cartoon_url: imageUrl,
+        style: selectedStyle,
+        hunger: 80, energy: 80, mood: 80, level: 1, exp: 0
+      })
+    });
+    const petData = await petRes.json();
+    if (petData.pet) {
+      allPets.push(petData.pet);
+      currentPet = petData.pet;
+      activePetIdx = allPets.length - 1;
+    }
+    window._pendingPet = null;
+    closeConfirm();
+    updateGenerateNavVisibility();
+    switchPage('play');
+  } catch (err) {
+    btn.textContent = '确认保存！';
+    btn.disabled = false;
+    alert('保存失败，请重试：' + err.message);
+  }
+}
+
+function goToGenerate() {
+  const check = canAddNewPet();
+  if (!check.can) {
+    alert('⚠️ ' + check.reason);
+    return;
+  }
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-generate').classList.add('active');
+  // Reset form
+  resetGenerate();
+  document.getElementById('gen-form').style.display = '';
+  setActiveNav('generate');
+}
+
+function updateGenerateNavVisibility() {
+  const navGen = document.getElementById('nav-generate');
+  if (allPets.length === 0) {
+    navGen.style.display = 'none';
+  } else {
+    const check = canAddNewPet();
+    navGen.style.display = check.can ? 'flex' : 'none';
+  }
 }
 
 async function sendChat() {
