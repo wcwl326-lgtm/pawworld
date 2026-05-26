@@ -607,27 +607,32 @@ async function generate() {
     if (!initRes.ok) throw new Error(initData.error || '生成失败');
 
     setStep(3);
-    // Poll for result
     let imageUrl = null;
     let description = initData.description || '';
-    const predictionId = initData.predictionId;
-    if (!predictionId) throw new Error('生成启动失败，请重试');
 
-    for (let i = 0; i < 40; i++) {
-      await new Promise(r => setTimeout(r, 3000));
-      const pollRes = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pollId: predictionId, petName, style: selectedStyle })
-      });
-      const pollData = await pollRes.json();
-      if (pollData.status === 'done' && pollData.imageUrl) {
-        imageUrl = pollData.imageUrl;
-        break;
+    // If imageUrl returned directly (sync mode)
+    if (initData.imageUrl) {
+      imageUrl = initData.imageUrl;
+    } else {
+      // Poll for result (async mode)
+      const predictionId = initData.predictionId;
+      if (!predictionId) throw new Error('生成启动失败，请重试');
+      for (let i = 0; i < 40; i++) {
+        await new Promise(r => setTimeout(r, 3000));
+        const pollRes = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pollId: predictionId, petName, style: selectedStyle })
+        });
+        const pollData = await pollRes.json();
+        if (pollData.status === 'done' && pollData.imageUrl) {
+          imageUrl = pollData.imageUrl;
+          break;
+        }
+        if (pollData.status === 'failed') throw new Error(pollData.error || '图片生成失败');
       }
-      if (pollData.status === 'failed') throw new Error(pollData.error || '图片生成失败');
+      if (!imageUrl) throw new Error('生成超时，请重试');
     }
-    if (!imageUrl) throw new Error('生成超时，请重试');
     const data = { imageUrl, description };
     generatedImageUrl = data.imageUrl;
 
