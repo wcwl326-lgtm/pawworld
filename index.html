@@ -522,9 +522,7 @@ async function loadPet() {
 }
 
 function showPlayDirect() {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-play').classList.add('active');
-  setActiveNav('play');
+  window.location.href = '/play.html';
 }
 
 function canAddNewPet() {
@@ -858,8 +856,7 @@ async function confirmSave() {
     window._pendingPet = null;
     closeConfirm();
     updateGenerateNavVisibility();
-    renderPlayPage();
-    switchPage('play');
+    window.location.href = '/play.html';
   } catch (err) {
     btn.textContent = '确认保存！';
     btn.disabled = false;
