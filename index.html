@@ -609,7 +609,7 @@ async function generate() {
     const initRes = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64, mediaType, petName, petDesc, style: selectedStyle })
+      body: JSON.stringify({ imageBase64, mediaType, petName, petDesc, style: selectedStyle, userToken: currentUser?.token })
     });
     const initData = await initRes.json();
     if (!initRes.ok) throw new Error(initData.error || '生成失败');
@@ -630,7 +630,7 @@ async function generate() {
         const pollRes = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pollId: predictionId, petName, style: selectedStyle })
+          body: JSON.stringify({ pollId: predictionId, petName, style: selectedStyle, userToken: currentUser?.token })
         });
         const pollData = await pollRes.json();
         if (pollData.status === 'done' && pollData.imageUrl) {
