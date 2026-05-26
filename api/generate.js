@@ -1,4 +1,4 @@
-export const config = { runtime: 'edge', maxDuration: 60 };
+export const config = { runtime: 'edge' };
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
@@ -7,6 +7,8 @@ export default async function handler(req) {
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   const REPLICATE_KEY = process.env.REPLICATE_API_KEY;
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!ANTHROPIC_KEY || !REPLICATE_KEY) {
     return new Response(JSON.stringify({ error: 'API keys not configured' }), { status: 500 });
@@ -17,7 +19,33 @@ export default async function handler(req) {
     return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400 });
   }
 
-  const { imageBase64, mediaType, petName, petDesc, style } = body;
+  const { imageBase64, mediaType, petName, petDesc, style, pollId, userToken } = body;
+
+  // Poll mode: check existing prediction
+  if (pollId) {
+    const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${pollId}`, {
+      headers: { 'Authorization': 'Bearer ' + REPLICATE_KEY }
+    });
+    const pollData = await pollRes.json();
+
+    if (pollData.status === 'succeeded') {
+      const tempUrl = pollData.output?.[0];
+      if (!tempUrl) return new Response(JSON.stringify({ status: 'failed', error: '图片生成失败' }), { status: 500 });
+
+      // Upload to Supabase Storage for permanent URL
+      const permanentUrl = await uploadToStorage(tempUrl, SUPABASE_URL, SUPABASE_KEY, userToken);
+      return new Response(JSON.stringify({
+        status: 'done',
+        imageUrl: permanentUrl || tempUrl
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    if (pollData.status === 'failed') {
+      return new Response(JSON.stringify({ status: 'failed', error: pollData.error || '生成失败' }), { status: 500 });
+    }
+    return new Response(JSON.stringify({ status: 'pending' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Generate mode
   if (!petName || !style) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
   }
@@ -27,14 +55,13 @@ export default async function handler(req) {
     realistic3d: '写实3D渲染风格',
     chibi: 'Q版萌系卡通风格'
   };
-
   const stylePrompts = {
     pixar: 'Pixar 3D animation style, adorable fluffy character, vibrant expressive eyes, smooth glossy fur, soft studio lighting, depth of field, ultra detailed 3D render, white background, Disney Pixar quality',
     realistic3d: 'photorealistic 3D render, cute pet character, studio lighting, subsurface scattering fur, high detail, octane render, soft shadows, white background, professional CGI quality',
     chibi: 'chibi 3D render, super cute proportions, big sparkling eyes, smooth rounded shapes, pastel colors, soft lighting, white background, adorable kawaii 3D style'
   };
 
-  // Step 1: Claude analyzes photo and/or description
+  // Step 1: Claude analyzes
   const contentParts = [];
   if (imageBase64 && mediaType) {
     contentParts.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } });
@@ -43,21 +70,13 @@ export default async function handler(req) {
   if (petDesc) textPrompt += `主人描述：${petDesc}。`;
   if (imageBase64) textPrompt += `请结合照片和描述，`;
   else textPrompt += `请根据描述，`;
-  textPrompt += `用中文2-3句话描述这只宠物的外貌特征，然后用英文写一段适合AI图片生成的提示词，将这只宠物渲染成${styleNames[style] || styleNames.pixar}的3D卡通形象。重点描述毛色、体型、眼睛、表情等特征。格式：\n中文描述：[描述]\nImage prompt: [英文prompt]`;
+  textPrompt += `用中文2-3句话描述这只宠物的外貌特征，然后用英文写一段适合AI图片生成的提示词，将这只宠物渲染成${styleNames[style] || styleNames.pixar}的3D卡通形象。格式：\n中文描述：[描述]\nImage prompt: [英文prompt]`;
   contentParts.push({ type: 'text', text: textPrompt });
 
   const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
-      messages: [{ role: 'user', content: contentParts }]
-    })
+    headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 500, messages: [{ role: 'user', content: contentParts }] })
   });
 
   if (!claudeRes.ok) {
@@ -69,16 +88,15 @@ export default async function handler(req) {
   const claudeText = claudeData.content[0].text;
   const chineseDesc = claudeText.match(/中文描述[：:]\s*(.+?)(?:\n|Image)/s)?.[1]?.trim() || claudeText.slice(0, 150);
   const imgPromptMatch = claudeText.match(/Image prompt[：:]\s*(.+)/si);
-  const imgPrompt = imgPromptMatch ? imgPromptMatch[1].trim() : `cute 3D render of ${petName}, adorable pet`;
+  const imgPrompt = imgPromptMatch ? imgPromptMatch[1].trim() : `cute 3D cartoon ${petName}`;
   const fullPrompt = `${imgPrompt}, ${stylePrompts[style] || stylePrompts.pixar}, high quality, 4k`;
 
-  // Step 2: Replicate generates image
+  // Step 2: Start Replicate prediction
   const replicateRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + REPLICATE_KEY,
-      'Prefer': 'wait'
     },
     body: JSON.stringify({
       input: {
@@ -86,7 +104,7 @@ export default async function handler(req) {
         num_outputs: 1,
         aspect_ratio: '1:1',
         output_format: 'webp',
-        output_quality: 90,
+        output_quality: 85,
         num_inference_steps: 28,
         guidance: 3.5
       }
@@ -99,28 +117,52 @@ export default async function handler(req) {
   }
 
   const replicateData = await replicateRes.json();
-  let imageUrl = replicateData.output?.[0];
 
-  if (!imageUrl && replicateData.urls?.get) {
-    for (let i = 0; i < 25; i++) {
-      await new Promise(r => setTimeout(r, 2000));
-      const pollRes = await fetch(replicateData.urls.get, {
-        headers: { 'Authorization': 'Bearer ' + REPLICATE_KEY }
-      });
-      const pollData = await pollRes.json();
-      if (pollData.status === 'succeeded') { imageUrl = pollData.output?.[0]; break; }
-      if (pollData.status === 'failed') {
-        return new Response(JSON.stringify({ error: '图片生成失败：' + (pollData.error || '未知错误') }), { status: 500 });
-      }
-    }
+  // If already done (sync), upload immediately
+  if (replicateData.output?.[0]) {
+    const tempUrl = replicateData.output[0];
+    const permanentUrl = await uploadToStorage(tempUrl, SUPABASE_URL, SUPABASE_KEY, userToken);
+    return new Response(JSON.stringify({
+      status: 'done',
+      imageUrl: permanentUrl || tempUrl,
+      description: chineseDesc
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
 
-  if (!imageUrl) {
-    return new Response(JSON.stringify({ error: '图片生成超时，请重试' }), { status: 500 });
-  }
+  return new Response(JSON.stringify({
+    status: 'pending',
+    predictionId: replicateData.id,
+    description: chineseDesc
+  }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+}
 
-  return new Response(JSON.stringify({ imageUrl, description: chineseDesc }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' }
-  });
+async function uploadToStorage(tempUrl, supabaseUrl, supabaseKey, userToken) {
+  try {
+    // Download image from Replicate
+    const imgRes = await fetch(tempUrl);
+    if (!imgRes.ok) return null;
+    const imgBlob = await imgRes.arrayBuffer();
+
+    // Generate unique filename
+    const filename = `pets/${Date.now()}_${Math.random().toString(36).slice(2)}.webp`;
+
+    // Upload to Supabase Storage using service key or anon key
+    const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/pet-images/${filename}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${userToken || supabaseKey}`,
+        'apikey': supabaseKey,
+        'Content-Type': 'image/webp',
+        'x-upsert': 'true'
+      },
+      body: imgBlob
+    });
+
+    if (!uploadRes.ok) return null;
+
+    // Return permanent public URL
+    return `${supabaseUrl}/storage/v1/object/public/pet-images/${filename}`;
+  } catch {
+    return null;
+  }
 }
