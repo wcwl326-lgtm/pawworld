@@ -40,15 +40,15 @@
   .preview-card { background: white; border-radius: var(--radius-lg); padding: 20px; border: 1.5px solid var(--gray-200); display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 14px; animation: fadeUp 0.4s ease 0.05s both; position: relative; overflow: hidden; }
   .preview-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #FFF7ED 0%, #EDE9FE 100%); opacity: 0.4; }
   .pet-preview-wrap { position: relative; width: 140px; height: 210px; animation: float 3s ease-in-out infinite; }
-  .pet-preview-img { width: 140px; height: 210px; object-fit: cover; object-position: center top; border-radius: 20px; border: 3px solid var(--orange); position: relative; z-index: 1; }
-  .pet-preview-emoji { font-size: 80px; display: flex; align-items: center; justify-content: center; width: 140px; height: 210px; position: relative; z-index: 1; }
+  .pet-preview-img { width: 140px; height: 210px; object-fit: cover; object-position: center top; border-radius: 20px; border: 3px solid var(--orange); position: relative; z-index: 2; }
+  .pet-preview-emoji { font-size: 80px; display: flex; align-items: center; justify-content: center; width: 140px; height: 210px; position: relative; z-index: 2; }
 
   /* Accessory overlay layers */
-  .acc-layer { position: absolute; z-index: 2; pointer-events: none; }
-  .acc-hat { top: -14px; left: 50%; transform: translateX(-50%); }
-  .acc-glasses { top: 18%; left: 50%; transform: translateX(-50%); }
-  .acc-neck { top: 34%; left: 50%; transform: translateX(-50%); }
-  .acc-bg { position: absolute; inset: 0; z-index: 0; border-radius: 20px; overflow: hidden; }
+  .acc-layer { position: absolute; z-index: 3; pointer-events: none; }
+  .acc-hat { top: 2%; left: 50%; transform: translateX(-50%); }
+  .acc-glasses { top: 22%; left: 50%; transform: translateX(-50%); }
+  .acc-neck { top: 36%; left: 50%; transform: translateX(-50%); }
+  .acc-bg { position: absolute; inset: 0; z-index: 1; border-radius: 20px; overflow: hidden; }
 
   .pet-preview-name { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); position: relative; z-index: 1; }
   .pet-preview-level { background: var(--purple-light); color: var(--purple); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; position: relative; z-index: 1; }
@@ -336,46 +336,52 @@ function renderAll() {
 }
 
 function renderEquipped() {
-  // Hat
+  // Hat - ~88px wide, centered
   const hatEl = document.getElementById('acc-hat');
   if (equipped.hat) {
     const item = ITEMS.find(i=>i.id===equipped.hat);
     if (item && item.svg) {
-      hatEl.innerHTML = `<div style="width:${item.overlaySize||54}px;height:${item.overlaySize||54}px;overflow:visible;">${item.svg}</div>`;
+      const s = 88;
+      const svg = item.svg.replace(/width="64"/g,'width="'+s+'"').replace(/height="64"/g,'height="'+s+'"');
+      hatEl.innerHTML = '<div style="width:'+s+'px;height:'+s+'px;overflow:visible;">'+svg+'</div>';
       hatEl.style.display = 'block';
     }
   } else hatEl.style.display = 'none';
 
-  // Glasses
+  // Glasses - 110px wide
   const glEl = document.getElementById('acc-glasses');
   if (equipped.glasses) {
     const item = ITEMS.find(i=>i.id===equipped.glasses);
     if (item && item.svg) {
-      glEl.innerHTML = `<div style="width:${item.overlaySize||64}px;overflow:visible;">${item.svg}</div>`;
+      const s = 110; const h = Math.round(s*0.6);
+      const svg = item.svg.replace(/width="64"/g,'width="'+s+'"').replace(/height="64"/g,'height="'+h+'"');
+      glEl.innerHTML = '<div style="width:'+s+'px;height:'+h+'px;overflow:visible;">'+svg+'</div>';
       glEl.style.display = 'block';
     }
   } else glEl.style.display = 'none';
 
-  // Neck
+  // Neck - 100px wide
   const nkEl = document.getElementById('acc-neck');
   if (equipped.neck) {
     const item = ITEMS.find(i=>i.id===equipped.neck);
     if (item && item.svg) {
-      nkEl.innerHTML = `<div style="width:${item.overlaySize||64}px;overflow:visible;">${item.svg}</div>`;
+      const s = 100; const h = Math.round(s*0.7);
+      const svg = item.svg.replace(/width="64"/g,'width="'+s+'"').replace(/height="64"/g,'height="'+h+'"');
+      nkEl.innerHTML = '<div style="width:'+s+'px;height:'+h+'px;overflow:visible;">'+svg+'</div>';
       nkEl.style.display = 'block';
     }
   } else nkEl.style.display = 'none';
 
-  // Background
+  // Background - behind pet image
   const bgEl = document.getElementById('acc-bg');
   if (equipped.bg) {
     const item = ITEMS.find(i=>i.id===equipped.bg);
     if (item && item.bgStyle) {
-      bgEl.style.background = item.bgStyle;
-      bgEl.style.display = 'block';
-      bgEl.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:80px;opacity:0.15;">${item.bgEmoji||''}</div>`;
+      bgEl.setAttribute('style','position:absolute;inset:0;z-index:1;border-radius:17px;overflow:hidden;background:'+item.bgStyle+';display:block;');
+      bgEl.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:90px;opacity:0.18;">'+(item.bgEmoji||'')+'</div>';
     }
-  } else { bgEl.style.display = 'none'; bgEl.innerHTML = ''; }
+  } else { bgEl.setAttribute('style','display:none;'); bgEl.innerHTML = ''; }
+
 
   // Tags
   const tags = document.getElementById('equipped-tags');
