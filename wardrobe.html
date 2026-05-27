@@ -10,7 +10,6 @@
     --orange: #F97316; --orange-light: #FFF7ED; --orange-mid: #FED7AA;
     --purple: #8B5CF6; --purple-light: #EDE9FE;
     --green: #10B981; --green-light: #ECFDF5;
-    --pink: #EC4899; --pink-light: #FDF2F8;
     --gray-100: #F3F4F6; --gray-200: #E5E7EB; --gray-400: #9CA3AF;
     --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937;
     --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
@@ -20,16 +19,13 @@
   body::before { content: ''; position: fixed; top: -100px; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, #FED7AA 0%, transparent 70%); z-index: 0; pointer-events: none; }
   body::after { content: ''; position: fixed; bottom: -80px; left: -80px; width: 300px; height: 300px; background: radial-gradient(circle, #DDD6FE 0%, transparent 70%); z-index: 0; pointer-events: none; }
   .page { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 16px 16px 100px; }
-
   @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
   @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
-  @keyframes sparkle { 0%,100% { opacity:0; transform:scale(0); } 50% { opacity:1; transform:scale(1); } }
+  @keyframes pop { 0% { transform:scale(0.8); opacity:0; } 70% { transform:scale(1.1); } 100% { transform:scale(1); opacity:1; } }
 
   .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .logo { font-family: 'Fredoka One', sans-serif; font-size: 22px; color: var(--orange); }
   .logo span { color: var(--purple); }
-  .back-btn { background: white; border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; color: var(--gray-600); cursor: pointer; text-decoration: none; display: inline-block; transition: all 0.2s; }
-  .back-btn:hover { border-color: var(--orange); color: var(--orange); }
 
   /* Coins bar */
   .coins-bar { background: white; border-radius: var(--radius-md); padding: 12px 16px; border: 1.5px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; animation: fadeUp 0.4s ease; }
@@ -45,69 +41,60 @@
   .preview-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #FFF7ED 0%, #EDE9FE 100%); opacity: 0.4; }
   .pet-preview-wrap { position: relative; width: 140px; height: 210px; animation: float 3s ease-in-out infinite; }
   .pet-preview-img { width: 140px; height: 210px; object-fit: cover; object-position: center top; border-radius: 20px; border: 3px solid var(--orange); position: relative; z-index: 1; }
-  .pet-preview-emoji { font-size: 100px; display: flex; align-items: center; justify-content: center; width: 160px; height: 160px; }
+  .pet-preview-emoji { font-size: 80px; display: flex; align-items: center; justify-content: center; width: 140px; height: 210px; position: relative; z-index: 1; }
 
   /* Accessory overlay layers */
   .acc-layer { position: absolute; z-index: 2; pointer-events: none; }
-  /* Portrait 140x210: head ~top 15%, eyes ~25%, neck ~35%, body middle ~50-70%, feet ~90% */
-  .acc-hat { top: -10px; left: 50%; transform: translateX(-50%); font-size: 48px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
-  .acc-glasses { top: 22%; left: 50%; transform: translateX(-50%); font-size: 32px; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.15)); }
-  .acc-neck { top: 36%; left: 50%; transform: translateX(-50%); font-size: 30px; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.15)); }
-  .acc-bg { position: absolute; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: center; font-size: 160px; opacity: 0.12; border-radius: 20px; overflow: hidden; }
+  .acc-hat { top: -14px; left: 50%; transform: translateX(-50%); }
+  .acc-glasses { top: 18%; left: 50%; transform: translateX(-50%); }
+  .acc-neck { top: 34%; left: 50%; transform: translateX(-50%); }
+  .acc-bg { position: absolute; inset: 0; z-index: 0; border-radius: 20px; overflow: hidden; }
 
   .pet-preview-name { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); position: relative; z-index: 1; }
   .pet-preview-level { background: var(--purple-light); color: var(--purple); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; position: relative; z-index: 1; }
-
   .equipped-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; position: relative; z-index: 1; }
-  .equipped-tag { background: var(--orange-light); color: var(--orange); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
-  .remove-tag { cursor: pointer; font-size: 13px; color: var(--gray-400); }
-  .remove-tag:hover { color: #EF4444; }
+  .equipped-tag { background: var(--orange-light); color: var(--orange); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .equipped-tag:hover { background: #FECACA; color: #DC2626; }
 
   /* Category tabs */
-  .cat-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 12px; animation: fadeUp 0.4s ease 0.1s both; }
+  .cat-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 12px; }
   .cat-tab { background: white; border: 1.5px solid var(--gray-200); border-radius: 20px; padding: 7px 16px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; color: var(--gray-600); cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.2s; }
   .cat-tab.active { background: var(--orange); border-color: var(--orange); color: white; }
 
   /* Items grid */
-  .items-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; animation: fadeUp 0.4s ease 0.15s both; }
-  .item-card { background: white; border: 2px solid var(--gray-200); border-radius: var(--radius-md); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; position: relative; }
-  .item-card:hover { transform: translateY(-2px); border-color: var(--orange-mid); }
+  .items-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .item-card { background: white; border: 2px solid var(--gray-200); border-radius: var(--radius-md); padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; position: relative; }
+  .item-card:hover { transform: translateY(-2px); border-color: var(--orange-mid); box-shadow: 0 4px 12px rgba(249,115,22,0.15); }
   .item-card.equipped { border-color: var(--orange); background: var(--orange-light); }
-  .item-card.locked { opacity: 0.75; cursor: default; }
-  .item-card.locked:hover { transform: none; border-color: var(--gray-200); }
-  .item-emoji { font-size: 36px; }
+  .item-card.locked { opacity: 0.7; cursor: default; }
+  .item-card.locked:hover { transform: none; border-color: var(--gray-200); box-shadow: none; }
+  .item-art { width: 72px; height: 72px; border-radius: 12px; overflow: hidden; }
   .item-name { font-family: 'Fredoka One', sans-serif; font-size: 12px; color: var(--gray-700); text-align: center; }
   .item-cost { font-size: 11px; font-weight: 700; }
   .item-cost.free { color: var(--green); }
   .item-cost.coins { color: var(--orange); }
-  .item-cost.equipped-label { color: var(--orange); }
+  .item-cost.owned { color: var(--orange); }
   .lock-overlay { position: absolute; top: 6px; right: 6px; font-size: 14px; }
-  .item-card.new-badge::after { content: 'NEW'; position: absolute; top: 6px; left: 6px; background: #EF4444; color: white; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 8px; }
-
-  /* Equipped checkmark */
-  .check-badge { position: absolute; top: 6px; right: 6px; background: var(--orange); color: white; font-size: 11px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+  .check-badge { position: absolute; top: 6px; right: 6px; background: var(--orange); color: white; font-size: 10px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; }
 
   /* Unlock modal */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
   .modal-overlay.visible { display: flex; }
-  .modal-sheet { background: white; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 560px; animation: slideUp 0.3s ease; }
-  @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
-  .modal-title { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--gray-800); margin-bottom: 6px; text-align: center; }
-  .modal-sub { font-size: 13px; color: var(--gray-400); text-align: center; margin-bottom: 20px; }
-  .modal-item-preview { font-size: 64px; text-align: center; margin-bottom: 12px; }
-  .modal-cost { font-family: 'Fredoka One', sans-serif; font-size: 22px; color: var(--orange); text-align: center; margin-bottom: 20px; }
+  .modal-sheet { background: white; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 560px; animation: pop 0.3s ease; }
+  .modal-art { width: 80px; height: 80px; border-radius: 14px; margin: 0 auto 10px; overflow: hidden; }
+  .modal-title { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--gray-800); text-align: center; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--gray-400); text-align: center; margin-bottom: 16px; }
+  .modal-cost { font-family: 'Fredoka One', sans-serif; font-size: 22px; color: var(--orange); text-align: center; margin-bottom: 16px; }
   .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .modal-btn { padding: 14px; border-radius: var(--radius-sm); font-family: 'Fredoka One', sans-serif; font-size: 16px; cursor: pointer; border: none; transition: all 0.2s; text-align: center; }
   .modal-btn.primary { background: var(--orange); color: white; }
   .modal-btn.secondary { background: var(--gray-100); color: var(--gray-700); }
-  .modal-btn:hover { transform: translateY(-1px); }
-  .modal-btn:disabled { background: var(--gray-200); color: var(--gray-400); cursor: not-allowed; transform: none; }
   .not-enough { background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #DC2626; text-align: center; margin-bottom: 12px; display: none; }
   .not-enough.visible { display: block; }
 
   /* Toast */
   .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 700; z-index: 500; display: none; font-family: 'Nunito', sans-serif; }
-  .toast.visible { display: block; }
+  .toast.visible { display: block; animation: pop 0.3s ease; }
 
   .nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; background: white; border-top: 1px solid var(--gray-200); display: flex; z-index: 100; }
   .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 14px; cursor: pointer; color: var(--gray-400); font-size: 10px; font-weight: 700; border: none; background: none; font-family: 'Nunito', sans-serif; text-decoration: none; transition: color 0.2s; }
@@ -119,10 +106,8 @@
 <div class="page">
   <div class="top-bar">
     <div class="logo">Paw<span>World</span></div>
-    
   </div>
 
-  <!-- Coins bar -->
   <div class="coins-bar">
     <div class="coins-left">
       <div class="coins-icon">🪙</div>
@@ -134,7 +119,6 @@
     <a href="/play.html" class="earn-btn">🎮 去玩游戏赚积分</a>
   </div>
 
-  <!-- Pet preview -->
   <div class="preview-card">
     <div class="pet-preview-wrap" id="pet-preview-wrap">
       <div class="acc-bg" id="acc-bg"></div>
@@ -149,23 +133,20 @@
     <div class="equipped-tags" id="equipped-tags"></div>
   </div>
 
-  <!-- Category tabs -->
   <div class="cat-tabs">
-    <div class="cat-tab active" onclick="switchCat('all', this)">全部</div>
-    <div class="cat-tab" onclick="switchCat('hat', this)">🎩 帽子</div>
-    <div class="cat-tab" onclick="switchCat('glasses', this)">👓 眼镜</div>
-    <div class="cat-tab" onclick="switchCat('neck', this)">📿 颈饰</div>
-    <div class="cat-tab" onclick="switchCat('bg', this)">✨ 背景</div>
+    <div class="cat-tab active" onclick="switchCat('all',this)">全部</div>
+    <div class="cat-tab" onclick="switchCat('hat',this)">🎩 帽子</div>
+    <div class="cat-tab" onclick="switchCat('glasses',this)">👓 眼镜</div>
+    <div class="cat-tab" onclick="switchCat('neck',this)">📿 颈饰</div>
+    <div class="cat-tab" onclick="switchCat('bg',this)">✨ 背景</div>
   </div>
 
-  <!-- Items grid -->
   <div class="items-grid" id="items-grid"></div>
 </div>
 
-<!-- Unlock modal -->
 <div class="modal-overlay" id="unlock-modal">
   <div class="modal-sheet">
-    <div class="modal-item-preview" id="modal-emoji"></div>
+    <div class="modal-art" id="modal-art"></div>
     <div class="modal-title" id="modal-name"></div>
     <div class="modal-sub" id="modal-desc"></div>
     <div class="modal-cost" id="modal-cost"></div>
@@ -180,41 +161,113 @@
 <div class="toast" id="toast"></div>
 
 <div class="nav-bar">
-  <a href="/play.html" class="nav-item "><div class="nav-icon">🎮</div>互动</a>
+  <a href="/play.html" class="nav-item"><div class="nav-icon">🎮</div>互动</a>
   <a href="/wardrobe.html" class="nav-item active"><div class="nav-icon">👗</div>衣橱</a>
-  <a href="/checkin.html" class="nav-item "><div class="nav-icon">📅</div>签到</a>
-  <a href="/milestone.html" class="nav-item "><div class="nav-icon">🏆</div>成长</a>
-  <a href="/profile.html" class="nav-item "><div class="nav-icon">👤</div>我的</a>
+  <a href="/checkin.html" class="nav-item"><div class="nav-icon">📅</div>签到</a>
+  <a href="/milestone.html" class="nav-item"><div class="nav-icon">🏆</div>成长</a>
+  <a href="/profile.html" class="nav-item"><div class="nav-icon">👤</div>我的</a>
 </div>
 
 <script>
-// All items catalogue
+// All items with SVG art
 const ITEMS = [
-  // Hats
-  { id: 'hat_crown',    cat: 'hat', emoji: '👑', name: '皇冠',     cost: 0,    desc: '高贵的金色皇冠' },
-  { id: 'hat_party',    cat: 'hat', emoji: '🎉', name: '派对帽',   cost: 50,   desc: '欢乐派对必备' },
-  { id: 'hat_cowboy',   cat: 'hat', emoji: '🤠', name: '牛仔帽',   cost: 80,   desc: '西部牛仔风格' },
-  { id: 'hat_witch',    cat: 'hat', emoji: '🧙', name: '女巫帽',   cost: 120,  desc: '神秘魔法师' },
-  { id: 'hat_santa',    cat: 'hat', emoji: '🎅', name: '圣诞帽',   cost: 150,  desc: '节日限定' },
-  { id: 'hat_chef',     cat: 'hat', emoji: '👨‍🍳', name: '厨师帽',   cost: 100,  desc: '小小厨神' },
-  // Glasses
-  { id: 'gl_star',      cat: 'glasses', emoji: '🌟', name: '星星框',   cost: 0,   desc: '闪亮亮的星星眼镜' },
-  { id: 'gl_cool',      cat: 'glasses', emoji: '😎', name: '酷炫墨镜', cost: 60,  desc: '超级酷的墨镜' },
-  { id: 'gl_heart',     cat: 'glasses', emoji: '🥰', name: '爱心眼镜', cost: 80,  desc: '充满爱意' },
-  { id: 'gl_monocle',   cat: 'glasses', emoji: '🧐', name: '单片眼镜', cost: 100, desc: '绅士优雅风' },
-  { id: 'gl_rainbow',   cat: 'glasses', emoji: '🌈', name: '彩虹框',   cost: 130, desc: '七彩绚丽' },
-  // Neck
-  { id: 'nk_bow',       cat: 'neck', emoji: '🎀', name: '蝴蝶结',   cost: 0,   desc: '可爱蝴蝶结' },
-  { id: 'nk_tie',       cat: 'neck', emoji: '👔', name: '领带',     cost: 70,  desc: '正式商务风' },
-  { id: 'nk_necklace',  cat: 'neck', emoji: '📿', name: '珍珠项链', cost: 100, desc: '优雅高贵' },
-  { id: 'nk_medal',     cat: 'neck', emoji: '🥇', name: '金牌',     cost: 150, desc: '冠军专属' },
-  { id: 'nk_flower',    cat: 'neck', emoji: '🌸', name: '花环',     cost: 80,  desc: '清新田园风' },
-  // Background
-  { id: 'bg_star',      cat: 'bg', emoji: '⭐', name: '星星背景',   cost: 0,   desc: '闪亮星空' },
-  { id: 'bg_rainbow',   cat: 'bg', emoji: '🌈', name: '彩虹背景',   cost: 60,  desc: '七彩绚丽' },
-  { id: 'bg_fire',      cat: 'bg', emoji: '🔥', name: '火焰背景',   cost: 100, desc: '热情燃烧' },
-  { id: 'bg_sparkle',   cat: 'bg', emoji: '✨', name: '闪光背景',   cost: 80,  desc: '魔法闪耀' },
-  { id: 'bg_heart',     cat: 'bg', emoji: '💕', name: '爱心背景',   cost: 120, desc: '满满爱意' },
+  // HATS
+  { id:'hat_magic', cat:'hat', name:'魔术师帽', cost:0, desc:'神秘魔法师专属', svgBg:'radial-gradient(circle at 40% 40%,#2d006e,#0d0020)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="wh1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#9C27B0"/><stop offset="100%" stop-color="#3a007a"/></linearGradient><linearGradient id="wh2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#B44FE8"/><stop offset="50%" stop-color="#7B1FA2"/><stop offset="100%" stop-color="#4a0088"/></linearGradient></defs><ellipse cx="32" cy="47" rx="22" ry="5" fill="#1a0035" opacity="0.7"/><rect x="16" y="39" width="32" height="7" rx="3.5" fill="url(#wh2)"/><rect x="17" y="39" width="30" height="3" rx="1.5" fill="#D4A0FF" opacity="0.25"/><rect x="20" y="12" width="24" height="28" rx="3" fill="url(#wh1)"/><rect x="20" y="12" width="10" height="28" rx="2" fill="#CE93D8" opacity="0.12"/><rect x="27" y="10" width="10" height="5" rx="2.5" fill="#7B1FA2"/><path d="M22,20 Q32,17 42,20" fill="none" stroke="#CE93D8" stroke-width="1" opacity="0.5"/><circle cx="32" cy="30" r="5" fill="#FFD700" stroke="#FFC107" stroke-width="1"/><circle cx="32" cy="30" r="2.5" fill="#FF8F00"/><text x="32" y="33" text-anchor="middle" font-size="5" fill="#1a0035">★</text><circle cx="23" cy="24" r="2" fill="#E040FB" opacity="0.8"/><circle cx="41" cy="24" r="2" fill="#E040FB" opacity="0.8"/></svg>`,
+    overlaySize: 54 },
+  { id:'hat_baseball', cat:'hat', name:'棒球帽', cost:50, desc:'活力运动风格', svgBg:'radial-gradient(circle at 40% 35%,#fff5d6,#ffe58a)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="bb1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF6B6B"/><stop offset="100%" stop-color="#C0392B"/></linearGradient></defs><ellipse cx="32" cy="47" rx="22" ry="5" fill="#aa1a10" opacity="0.4"/><ellipse cx="32" cy="41" rx="26" ry="6" fill="url(#bb1)"/><path d="M10,41 Q10,22 32,17 Q54,22 54,41" fill="#E74C3C"/><path d="M14,41 Q14,25 32,20 Q50,25 50,41" fill="#FF6B6B" opacity="0.4"/><ellipse cx="32" cy="41" rx="25" ry="5.5" fill="#C0392B"/><rect x="28" y="12" width="8" height="6" rx="3" fill="#C0392B"/><circle cx="32" cy="12" r="4" fill="#FF8A80" stroke="#E74C3C" stroke-width="1"/><circle cx="30" cy="11" r="1.5" fill="white" opacity="0.5"/><text x="22" y="35" font-size="9" fill="white" opacity="0.7">NY</text></svg>`,
+    overlaySize: 56 },
+  { id:'hat_fishing', cat:'hat', name:'渔夫帽', cost:80, desc:'休闲户外风', svgBg:'radial-gradient(circle at 40% 40%,#f5efe0,#e8dcc8)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="fh1" cx="40%" cy="35%" r="60%"><stop offset="0%" stop-color="#C8A97A"/><stop offset="100%" stop-color="#8B6914"/></radialGradient></defs><ellipse cx="32" cy="48" rx="26" ry="5" fill="#5a3d00" opacity="0.3"/><ellipse cx="32" cy="42" rx="28" ry="6" fill="#8B6914"/><ellipse cx="32" cy="41" rx="27" ry="4.5" fill="#A0892A"/><ellipse cx="32" cy="35" rx="18" ry="14" fill="url(#fh1)"/><ellipse cx="25" cy="28" rx="5" ry="3" fill="#D4B896" opacity="0.4"/><path d="M16,32 L20,30" stroke="#7a5a00" stroke-width="1.5"/><circle cx="14" cy="34" r="3.5" fill="#E8D5A3" stroke="#A0892A" stroke-width="1"/></svg>`,
+    overlaySize: 58 },
+  { id:'hat_chef', cat:'hat', name:'厨师帽', cost:100, desc:'小小厨神', svgBg:'radial-gradient(circle at 50% 40%,#fffef0,#f5f0e0)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="ch1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="white"/><stop offset="100%" stop-color="#f0f0f0"/></linearGradient></defs><ellipse cx="32" cy="50" rx="16" ry="4" fill="#ccc" opacity="0.3"/><rect x="20" y="37" width="24" height="16" rx="2" fill="url(#ch1)" stroke="#ddd" stroke-width="1"/><path d="M20,37 Q32,12 44,37" fill="url(#ch1)" stroke="#ddd" stroke-width="1"/><path d="M24,37 Q32,18 40,37" fill="white" opacity="0.5"/><rect x="28" y="10" width="8" height="4" rx="2" fill="#f0f0f0" stroke="#ddd" stroke-width="0.5"/><line x1="20" y1="43" x2="44" y2="43" stroke="#eee" stroke-width="1"/><line x1="20" y1="48" x2="44" y2="48" stroke="#eee" stroke-width="1"/><circle cx="38" cy="20" r="2" fill="white" opacity="0.6"/></svg>`,
+    overlaySize: 52 },
+  { id:'hat_santa', cat:'hat', name:'圣诞帽', cost:150, desc:'节日限定', svgBg:'radial-gradient(circle at 40% 35%,#fff5f5,#ffe0e0)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="xm1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF4444"/><stop offset="100%" stop-color="#AA0000"/></linearGradient></defs><ellipse cx="32" cy="49" rx="16" ry="4" fill="#880000" opacity="0.3"/><polygon points="32,8 42,42 22,42" fill="url(#xm1)"/><polygon points="32,8 40,38 24,38" fill="#FF6666" opacity="0.3"/><rect x="18" y="42" width="28" height="6" rx="3" fill="#AA0000"/><rect x="19" y="43" width="26" height="3" rx="1.5" fill="#FF4444" opacity="0.4"/><circle cx="32" cy="8" r="5" fill="white" stroke="#CC0000" stroke-width="1"/><circle cx="32" cy="8" r="3" fill="#FF8A80"/><circle cx="31" cy="7" r="1" fill="white" opacity="0.6"/></svg>`,
+    overlaySize: 52 },
+  { id:'hat_bow', cat:'hat', name:'蝴蝶结', cost:0, desc:'可爱甜美风', svgBg:'radial-gradient(circle at 40% 40%,#fff0f8,#ffd6ec)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="bw1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FF8FB3"/><stop offset="100%" stop-color="#E91E8C"/></radialGradient></defs><path d="M32,20 Q18,20 14,30 Q20,24 32,28 Q44,24 50,30 Q46,20 32,20Z" fill="url(#bw1)"/><path d="M32,20 Q24,12 19,17 Q24,14 32,20Z" fill="#FF6B9D"/><path d="M32,20 Q40,12 45,17 Q40,14 32,20Z" fill="#FF6B9D"/><circle cx="32" cy="20" r="5" fill="#FF80AB" stroke="#E91E8C" stroke-width="1"/><circle cx="30" cy="19" r="1.5" fill="white" opacity="0.5"/><path d="M14,30 Q32,42 50,30" stroke="#FF6B9D" stroke-width="3" fill="none"/><path d="M14,30 Q32,38 50,30" stroke="#FF8FB3" stroke-width="1.5" fill="none" opacity="0.5"/></svg>`,
+    overlaySize: 54 },
+  { id:'hat_starcrown', cat:'hat', name:'星光王冠', cost:120, desc:'闪耀星光', svgBg:'radial-gradient(circle at 40% 35%,#fffde7,#fff8e1)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="sc1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFF176"/><stop offset="100%" stop-color="#FFD600"/></radialGradient></defs><circle cx="32" cy="32" r="22" fill="#FFD600" opacity="0.1"/><polygon points="32,6 36,22 52,22 39,32 44,48 32,38 20,48 25,32 12,22 28,22" fill="url(#sc1)" stroke="#FFC107" stroke-width="1"/><circle cx="32" cy="30" r="6" fill="#FFF9C4" stroke="#FFD700" stroke-width="1.5"/><circle cx="32" cy="30" r="3.5" fill="#FFD700"/><circle cx="30" cy="28" r="1.5" fill="white" opacity="0.5"/></svg>`,
+    overlaySize: 50 },
+  { id:'hat_elf', cat:'hat', name:'精灵帽', cost:80, desc:'森林精灵风', svgBg:'radial-gradient(circle at 40% 40%,#e8fce8,#c8f0c8)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="eg1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#66BB6A"/><stop offset="100%" stop-color="#2E7D32"/></linearGradient></defs><ellipse cx="32" cy="49" rx="20" ry="4.5" fill="#1B5E20" opacity="0.3"/><rect x="18" y="41" width="28" height="7" rx="3.5" fill="#388E3C"/><rect x="19" y="42" width="26" height="3" rx="1.5" fill="#81C784" opacity="0.4"/><ellipse cx="32" cy="28" rx="14" ry="18" fill="url(#eg1)"/><ellipse cx="27" cy="22" rx="5" ry="3" fill="#A5D6A7" opacity="0.4"/><path d="M20,26 Q32,20 44,26" fill="none" stroke="#A5D6A7" stroke-width="1.5" opacity="0.7"/><ellipse cx="32" cy="17" rx="5" ry="3.5" fill="#81C784"/><circle cx="26" cy="23" r="2" fill="#C8E6C9" opacity="0.8"/></svg>`,
+    overlaySize: 56 },
+  { id:'hat_strawberry', cat:'hat', name:'甜心帽', cost:100, desc:'甜蜜可爱', svgBg:'radial-gradient(circle at 40% 35%,#fff0f5,#ffd6e8)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="st1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF80AB"/><stop offset="100%" stop-color="#E91E63"/></linearGradient></defs><ellipse cx="32" cy="49" rx="20" ry="4" fill="#880E4F" opacity="0.25"/><rect x="16" y="41" width="32" height="7" rx="3.5" fill="#F48FB1"/><rect x="17" y="42" width="30" height="3" rx="1.5" fill="#FCE4EC" opacity="0.5"/><path d="M18,41 Q32,10 46,41" fill="url(#st1)"/><path d="M22,41 Q32,16 42,41" fill="#FF80AB" opacity="0.35"/><circle cx="32" cy="18" r="4.5" fill="#FF4081" stroke="#E91E63" stroke-width="1"/><circle cx="30" cy="17" r="1.5" fill="white" opacity="0.5"/><circle cx="24" cy="32" r="3" fill="#FF80AB" opacity="0.6"/><circle cx="40" cy="32" r="3" fill="#FF80AB" opacity="0.6"/></svg>`,
+    overlaySize: 56 },
+  { id:'hat_knight', cat:'hat', name:'骑士帽', cost:130, desc:'勇敢骑士风', svgBg:'radial-gradient(circle at 40% 35%,#e8f0ff,#d0dcff)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="kn1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#42A5F5"/><stop offset="100%" stop-color="#0D47A1"/></linearGradient></defs><ellipse cx="32" cy="49" rx="20" ry="4" fill="#0D47A1" opacity="0.3"/><rect x="16" y="40" width="32" height="8" rx="3" fill="#1565C0"/><rect x="20" y="17" width="24" height="24" rx="3" fill="url(#kn1)"/><rect x="20" y="13" width="24" height="6" rx="2" fill="#0D47A1"/><text x="32" y="32" text-anchor="middle" font-size="13" fill="white" opacity="0.9">✦</text><circle cx="26" cy="21" r="1.5" fill="#64B5F6" opacity="0.6"/><circle cx="38" cy="21" r="1.5" fill="#64B5F6" opacity="0.6"/></svg>`,
+    overlaySize: 54 },
+
+  // GLASSES
+  { id:'gl_sunglasses', cat:'glasses', name:'墨镜', cost:0, desc:'超级酷帅', svgBg:'radial-gradient(circle at 40% 40%,#1a1a2e,#0a0a14)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="sg1" cx="40%" cy="35%" r="70%"><stop offset="0%" stop-color="#444"/><stop offset="100%" stop-color="#111"/></radialGradient></defs><ellipse cx="18" cy="35" rx="13" ry="10" fill="url(#sg1)" stroke="#555" stroke-width="1.5"/><ellipse cx="46" cy="35" rx="13" ry="10" fill="url(#sg1)" stroke="#555" stroke-width="1.5"/><ellipse cx="14" cy="32" rx="4" ry="3" fill="white" opacity="0.08"/><ellipse cx="42" cy="32" rx="4" ry="3" fill="white" opacity="0.08"/><line x1="31" y1="35" x2="35" y2="35" stroke="#666" stroke-width="2"/><line x1="4" y1="33" x2="5" y2="35" stroke="#666" stroke-width="1.5"/><line x1="59" y1="35" x2="60" y2="33" stroke="#666" stroke-width="1.5"/></svg>`,
+    overlaySize: 66 },
+  { id:'gl_monocle', cat:'glasses', name:'单片眼镜', cost:60, desc:'绅士优雅风', svgBg:'radial-gradient(circle at 40% 40%,#f8f4ee,#ede8de)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="mg1" cx="40%" cy="35%" r="70%"><stop offset="0%" stop-color="#D4C090"/><stop offset="100%" stop-color="#8B6914"/></radialGradient></defs><circle cx="36" cy="34" r="14" fill="none" stroke="url(#mg1)" stroke-width="2.5"/><ellipse cx="33" cy="31" rx="5" ry="4" fill="white" opacity="0.15"/><line x1="4" y1="32" x2="22" y2="34" stroke="url(#mg1)" stroke-width="2"/><line x1="50" y1="34" x2="60" y2="32" stroke="url(#mg1)" stroke-width="2"/></svg>`,
+    overlaySize: 64 },
+  { id:'gl_round', cat:'glasses', name:'圆框眼镜', cost:80, desc:'复古文艺感', svgBg:'radial-gradient(circle at 40% 40%,#f5f8ff,#e8eef8)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="rg1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#D4B896"/><stop offset="100%" stop-color="#A0784A"/></linearGradient></defs><rect x="6" y="26" width="22" height="16" rx="8" fill="none" stroke="url(#rg1)" stroke-width="2"/><rect x="36" y="26" width="22" height="16" rx="8" fill="none" stroke="url(#rg1)" stroke-width="2"/><rect x="7" y="27" width="9" height="7" rx="4" fill="white" opacity="0.12"/><rect x="37" y="27" width="9" height="7" rx="4" fill="white" opacity="0.12"/><line x1="28" y1="34" x2="36" y2="34" stroke="url(#rg1)" stroke-width="2"/><line x1="3" y1="32" x2="6" y2="34" stroke="url(#rg1)" stroke-width="2"/><line x1="58" y1="34" x2="61" y2="32" stroke="url(#rg1)" stroke-width="2"/></svg>`,
+    overlaySize: 66 },
+  { id:'gl_blackframe', cat:'glasses', name:'黑框眼镜', cost:70, desc:'知性学霸风', svgBg:'radial-gradient(circle at 40% 40%,#f5f5f5,#e8e8e8)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="bfg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#333"/><stop offset="100%" stop-color="#111"/></linearGradient></defs><rect x="5" y="25" width="24" height="16" rx="3" fill="none" stroke="url(#bfg)" stroke-width="2.5"/><rect x="35" y="25" width="24" height="16" rx="3" fill="none" stroke="url(#bfg)" stroke-width="2.5"/><rect x="6" y="26" width="10" height="7" rx="1" fill="white" opacity="0.1"/><rect x="36" y="26" width="10" height="7" rx="1" fill="white" opacity="0.1"/><line x1="29" y1="33" x2="35" y2="33" stroke="#222" stroke-width="2"/><line x1="3" y1="30" x2="5" y2="33" stroke="#222" stroke-width="2"/><line x1="59" y1="33" x2="61" y2="30" stroke="#222" stroke-width="2"/></svg>`,
+    overlaySize: 66 },
+  { id:'gl_swim', cat:'glasses', name:'泳镜', cost:90, desc:'水中冒险家', svgBg:'radial-gradient(circle at 40% 40%,#e0f7fa,#b2ebf2)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="swg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#0288D1"/><stop offset="100%" stop-color="#00838F"/></linearGradient></defs><ellipse cx="18" cy="34" rx="13" ry="9" fill="none" stroke="url(#swg)" stroke-width="2"/><ellipse cx="46" cy="34" rx="13" ry="9" fill="none" stroke="url(#swg)" stroke-width="2"/><ellipse cx="18" cy="34" rx="13" ry="9" fill="#4FC3F7" opacity="0.15"/><ellipse cx="46" cy="34" rx="13" ry="9" fill="#26C6DA" opacity="0.15"/><ellipse cx="13" cy="30" rx="4" ry="3" fill="white" opacity="0.25"/><ellipse cx="41" cy="30" rx="4" ry="3" fill="white" opacity="0.25"/><line x1="31" y1="34" x2="33" y2="34" stroke="url(#swg)" stroke-width="2"/><line x1="3" y1="32" x2="5" y2="34" stroke="#0288D1" stroke-width="2"/><line x1="59" y1="34" x2="61" y2="32" stroke="#00838F" stroke-width="2"/></svg>`,
+    overlaySize: 66 },
+  { id:'gl_goggles', cat:'glasses', name:'护目镜', cost:110, desc:'冒险家专属', svgBg:'radial-gradient(circle at 40% 40%,#fff8e1,#fff3cd)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="og1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF8F00"/><stop offset="100%" stop-color="#E65100"/></linearGradient></defs><path d="M4,26 L60,26 L60,42 L36,42 L32,50 L28,42 L4,42Z" fill="none" stroke="url(#og1)" stroke-width="2"/><path d="M4,26 L28,26 L28,42 L4,42Z" fill="#FFA000" opacity="0.1"/><path d="M36,26 L60,26 L60,42 L36,42Z" fill="#FF6D00" opacity="0.1"/><line x1="32" y1="26" x2="32" y2="42" stroke="url(#og1)" stroke-width="1.5"/></svg>`,
+    overlaySize: 64 },
+  { id:'gl_goldstar', cat:'glasses', name:'金色星眼镜', cost:130, desc:'闪耀登场', svgBg:'radial-gradient(circle at 40% 40%,#fffde7,#fff9c4)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="lsg1" cx="40%" cy="35%" r="70%"><stop offset="0%" stop-color="#FFF9C4"/><stop offset="100%" stop-color="#F9A825"/></radialGradient></defs><ellipse cx="18" cy="34" rx="13" ry="10" fill="url(#lsg1)" stroke="#FFD700" stroke-width="2"/><ellipse cx="46" cy="34" rx="13" ry="10" fill="url(#lsg1)" stroke="#FFD700" stroke-width="2"/><ellipse cx="13" cy="30" rx="4" ry="3" fill="white" opacity="0.4"/><ellipse cx="41" cy="30" rx="4" ry="3" fill="white" opacity="0.4"/><text x="18" y="37" text-anchor="middle" font-size="9" fill="#FF8F00">✦</text><text x="46" y="37" text-anchor="middle" font-size="9" fill="#FF8F00">✦</text><line x1="31" y1="34" x2="33" y2="34" stroke="#FFD700" stroke-width="2"/><line x1="3" y1="32" x2="5" y2="34" stroke="#FFD700" stroke-width="2"/><line x1="59" y1="34" x2="61" y2="32" stroke="#FFD700" stroke-width="2"/></svg>`,
+    overlaySize: 66 },
+  { id:'gl_cyber', cat:'glasses', name:'赛博眼镜', cost:150, desc:'未来科技感', svgBg:'radial-gradient(circle at 40% 40%,#1a0a2e,#0d0018)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="cbg1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#7C4DFF"/><stop offset="100%" stop-color="#E040FB"/></linearGradient></defs><rect x="5" y="25" width="24" height="16" rx="2" fill="#7C4DFF" opacity="0.2" stroke="url(#cbg1)" stroke-width="1.5"/><rect x="35" y="25" width="24" height="16" rx="2" fill="#E040FB" opacity="0.2" stroke="url(#cbg1)" stroke-width="1.5"/><line x1="14" y1="25" x2="29" y2="41" stroke="#B388FF" stroke-width="0.5" opacity="0.3"/><line x1="44" y1="25" x2="59" y2="41" stroke="#EA80FC" stroke-width="0.5" opacity="0.3"/><circle cx="14" cy="31" r="3" fill="#7C4DFF" opacity="0.5"/><circle cx="50" cy="31" r="3" fill="#E040FB" opacity="0.5"/><line x1="29" y1="33" x2="35" y2="33" stroke="url(#cbg1)" stroke-width="1.5"/><line x1="3" y1="30" x2="5" y2="33" stroke="#7C4DFF" stroke-width="1.5"/><line x1="59" y1="33" x2="61" y2="30" stroke="#E040FB" stroke-width="1.5"/></svg>`,
+    overlaySize: 66 },
+  { id:'gl_heart', cat:'glasses', name:'爱心眼镜', cost:80, desc:'充满爱意', svgBg:'radial-gradient(circle at 40% 40%,#fff0f5,#ffd6e8)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="heg1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF80AB"/><stop offset="100%" stop-color="#E91E63"/></linearGradient></defs><path d="M5,33 Q5,22 18,26 Q18,20 32,20 Q46,20 46,26 Q59,22 59,33 Q59,42 46,37 Q40,44 32,40 Q24,44 18,37 Q5,42 5,33Z" fill="url(#heg1)" opacity="0.25" stroke="url(#heg1)" stroke-width="1.5"/><line x1="32" y1="20" x2="32" y2="40" stroke="url(#heg1)" stroke-width="1.5"/><line x1="3" y1="31" x2="5" y2="33" stroke="#FF4081" stroke-width="1.5"/><line x1="59" y1="33" x2="61" y2="31" stroke="#FF4081" stroke-width="1.5"/><ellipse cx="14" cy="30" rx="4" ry="3" fill="white" opacity="0.2"/><ellipse cx="50" cy="30" rx="4" ry="3" fill="white" opacity="0.2"/></svg>`,
+    overlaySize: 66 },
+  { id:'gl_rose', cat:'glasses', name:'玫瑰眼镜', cost:120, desc:'浪漫玫瑰风', svgBg:'radial-gradient(circle at 40% 40%,#1a0a14,#110008)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF4081"/><stop offset="100%" stop-color="#880E4F"/></linearGradient></defs><rect x="5" y="25" width="24" height="16" rx="8" fill="url(#lg1)" opacity="0.3" stroke="#FF4081" stroke-width="1.5"/><rect x="35" y="25" width="24" height="16" rx="8" fill="url(#lg1)" opacity="0.3" stroke="#FF80AB" stroke-width="1.5"/><ellipse cx="10" cy="30" rx="4" ry="3" fill="white" opacity="0.15"/><ellipse cx="40" cy="30" rx="4" ry="3" fill="white" opacity="0.15"/><line x1="29" y1="33" x2="35" y2="33" stroke="#FF4081" stroke-width="2"/><line x1="3" y1="31" x2="5" y2="33" stroke="#FF4081" stroke-width="1.5"/><line x1="59" y1="33" x2="61" y2="31" stroke="#FF80AB" stroke-width="1.5"/></svg>`,
+    overlaySize: 66 },
+
+  // NECK/ACCESSORIES
+  { id:'nk_pearl', cat:'neck', name:'珍珠项链', cost:0, desc:'优雅高贵', svgBg:'radial-gradient(circle at 40% 40%,#fafaf8,#f0ede8)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="pn1" cx="50%" cy="30%" r="60%"><stop offset="0%" stop-color="white"/><stop offset="100%" stop-color="#E8DFD0"/></radialGradient></defs><path d="M12,30 Q32,22 52,30" fill="none" stroke="#C8B89A" stroke-width="1.5"/><circle cx="12" cy="30" r="5" fill="url(#pn1)" stroke="#C8B89A" stroke-width="1"/><circle cx="19" cy="26" r="4.5" fill="url(#pn1)" stroke="#C8B89A" stroke-width="1"/><circle cx="26" cy="24" r="5" fill="url(#pn1)" stroke="#C8B89A" stroke-width="1"/><circle cx="32" cy="23" r="5.5" fill="url(#pn1)" stroke="#D4C5A9" stroke-width="1"/><circle cx="38" cy="24" r="5" fill="url(#pn1)" stroke="#C8B89A" stroke-width="1"/><circle cx="45" cy="26" r="4.5" fill="url(#pn1)" stroke="#C8B89A" stroke-width="1"/><circle cx="52" cy="30" r="5" fill="url(#pn1)" stroke="#C8B89A" stroke-width="1"/><circle cx="10" cy="28" r="1.5" fill="white" opacity="0.8"/><circle cx="30" cy="21" r="2" fill="white" opacity="0.7"/></svg>`,
+    overlaySize: 66 },
+  { id:'nk_medal', cat:'neck', name:'金牌', cost:150, desc:'冠军专属', svgBg:'radial-gradient(circle at 40% 35%,#fff9e0,#fff0a0)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="gmd1" cx="40%" cy="35%" r="60%"><stop offset="0%" stop-color="#FFE57F"/><stop offset="100%" stop-color="#FFA000"/></radialGradient><linearGradient id="gmd2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FFD740"/><stop offset="100%" stop-color="#FF6D00"/></linearGradient></defs><ellipse cx="32" cy="44" rx="18" ry="3" fill="#CC7700" opacity="0.25"/><circle cx="32" cy="34" r="18" fill="url(#gmd1)" stroke="#FFC107" stroke-width="1.5"/><circle cx="32" cy="34" r="14" fill="url(#gmd2)"/><circle cx="27" cy="29" r="4" fill="#FFE57F" opacity="0.5"/><text x="32" y="39" text-anchor="middle" font-size="14" fill="#BF360C">①</text><rect x="27" y="14" width="10" height="10" rx="1" fill="url(#gmd1)" stroke="#FFA000" stroke-width="1"/><path d="M27,14 L37,14 L34,18 L30,18Z" fill="#FF8F00"/></svg>`,
+    overlaySize: 60 },
+  { id:'nk_pearl_ear', cat:'neck', name:'珍珠耳环', cost:100, desc:'典雅气质', svgBg:'radial-gradient(circle at 40% 40%,#fafaf8,#f0ede8)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="pe1" cx="40%" cy="30%" r="60%"><stop offset="0%" stop-color="white"/><stop offset="100%" stop-color="#E8DFD0"/></radialGradient></defs><circle cx="16" cy="28" r="8" fill="url(#pe1)" stroke="#D4C5A9" stroke-width="1.5"/><circle cx="16" cy="28" r="4" fill="#F0E6D3"/><circle cx="13" cy="25" r="2" fill="white" opacity="0.6"/><path d="M16,20 Q13,13 16,10 Q19,13 16,20" fill="#E8D5C4" stroke="#C4A882" stroke-width="0.8"/><circle cx="48" cy="28" r="8" fill="url(#pe1)" stroke="#D4C5A9" stroke-width="1.5"/><circle cx="48" cy="28" r="4" fill="#F0E6D3"/><circle cx="45" cy="25" r="2" fill="white" opacity="0.6"/><path d="M48,20 Q45,13 48,10 Q51,13 48,20" fill="#E8D5C4" stroke="#C4A882" stroke-width="0.8"/></svg>`,
+    overlaySize: 66 },
+  { id:'nk_star_pendant', cat:'neck', name:'星星吊坠', cost:80, desc:'闪亮星空', svgBg:'radial-gradient(circle at 40% 35%,#fffde7,#fff8e1)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="sd1" cx="50%" cy="40%" r="55%"><stop offset="0%" stop-color="#FFF9C4"/><stop offset="100%" stop-color="#F9A825"/></radialGradient></defs><path d="M32,10 L36,22 L48,22 L38,30 L42,42 L32,34 L22,42 L26,30 L16,22 L28,22Z" fill="url(#sd1)" stroke="#FFD700" stroke-width="1"/><circle cx="32" cy="28" r="5" fill="#FFF9C4" stroke="#FFD700" stroke-width="1"/><circle cx="30" cy="26" r="2" fill="white" opacity="0.5"/><line x1="32" y1="42" x2="32" y2="52" stroke="#FFD700" stroke-width="2"/><circle cx="26" cy="53" r="3.5" fill="white" stroke="#D4B800" stroke-width="1"/><circle cx="38" cy="53" r="3.5" fill="white" stroke="#D4B800" stroke-width="1"/></svg>`,
+    overlaySize: 62 },
+  { id:'nk_jade', cat:'neck', name:'翡翠项链', cost:120, desc:'清新高雅', svgBg:'radial-gradient(circle at 40% 40%,#e8fce8,#d0f0d0)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="jd1" cx="40%" cy="30%" r="60%"><stop offset="0%" stop-color="#A5D6A7"/><stop offset="100%" stop-color="#2E7D32"/></radialGradient></defs><path d="M10,32 Q32,22 54,32" fill="none" stroke="#81C784" stroke-width="1.5"/><circle cx="10" cy="32" r="5" fill="url(#jd1)" stroke="#4CAF50" stroke-width="1"/><circle cx="18" cy="28" r="4.5" fill="url(#jd1)" stroke="#4CAF50" stroke-width="1"/><circle cx="26" cy="26" r="5" fill="url(#jd1)" stroke="#388E3C" stroke-width="1"/><circle cx="32" cy="25" r="5.5" fill="url(#jd1)" stroke="#388E3C" stroke-width="1.5"/><circle cx="38" cy="26" r="5" fill="url(#jd1)" stroke="#388E3C" stroke-width="1"/><circle cx="46" cy="28" r="4.5" fill="url(#jd1)" stroke="#4CAF50" stroke-width="1"/><circle cx="54" cy="32" r="5" fill="url(#jd1)" stroke="#4CAF50" stroke-width="1"/><circle cx="8" cy="30" r="2" fill="white" opacity="0.5"/><circle cx="30" cy="23" r="2" fill="white" opacity="0.4"/></svg>`,
+    overlaySize: 66 },
+  { id:'nk_sapphire', cat:'neck', name:'蓝宝石项链', cost:140, desc:'高贵蓝宝', svgBg:'radial-gradient(circle at 40% 40%,#e3f2fd,#d0e8f8)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="sn1" cx="40%" cy="30%" r="60%"><stop offset="0%" stop-color="#90CAF9"/><stop offset="100%" stop-color="#1565C0"/></radialGradient></defs><path d="M10,32 Q32,22 54,32" fill="none" stroke="#64B5F6" stroke-width="1.5"/><circle cx="10" cy="32" r="4.5" fill="url(#sn1)" stroke="#1976D2" stroke-width="1"/><circle cx="18" cy="28" r="4" fill="url(#sn1)" stroke="#1976D2" stroke-width="1"/><circle cx="26" cy="26" r="4.5" fill="url(#sn1)" stroke="#1565C0" stroke-width="1"/><circle cx="32" cy="25" r="5" fill="url(#sn1)" stroke="#1565C0" stroke-width="1.5"/><circle cx="38" cy="26" r="4.5" fill="url(#sn1)" stroke="#1565C0" stroke-width="1"/><circle cx="46" cy="28" r="4" fill="url(#sn1)" stroke="#1976D2" stroke-width="1"/><circle cx="54" cy="32" r="4.5" fill="url(#sn1)" stroke="#1976D2" stroke-width="1"/><circle cx="8" cy="30" r="2" fill="white" opacity="0.5"/><circle cx="30" cy="23" r="2" fill="white" opacity="0.45"/></svg>`,
+    overlaySize: 66 },
+  { id:'nk_rose_ear', cat:'neck', name:'玫瑰耳环', cost:110, desc:'浪漫玫瑰', svgBg:'radial-gradient(circle at 40% 40%,#fce4ec,#f8bbd0)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="re1" cx="40%" cy="30%" r="60%"><stop offset="0%" stop-color="#F48FB1"/><stop offset="100%" stop-color="#C2185B"/></radialGradient></defs><circle cx="16" cy="28" r="9" fill="url(#re1)" stroke="#AD1457" stroke-width="1.5"/><circle cx="16" cy="28" r="5" fill="#F48FB1"/><circle cx="13" cy="25" r="2.5" fill="white" opacity="0.5"/><path d="M16,19 Q13,12 16,9 Q19,12 16,19" fill="#FCE4EC" stroke="#E91E63" stroke-width="0.8"/><circle cx="48" cy="28" r="9" fill="url(#re1)" stroke="#AD1457" stroke-width="1.5"/><circle cx="48" cy="28" r="5" fill="#F48FB1"/><circle cx="45" cy="25" r="2.5" fill="white" opacity="0.5"/><path d="M48,19 Q45,12 48,9 Q51,12 48,19" fill="#FCE4EC" stroke="#E91E63" stroke-width="0.8"/></svg>`,
+    overlaySize: 66 },
+  { id:'nk_amethyst', cat:'neck', name:'紫水晶胸针', cost:130, desc:'神秘紫晶', svgBg:'radial-gradient(circle at 40% 40%,#f3e5f5,#e8d5f5)',
+    svg:`<svg width="64" height="64" viewBox="0 0 64 64"><defs><radialGradient id="ab1" cx="50%" cy="40%" r="55%"><stop offset="0%" stop-color="#CE93D8"/><stop offset="100%" stop-color="#6A1B9A"/></radialGradient></defs><path d="M16,32 Q32,22 48,32" fill="none" stroke="#BA68C8" stroke-width="1.5"/><path d="M16,32 L19,46 Q24,52 32,54 Q40,52 45,46 L48,32" fill="none" stroke="#9C27B0" stroke-width="1.5"/><circle cx="16" cy="32" r="4" fill="url(#ab1)" stroke="#7B1FA2" stroke-width="1"/><circle cx="48" cy="32" r="4" fill="url(#ab1)" stroke="#7B1FA2" stroke-width="1"/><circle cx="32" cy="54" r="5.5" fill="url(#ab1)" stroke="#6A1B9A" stroke-width="1.5"/><circle cx="30" cy="52" r="2" fill="white" opacity="0.4"/><circle cx="26" cy="49" r="3.5" fill="#BA68C8" stroke="#7B1FA2" stroke-width="1"/><circle cx="38" cy="49" r="3.5" fill="#BA68C8" stroke="#7B1FA2" stroke-width="1"/></svg>`,
+    overlaySize: 64 },
+
+  // BACKGROUNDS
+  { id:'bg_heart', cat:'bg', name:'爱心背景', cost:0, desc:'满满爱意', svgBg:'linear-gradient(135deg,#ff9a9e,#fecfef)', svg:'', bgStyle:'linear-gradient(135deg,#ffb3ba,#ffd6e0)', bgEmoji:'💕' },
+  { id:'bg_snow', cat:'bg', name:'雪地背景', cost:60, desc:'冬日童话', svgBg:'linear-gradient(180deg,#a8edff,#e0f7fa)', svg:'', bgStyle:'linear-gradient(180deg,#c8f0ff,#e8f8ff)', bgEmoji:'❄️' },
+  { id:'bg_rainbow', cat:'bg', name:'彩虹背景', cost:80, desc:'七彩绚丽', svgBg:'linear-gradient(135deg,#a8ff78,#78ffd6)', svg:'', bgStyle:'linear-gradient(135deg,#ffcccc,#ffffcc,#ccffcc,#ccccff)', bgEmoji:'🌈' },
+  { id:'bg_night', cat:'bg', name:'星空背景', cost:100, desc:'璀璨星夜', svgBg:'radial-gradient(circle,#0a0a1a,#1a1a3e)', svg:'', bgStyle:'radial-gradient(circle at center,#1a1a3e,#0a0a1a)', bgEmoji:'⭐' },
+  { id:'bg_space', cat:'bg', name:'宇宙背景', cost:120, desc:'浩瀚宇宙', svgBg:'radial-gradient(circle,#000010,#001030)', svg:'', bgStyle:'radial-gradient(circle at center,#001030,#000010)', bgEmoji:'🚀' },
+  { id:'bg_fire', cat:'bg', name:'地狱背景', cost:150, desc:'燃烧地狱', svgBg:'radial-gradient(circle,#1a0000,#3d0000)', svg:'', bgStyle:'radial-gradient(circle at bottom,#ff4500,#1a0000)', bgEmoji:'🔥' },
 ];
 
 let pet = null;
@@ -224,33 +277,29 @@ let equipped = { hat: null, glasses: null, neck: null, bg: null };
 let currentCat = 'all';
 let pendingItem = null;
 
-window.addEventListener('load', () => {
-  loadData();
-});
+window.addEventListener('load', () => { loadData(); });
 
 async function loadData() {
-  // Load coins & unlocked from localStorage
   const saved = localStorage.getItem('pw_wardrobe');
   if (saved) {
     try {
       const d = JSON.parse(saved);
       coins = d.coins || 0;
-      unlocked = new Set(d.unlocked || ['hat_crown','gl_star','nk_bow','bg_star']);
+      unlocked = new Set(d.unlocked || ['hat_magic','gl_sunglasses','nk_pearl','bg_heart']);
       equipped = d.equipped || { hat: null, glasses: null, neck: null, bg: null };
-    } catch {
-      unlocked = new Set(['hat_crown','gl_star','nk_bow','bg_star']);
-    }
+    } catch { unlocked = new Set(['hat_magic','gl_sunglasses','nk_pearl','bg_heart']); }
   } else {
-    unlocked = new Set(['hat_crown','gl_star','nk_bow','bg_star']);
+    unlocked = new Set(['hat_magic','gl_sunglasses','nk_pearl','bg_heart']);
   }
-
-  // Sync coins from game scores
   const scores = JSON.parse(localStorage.getItem('pw_scores') || '{}');
-  const totalGameCoins = (scores.dodge||0) + (scores.memory||0) + (scores.tap||0) + (scores.runner||0) + Math.floor((scores.fruit||0)*2) + Math.floor((scores.candy||0)/10);
-  const savedCoins = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}').spentCoins || 0;
-  coins = Math.max(coins, totalGameCoins - savedCoins);
+  const totalGameCoins = Object.values(scores).reduce((a,b)=>a+(b||0),0);
+  const savedData = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}');
+  coins = Math.max(coins, totalGameCoins - (savedData.spentCoins||0));
 
-  // Load pet
+  const checkinData = JSON.parse(localStorage.getItem('pw_checkin') || '{}');
+  const checkinCoins = (checkinData.history?.length || 0) * 20;
+  coins = Math.max(coins, checkinCoins - (savedData.spentCoins||0));
+
   const session = localStorage.getItem('pw_session');
   if (session) {
     try {
@@ -262,25 +311,16 @@ async function loadData() {
       }
     } catch {}
   }
-
   renderAll();
 }
 
 function saveData() {
   const saved = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}');
-  localStorage.setItem('pw_wardrobe', JSON.stringify({
-    coins,
-    unlocked: [...unlocked],
-    equipped,
-    spentCoins: saved.spentCoins || 0
-  }));
+  localStorage.setItem('pw_wardrobe', JSON.stringify({ coins, unlocked:[...unlocked], equipped, spentCoins: saved.spentCoins||0 }));
 }
 
 function renderAll() {
-  // Coins
   document.getElementById('coins-display').textContent = coins;
-
-  // Pet preview
   if (pet) {
     document.getElementById('pet-preview-name').textContent = pet.name;
     document.getElementById('pet-preview-level').textContent = 'Lv.' + pet.level;
@@ -291,38 +331,63 @@ function renderAll() {
       document.getElementById('pet-preview-emoji').style.display = 'none';
     }
   }
-
   renderEquipped();
   renderItems();
 }
 
 function renderEquipped() {
-  // Apply accessories
-  ['hat','glasses','neck'].forEach(cat => {
-    const el = document.getElementById('acc-' + cat);
-    if (equipped[cat]) {
-      const item = ITEMS.find(i => i.id === equipped[cat]);
-      if (item) { el.textContent = item.emoji; el.style.display = 'block'; }
-    } else { el.style.display = 'none'; }
-  });
+  // Hat
+  const hatEl = document.getElementById('acc-hat');
+  if (equipped.hat) {
+    const item = ITEMS.find(i=>i.id===equipped.hat);
+    if (item && item.svg) {
+      hatEl.innerHTML = `<div style="width:${item.overlaySize||54}px;height:${item.overlaySize||54}px;overflow:visible;">${item.svg}</div>`;
+      hatEl.style.display = 'block';
+    }
+  } else hatEl.style.display = 'none';
+
+  // Glasses
+  const glEl = document.getElementById('acc-glasses');
+  if (equipped.glasses) {
+    const item = ITEMS.find(i=>i.id===equipped.glasses);
+    if (item && item.svg) {
+      glEl.innerHTML = `<div style="width:${item.overlaySize||64}px;overflow:visible;">${item.svg}</div>`;
+      glEl.style.display = 'block';
+    }
+  } else glEl.style.display = 'none';
+
+  // Neck
+  const nkEl = document.getElementById('acc-neck');
+  if (equipped.neck) {
+    const item = ITEMS.find(i=>i.id===equipped.neck);
+    if (item && item.svg) {
+      nkEl.innerHTML = `<div style="width:${item.overlaySize||64}px;overflow:visible;">${item.svg}</div>`;
+      nkEl.style.display = 'block';
+    }
+  } else nkEl.style.display = 'none';
 
   // Background
   const bgEl = document.getElementById('acc-bg');
   if (equipped.bg) {
-    const item = ITEMS.find(i => i.id === equipped.bg);
-    if (item) { bgEl.textContent = item.emoji; bgEl.style.display = 'flex'; }
-  } else { bgEl.style.display = 'none'; }
+    const item = ITEMS.find(i=>i.id===equipped.bg);
+    if (item && item.bgStyle) {
+      bgEl.style.background = item.bgStyle;
+      bgEl.style.display = 'block';
+      bgEl.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:80px;opacity:0.15;">${item.bgEmoji||''}</div>`;
+    }
+  } else { bgEl.style.display = 'none'; bgEl.innerHTML = ''; }
 
-  // Equipped tags
+  // Tags
   const tags = document.getElementById('equipped-tags');
   tags.innerHTML = '';
-  Object.entries(equipped).forEach(([cat, id]) => {
+  Object.entries(equipped).forEach(([cat,id])=>{
     if (!id) return;
-    const item = ITEMS.find(i => i.id === id);
+    const item = ITEMS.find(i=>i.id===id);
     if (!item) return;
     const tag = document.createElement('div');
     tag.className = 'equipped-tag';
-    tag.innerHTML = `${item.emoji} ${item.name} <span class="remove-tag" onclick="unequip('${cat}')">✕</span>`;
+    tag.innerHTML = `${item.name} ✕`;
+    tag.onclick = () => { equipped[cat]=null; saveData(); renderAll(); };
     tags.appendChild(tag);
   });
   if (!Object.values(equipped).some(Boolean)) {
@@ -333,24 +398,31 @@ function renderEquipped() {
 function renderItems() {
   const grid = document.getElementById('items-grid');
   grid.innerHTML = '';
-  const filtered = currentCat === 'all' ? ITEMS : ITEMS.filter(i => i.cat === currentCat);
-
+  const filtered = currentCat==='all' ? ITEMS : ITEMS.filter(i=>i.cat===currentCat);
   filtered.forEach(item => {
     const isUnlocked = unlocked.has(item.id);
     const isEquipped = Object.values(equipped).includes(item.id);
     const card = document.createElement('div');
-    card.className = 'item-card' + (isEquipped ? ' equipped' : '') + (!isUnlocked ? ' locked' : '');
+    card.className = 'item-card' + (isEquipped?' equipped':'') + (!isUnlocked?' locked':'');
 
     let costHtml = '';
-    if (isEquipped) costHtml = `<div class="item-cost equipped-label">✓ 已装备</div>`;
+    if (isEquipped) costHtml = `<div class="item-cost owned">✓ 已装备</div>`;
     else if (isUnlocked) costHtml = `<div class="item-cost free">✓ 已解锁</div>`;
-    else if (item.cost === 0) costHtml = `<div class="item-cost free">免费</div>`;
+    else if (item.cost===0) costHtml = `<div class="item-cost free">免费</div>`;
     else costHtml = `<div class="item-cost coins">🪙 ${item.cost}</div>`;
+
+    // Build art - bg items show gradient, others show SVG
+    let artHtml = '';
+    if (item.cat==='bg') {
+      artHtml = `<div class="item-art" style="background:${item.svgBg};display:flex;align-items:center;justify-content:center;font-size:28px;">${item.bgEmoji||'✨'}</div>`;
+    } else {
+      artHtml = `<div class="item-art" style="background:${item.svgBg};">${item.svg}</div>`;
+    }
 
     card.innerHTML = `
       ${isEquipped ? '<div class="check-badge">✓</div>' : ''}
       ${!isUnlocked ? '<div class="lock-overlay">🔒</div>' : ''}
-      <div class="item-emoji">${item.emoji}</div>
+      ${artHtml}
       <div class="item-name">${item.name}</div>
       ${costHtml}
     `;
@@ -362,32 +434,28 @@ function renderItems() {
 function onItemClick(item) {
   const isUnlocked = unlocked.has(item.id);
   const isEquipped = Object.values(equipped).includes(item.id);
-
-  if (isEquipped) {
-    unequip(item.cat);
-    return;
-  }
-  if (isUnlocked) {
-    equipItem(item);
-    return;
-  }
-  // Show unlock modal
+  if (isEquipped) { equipped[item.cat]=null; saveData(); renderAll(); return; }
+  if (isUnlocked) { equipItem(item); return; }
   pendingItem = item;
-  document.getElementById('modal-emoji').textContent = item.emoji;
+  // Show modal
+  if (item.cat==='bg') {
+    document.getElementById('modal-art').innerHTML = `<div style="width:80px;height:80px;border-radius:14px;background:${item.svgBg};display:flex;align-items:center;justify-content:center;font-size:36px;">${item.bgEmoji||'✨'}</div>`;
+  } else {
+    document.getElementById('modal-art').innerHTML = `<div style="width:80px;height:80px;border-radius:14px;background:${item.svgBg};">${item.svg}</div>`;
+  }
   document.getElementById('modal-name').textContent = item.name;
   document.getElementById('modal-desc').textContent = item.desc;
   document.getElementById('not-enough').classList.remove('visible');
-
-  if (item.cost === 0) {
+  if (item.cost===0) {
     document.getElementById('modal-cost').textContent = '免费解锁！';
     document.getElementById('unlock-btn').disabled = false;
     document.getElementById('unlock-btn').textContent = '免费获取';
   } else {
     document.getElementById('modal-cost').textContent = `🪙 ${item.cost} 积分`;
-    const hasEnough = coins >= item.cost;
-    document.getElementById('unlock-btn').disabled = !hasEnough;
-    document.getElementById('unlock-btn').textContent = hasEnough ? '解锁' : '积分不足';
-    if (!hasEnough) document.getElementById('not-enough').classList.add('visible');
+    const has = coins >= item.cost;
+    document.getElementById('unlock-btn').disabled = !has;
+    document.getElementById('unlock-btn').textContent = has ? '解锁' : '积分不足';
+    if (!has) document.getElementById('not-enough').classList.add('visible');
   }
   document.getElementById('unlock-modal').classList.add('visible');
 }
@@ -395,51 +463,24 @@ function onItemClick(item) {
 function confirmUnlock() {
   if (!pendingItem) return;
   const item = pendingItem;
-  if (item.cost > 0) {
-    if (coins < item.cost) return;
-    coins -= item.cost;
-    const saved = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}');
-    saved.spentCoins = (saved.spentCoins || 0) + item.cost;
-    localStorage.setItem('pw_wardrobe', JSON.stringify(saved));
-  }
+  if (item.cost>0) { if (coins<item.cost) return; coins-=item.cost; const s=JSON.parse(localStorage.getItem('pw_wardrobe')||'{}'); s.spentCoins=(s.spentCoins||0)+item.cost; localStorage.setItem('pw_wardrobe',JSON.stringify(s)); }
   unlocked.add(item.id);
   saveData();
   closeModal();
   equipItem(item);
-  showToast(`🎉 ${item.emoji} ${item.name} 已解锁！`);
+  showToast(`🎉 ${item.name} 已解锁并装备！`);
 }
 
 function equipItem(item) {
   equipped[item.cat] = item.id;
   saveData();
   renderAll();
-  showToast(`✨ ${item.emoji} ${item.name} 已装备！`);
+  showToast(`✨ ${item.name} 已装备！`);
 }
 
-function unequip(cat) {
-  equipped[cat] = null;
-  saveData();
-  renderAll();
-}
-
-function closeModal() {
-  document.getElementById('unlock-modal').classList.remove('visible');
-  pendingItem = null;
-}
-
-function switchCat(cat, el) {
-  currentCat = cat;
-  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  renderItems();
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('visible');
-  setTimeout(() => t.classList.remove('visible'), 2000);
-}
+function closeModal() { document.getElementById('unlock-modal').classList.remove('visible'); pendingItem=null; }
+function switchCat(cat,el) { currentCat=cat; document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderItems(); }
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2000); }
 </script>
 </body>
 </html>
