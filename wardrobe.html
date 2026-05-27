@@ -353,7 +353,7 @@ function renderEquipped() {
   if (equipped.glasses) {
     const item = ITEMS.find(i=>i.id===equipped.glasses);
     if (item && item.svg) {
-      const s = 68; const h = Math.round(s*0.48);
+      const s = 68; const h = Math.round(s*0.5);
       const svg = item.svg.replace(/width="64"/g,'width="'+s+'"').replace(/height="64"/g,'height="'+h+'"');
       glEl.innerHTML = '<div style="width:'+s+'px;height:'+h+'px;overflow:visible;">'+svg+'</div>';
       glEl.style.display = 'block';
@@ -365,7 +365,7 @@ function renderEquipped() {
   if (equipped.neck) {
     const item = ITEMS.find(i=>i.id===equipped.neck);
     if (item && item.svg) {
-      const s = 80; const h = Math.round(s*0.6);
+      const s = 80; const h = Math.round(s*0.55);
       const svg = item.svg.replace(/width="64"/g,'width="'+s+'"').replace(/height="64"/g,'height="'+h+'"');
       nkEl.innerHTML = '<div style="width:'+s+'px;height:'+h+'px;overflow:visible;">'+svg+'</div>';
       nkEl.style.display = 'block';
