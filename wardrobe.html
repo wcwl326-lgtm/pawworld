@@ -46,7 +46,7 @@
   /* Accessory overlay layers */
   .acc-layer { position: absolute; z-index: 3; pointer-events: none; }
   .acc-hat { top: 2%; left: 50%; transform: translateX(-50%); }
-  .acc-glasses { top: 22%; left: 50%; transform: translateX(-50%); }
+  .acc-glasses { top: 26%; left: 50%; transform: translateX(-50%); }
   .acc-neck { top: 36%; left: 50%; transform: translateX(-50%); }
   .acc-bg { position: absolute; inset: 0; z-index: 1; border-radius: 20px; overflow: hidden; }
 
@@ -121,7 +121,7 @@
 
   <div class="preview-card">
     <div class="pet-preview-wrap" id="pet-preview-wrap">
-      <div id="acc-bg" style="display:none;position:absolute;top:0;left:0;width:140px;height:210px;z-index:1;border-radius:17px;overflow:hidden;"></div>
+      <div id="acc-bg" style="display:none;position:absolute;top:0;left:0;width:140px;height:210px;z-index:0;border-radius:17px;overflow:hidden;pointer-events:none;"></div>
       <img class="pet-preview-img" id="pet-preview-img" src="" alt="宠物" style="display:none;">
       <div class="pet-preview-emoji" id="pet-preview-emoji">🐾</div>
       <div class="acc-layer acc-hat" id="acc-hat" style="display:none;"></div>
@@ -353,7 +353,7 @@ function renderEquipped() {
   if (equipped.glasses) {
     const item = ITEMS.find(i=>i.id===equipped.glasses);
     if (item && item.svg) {
-      const s = 62; const h = Math.round(s*0.5);
+      const s = 68; const h = Math.round(s*0.48);
       const svg = item.svg.replace(/width="64"/g,'width="'+s+'"').replace(/height="64"/g,'height="'+h+'"');
       glEl.innerHTML = '<div style="width:'+s+'px;height:'+h+'px;overflow:visible;">'+svg+'</div>';
       glEl.style.display = 'block';
@@ -372,25 +372,25 @@ function renderEquipped() {
     }
   } else nkEl.style.display = 'none';
 
-  // Background - apply to pet image border/wrapper
-  const bgEl = document.getElementById('acc-bg');
-  const petImg = document.getElementById('pet-preview-img');
+  // Background - apply directly to pet image as box-shadow/outline trick
   const petWrap = document.getElementById('pet-preview-wrap');
+  const petImg = document.getElementById('pet-preview-img');
+  const bgEl = document.getElementById('acc-bg');
   if (equipped.bg) {
     const item = ITEMS.find(i=>i.id===equipped.bg);
     if (item && item.bgStyle) {
-      // Apply background to the pet wrap container
       petWrap.style.borderRadius = '20px';
-      petWrap.style.background = item.bgStyle;
       petWrap.style.overflow = 'hidden';
-      bgEl.style.cssText = 'position:absolute;inset:0;z-index:0;display:flex;align-items:center;justify-content:center;font-size:90px;opacity:0.2;pointer-events:none;';
-      bgEl.innerHTML = item.bgEmoji || '';
+      bgEl.style.cssText = 'position:absolute;top:0;left:0;width:140px;height:210px;z-index:0;border-radius:17px;display:block;background:'+item.bgStyle+';';
+      bgEl.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;opacity:0.2;">'+( item.bgEmoji||'')+'</div>';
+      if (petImg) petImg.style.position = 'relative';
     }
   } else {
-    petWrap.style.background = '';
+    petWrap.style.borderRadius = '';
     petWrap.style.overflow = 'visible';
     bgEl.style.cssText = 'display:none;';
     bgEl.innerHTML = '';
+    if (petImg) petImg.style.position = 'relative';
   }
 
 
