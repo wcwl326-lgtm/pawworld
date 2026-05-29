@@ -405,6 +405,12 @@ async function loadPet() {
 }
 
 function showPlayDirect() {
+  // Prevent redirect loop: don't redirect if referrer is play.html
+  const ref = document.referrer;
+  if (ref && (ref.includes('/play.html') || ref.includes('play.html'))) {
+    // Already came from play.html - just show generate page instead
+    return;
+  }
   window.location.href = '/play.html';
 }
 
