@@ -414,6 +414,27 @@ tailwind.config = {
 </nav>
 
 <script>
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('pw_session');
+  if (!saved) { window.location.href = '/'; return; }
+  try {
+    const s = JSON.parse(saved);
+    if (s.user && s.token) {
+      const lastVisit = localStorage.getItem('pw_last_visit');
+      const now = Date.now();
+      if (lastVisit && (now - parseInt(lastVisit)) > 24 * 3600 * 1000) {
+        localStorage.setItem('pw_last_visit', now.toString());
+        window.location.href = '/missing.html';
+        return;
+      }
+      localStorage.setItem('pw_last_visit', now.toString());
+      loadPet(s.token);
+      updateBestScores();
+      applyDailyBonus(s.token);
+    } else { window.location.href = '/'; }
+  } catch { window.location.href = '/'; }
+});
+
 async function applyDailyBonus(token) {
   const bonus = JSON.parse(localStorage.getItem('pw_daily_bonus') || '{}');
   if (!bonus.energy && !bonus.mood) return;
@@ -519,9 +540,15 @@ function renderPet() {
   if (!pet) return;
   document.getElementById('header-pet-name').textContent = pet.name;
   document.getElementById('header-pet-level').textContent = 'Lv.' + pet.level;
-  // Update coins display
-  const wardrobe = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}');
-  document.getElementById('header-coins').textContent = wardrobe.coins || 0;
+  // Sync coins from game scores (same logic as wardrobe)
+  const scores = JSON.parse(localStorage.getItem('pw_scores') || '{}');
+  const wdata = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}');
+  const totalEarned = Object.values(scores).reduce((a,b)=>a+(b||0),0);
+  const spent = wdata.spentCoins || 0;
+  const coins = Math.max(wdata.coins || 0, totalEarned - spent);
+  document.getElementById('header-coins').textContent = coins;
+  // Keep wardrobe coins in sync
+  if (coins !== wdata.coins) { wdata.coins = coins; localStorage.setItem('pw_wardrobe', JSON.stringify(wdata)); }
   if (pet.cartoon_url) {
     const img = document.getElementById('pet-display-img');
     img.src = pet.cartoon_url;
