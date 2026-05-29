@@ -4,171 +4,131 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>PawWorld — 换装衣橱</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --orange: #F97316; --orange-light: #FFF7ED; --orange-mid: #FED7AA;
-    --purple: #8B5CF6; --purple-light: #EDE9FE;
-    --green: #10B981; --green-light: #ECFDF5;
-    --gray-100: #F3F4F6; --gray-200: #E5E7EB; --gray-400: #9CA3AF;
-    --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937;
-    --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Quicksand:wght@700&family=Be+Vietnam+Pro:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "primary":"#02677f","primary-container":"#7ec8e3","on-primary":"#ffffff","on-primary-container":"#005468",
+        "primary-fixed":"#b7eaff","primary-fixed-dim":"#87d1ec",
+        "secondary":"#705d00","secondary-container":"#fdd73b","on-secondary-container":"#715d00",
+        "tertiary":"#2d6a44","tertiary-container":"#8dcc9f","on-tertiary-container":"#185834","tertiary-fixed":"#b0f1c2",
+        "surface":"#fff9f0","surface-bright":"#fff9f0","surface-container-low":"#f9f3ea",
+        "surface-container":"#f3ede4","surface-container-high":"#ede7df","surface-container-highest":"#e7e2d9",
+        "on-surface":"#1d1b16","on-surface-variant":"#3f484c",
+        "outline":"#6f787d","outline-variant":"#bfc8cd",
+      },
+      borderRadius:{"DEFAULT":"1rem","lg":"2rem","xl":"3rem","full":"9999px"},
+      spacing:{"xs":"4px","sm":"12px","md":"24px","lg":"40px","xl":"64px","gutter":"16px","container-padding":"20px"},
+      fontFamily:{"sans":["Be Vietnam Pro","sans-serif"],"display":["Plus Jakarta Sans","sans-serif"],"label":["Quicksand","sans-serif"]}
+    }
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: 'Nunito', sans-serif; background: #FFF9F5; min-height: 100vh; }
-  body::before { content: ''; position: fixed; top: -100px; right: -100px; width: 350px; height: 350px; background: radial-gradient(circle, #FED7AA 0%, transparent 70%); z-index: 0; pointer-events: none; }
-  body::after { content: ''; position: fixed; bottom: -80px; left: -80px; width: 300px; height: 300px; background: radial-gradient(circle, #DDD6FE 0%, transparent 70%); z-index: 0; pointer-events: none; }
-  .page { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 16px 16px 100px; }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
-  @keyframes pop { 0% { transform:scale(0.8); opacity:0; } 70% { transform:scale(1.1); } 100% { transform:scale(1); opacity:1; } }
+}
+</script>
+<style>
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .soft-pop{box-shadow:inset 0 2px 4px rgba(255,255,255,0.4),0 4px 12px rgba(2,103,127,0.15);}
+  .squishy:active{transform:scale(0.95) translateY(2px);box-shadow:none!important;}
+  body{background-color:#fff9f0;min-height:100dvh;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pop{0%{transform:scale(0.8);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(-100px) rotate(720deg);opacity:0}}
+  .animate-float{animation:float 3s ease-in-out infinite;}
+  .animate-fade-up{animation:fadeUp 0.4s ease both;}
+</style>
 
-  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-  .logo { font-family: 'Fredoka One', sans-serif; font-size: 22px; color: var(--orange); }
-  .logo span { color: var(--purple); }
-
-  /* Coins bar */
-  .coins-bar { background: white; border-radius: var(--radius-md); padding: 12px 16px; border: 1.5px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; animation: fadeUp 0.4s ease; }
-  .coins-left { display: flex; align-items: center; gap: 8px; }
-  .coins-icon { font-size: 24px; }
-  .coins-val { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--orange); }
-  .coins-label { font-size: 12px; color: var(--gray-400); font-weight: 700; }
-  .earn-btn { background: var(--purple-light); color: var(--purple); border: none; border-radius: 10px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block; }
-  .earn-btn:hover { background: var(--purple); color: white; }
-
-  /* Pet preview */
-  .preview-card { background: white; border-radius: var(--radius-lg); padding: 20px; border: 1.5px solid var(--gray-200); display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 14px; animation: fadeUp 0.4s ease 0.05s both; position: relative; overflow: hidden; }
-  .preview-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #FFF7ED 0%, #EDE9FE 100%); opacity: 0.4; }
-  .pet-preview-wrap { position: relative; width: 140px; height: 210px; animation: float 3s ease-in-out infinite; overflow: visible; }
-  .pet-preview-img { width: 140px; height: 210px; object-fit: cover; object-position: center top; border-radius: 17px; border: 3px solid var(--orange); position: relative; z-index: 2; }
-  .pet-preview-emoji { font-size: 80px; display: flex; align-items: center; justify-content: center; width: 140px; height: 210px; position: relative; z-index: 2; }
-
-  /* Accessory overlay layers */
-  .acc-layer { position: absolute; z-index: 3; pointer-events: none; }
-  .acc-hat { top: 2%; left: 50%; transform: translateX(-50%); }
-  .acc-glasses { top: 26%; left: 50%; transform: translateX(-50%); }
-  .acc-neck { top: 36%; left: 50%; transform: translateX(-50%); }
-  .acc-bg { position: absolute; inset: 0; z-index: 1; border-radius: 20px; overflow: hidden; }
-
-  .pet-preview-name { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); position: relative; z-index: 1; }
-  .pet-preview-level { background: var(--purple-light); color: var(--purple); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; position: relative; z-index: 1; }
-  .equipped-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; position: relative; z-index: 1; }
-  .equipped-tag { background: var(--orange-light); color: var(--orange); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
-  .equipped-tag:hover { background: #FECACA; color: #DC2626; }
-
-  /* Category tabs */
-  .cat-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 12px; }
-  .cat-tab { background: white; border: 1.5px solid var(--gray-200); border-radius: 20px; padding: 7px 16px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; color: var(--gray-600); cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.2s; }
-  .cat-tab.active { background: var(--orange); border-color: var(--orange); color: white; }
-
-  /* Items grid */
-  .items-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .item-card { background: white; border: 2px solid var(--gray-200); border-radius: var(--radius-md); padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; position: relative; }
-  .item-card:hover { transform: translateY(-2px); border-color: var(--orange-mid); box-shadow: 0 4px 12px rgba(249,115,22,0.15); }
-  .item-card.equipped { border-color: var(--orange); background: var(--orange-light); }
-  .item-card.locked { opacity: 0.7; cursor: default; }
-  .item-card.locked:hover { transform: none; border-color: var(--gray-200); box-shadow: none; }
-  .item-art { width: 72px; height: 72px; border-radius: 12px; overflow: hidden; }
-  .item-name { font-family: 'Fredoka One', sans-serif; font-size: 12px; color: var(--gray-700); text-align: center; }
-  .item-cost { font-size: 11px; font-weight: 700; }
-  .item-cost.free { color: var(--green); }
-  .item-cost.coins { color: var(--orange); }
-  .item-cost.owned { color: var(--orange); }
-  .lock-overlay { position: absolute; top: 6px; right: 6px; font-size: 14px; }
-  .check-badge { position: absolute; top: 6px; right: 6px; background: var(--orange); color: white; font-size: 10px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; }
-
-  /* Unlock modal */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; }
-  .modal-overlay.visible { display: flex; }
-  .modal-sheet { background: white; border-radius: 24px 24px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 560px; animation: pop 0.3s ease; }
-  .modal-art { width: 80px; height: 80px; border-radius: 14px; margin: 0 auto 10px; overflow: hidden; }
-  .modal-title { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--gray-800); text-align: center; margin-bottom: 6px; }
-  .modal-sub { font-size: 13px; color: var(--gray-400); text-align: center; margin-bottom: 16px; }
-  .modal-cost { font-family: 'Fredoka One', sans-serif; font-size: 22px; color: var(--orange); text-align: center; margin-bottom: 16px; }
-  .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .modal-btn { padding: 14px; border-radius: var(--radius-sm); font-family: 'Fredoka One', sans-serif; font-size: 16px; cursor: pointer; border: none; transition: all 0.2s; text-align: center; }
-  .modal-btn.primary { background: var(--orange); color: white; }
-  .modal-btn.secondary { background: var(--gray-100); color: var(--gray-700); }
-  .not-enough { background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #DC2626; text-align: center; margin-bottom: 12px; display: none; }
-  .not-enough.visible { display: block; }
-
-  /* Toast */
-  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 700; z-index: 500; display: none; font-family: 'Nunito', sans-serif; }
-  .toast.visible { display: block; animation: pop 0.3s ease; }
-
-  .nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; background: white; border-top: 1px solid var(--gray-200); display: flex; z-index: 100; }
-  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 14px; cursor: pointer; color: var(--gray-400); font-size: 10px; font-weight: 700; border: none; background: none; font-family: 'Nunito', sans-serif; text-decoration: none; transition: color 0.2s; }
-  .nav-item.active { color: var(--orange); }
-  .nav-icon { font-size: 22px; }
+<style>
+.custom-scrollbar::-webkit-scrollbar{width:4px;}
+.custom-scrollbar::-webkit-scrollbar-thumb{background:#7ec8e3;border-radius:10px;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-overlay.visible{display:flex;}
+.modal-sheet{background:white;border-radius:24px 24px 0 0;padding:20px 16px 40px;width:100%;max-width:560px;animation:slideUp 0.3s ease;}
 </style>
 </head>
-<body>
-<div class="page">
-  <div class="top-bar">
-    <div class="logo">Paw<span>World</span></div>
-  </div>
+<body class="font-sans text-on-surface">
+<div class="fixed inset-0 z-0 opacity-30 pointer-events-none" style="background:radial-gradient(ellipse at 20% 20%,#b7eaff 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,#b0f1c2 0%,transparent 50%);"></div>
 
-  <div class="coins-bar">
-    <div class="coins-left">
-      <div class="coins-icon">🪙</div>
-      <div>
-        <div class="coins-val" id="coins-display">0</div>
-        <div class="coins-label">游戏积分</div>
+<header class="fixed top-0 w-full z-50 bg-surface-bright/80 backdrop-blur-md">
+  <div class="flex justify-between items-center px-container-padding py-sm w-full max-w-lg mx-auto">
+    <h1 class="font-display font-extrabold text-xl text-primary">衣橱</h1>
+    <div class="bg-secondary-container px-sm py-xs rounded-full flex items-center gap-xs soft-pop">
+      <span class="material-symbols-outlined text-secondary text-[18px]" style="font-variation-settings:'FILL' 1;">paid</span>
+      <span class="font-display font-bold text-sm text-on-secondary-container" id="coins-display">0</span>
+      <span class="text-xs text-on-secondary-container font-label">积分</span>
+    </div>
+  </div>
+</header>
+
+<main class="relative z-10 pt-20 pb-28 px-container-padding max-w-lg mx-auto">
+
+  <!-- Pet preview -->
+  <div class="bg-white/80 backdrop-blur rounded-2xl p-md soft-pop mb-md border border-white animate-fade-up">
+    <div class="flex flex-col items-center gap-sm">
+      <div class="relative animate-float" id="pet-preview-wrap" style="width:140px;height:210px;overflow:visible;">
+        <div id="acc-bg" style="display:none;position:absolute;top:0;left:0;width:140px;height:210px;z-index:0;border-radius:17px;overflow:hidden;pointer-events:none;"></div>
+        <img id="pet-preview-img" src="" alt="" style="display:none;width:140px;height:210px;object-fit:cover;object-position:center top;border-radius:17px;border:3px solid #02677f;position:relative;z-index:2;" class="drop-shadow-xl">
+        <div id="pet-preview-emoji" class="w-[140px] h-[210px] flex items-center justify-center text-7xl relative z-2">🐾</div>
+        <div id="acc-hat" class="absolute z-[3] pointer-events-none" style="display:none;top:2%;left:50%;transform:translateX(-50%);"></div>
+        <div id="acc-glasses" class="absolute z-[3] pointer-events-none" style="display:none;top:26%;left:50%;transform:translateX(-50%);"></div>
+        <div id="acc-neck" class="absolute z-[3] pointer-events-none" style="display:none;top:36%;left:50%;transform:translateX(-50%);"></div>
+      </div>
+      <div class="font-display font-bold text-lg text-on-surface" id="pet-preview-name">加载中...</div>
+      <div class="bg-primary text-white px-sm py-xs rounded-full font-display font-bold text-xs" id="pet-preview-level">Lv.1</div>
+      <div class="flex gap-2 flex-wrap justify-center" id="equipped-tags">
+        <div class="text-xs text-on-surface-variant font-label">点击配件来装扮你的宠物！</div>
       </div>
     </div>
-    <a href="/play.html" class="earn-btn">🎮 去玩游戏赚积分</a>
   </div>
 
-  <div class="preview-card">
-    <div class="pet-preview-wrap" id="pet-preview-wrap">
-      <div id="acc-bg" style="display:none;position:absolute;top:0;left:0;width:140px;height:210px;z-index:0;border-radius:17px;overflow:hidden;pointer-events:none;"></div>
-      <img class="pet-preview-img" id="pet-preview-img" src="" alt="宠物" style="display:none;">
-      <div class="pet-preview-emoji" id="pet-preview-emoji">🐾</div>
-      <div class="acc-layer acc-hat" id="acc-hat" style="display:none;"></div>
-      <div class="acc-layer acc-glasses" id="acc-glasses" style="display:none;"></div>
-      <div class="acc-layer acc-neck" id="acc-neck" style="display:none;"></div>
-    </div>
-    <div class="pet-preview-name" id="pet-preview-name">加载中...</div>
-    <div class="pet-preview-level" id="pet-preview-level">Lv.1</div>
-    <div class="equipped-tags" id="equipped-tags"></div>
+  <!-- Category tabs -->
+  <div class="flex gap-2 overflow-x-auto pb-2 mb-md custom-scrollbar">
+    <button onclick="switchCat('all',this)" class="px-md py-2 bg-primary-container text-on-primary-container rounded-full font-display font-bold text-sm whitespace-nowrap squishy transition-colors">全部</button>
+    <button onclick="switchCat('hat',this)" class="px-md py-2 bg-surface-container text-on-surface-variant rounded-full font-display font-bold text-sm whitespace-nowrap squishy transition-colors">🎩 帽子</button>
+    <button onclick="switchCat('glasses',this)" class="px-md py-2 bg-surface-container text-on-surface-variant rounded-full font-display font-bold text-sm whitespace-nowrap squishy transition-colors">👓 眼镜</button>
+    <button onclick="switchCat('neck',this)" class="px-md py-2 bg-surface-container text-on-surface-variant rounded-full font-display font-bold text-sm whitespace-nowrap squishy transition-colors">📿 颈饰</button>
+    <button onclick="switchCat('bg',this)" class="px-md py-2 bg-surface-container text-on-surface-variant rounded-full font-display font-bold text-sm whitespace-nowrap squishy transition-colors">✨ 背景</button>
   </div>
 
-  <div class="cat-tabs">
-    <div class="cat-tab active" onclick="switchCat('all',this)">全部</div>
-    <div class="cat-tab" onclick="switchCat('hat',this)">🎩 帽子</div>
-    <div class="cat-tab" onclick="switchCat('glasses',this)">👓 眼镜</div>
-    <div class="cat-tab" onclick="switchCat('neck',this)">📿 颈饰</div>
-    <div class="cat-tab" onclick="switchCat('bg',this)">✨ 背景</div>
-  </div>
+  <!-- Items grid -->
+  <div class="grid grid-cols-3 gap-sm" id="items-grid"></div>
+</main>
 
-  <div class="items-grid" id="items-grid"></div>
-</div>
-
+<!-- Unlock Modal -->
 <div class="modal-overlay" id="unlock-modal">
   <div class="modal-sheet">
-    <div class="modal-art" id="modal-art"></div>
-    <div class="modal-title" id="modal-name"></div>
-    <div class="modal-sub" id="modal-desc"></div>
-    <div class="modal-cost" id="modal-cost"></div>
-    <div class="not-enough" id="not-enough">积分不足！去玩游戏赚更多积分吧 🎮</div>
-    <div class="modal-btns">
-      <button class="modal-btn secondary" onclick="closeModal()">取消</button>
-      <button class="modal-btn primary" id="unlock-btn" onclick="confirmUnlock()">解锁</button>
+    <div class="flex justify-between items-center mb-md">
+      <div id="modal-art" class="w-16 h-16 rounded-2xl overflow-hidden soft-pop"></div>
+      <button onclick="closeModal()" class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center squishy"><span class="material-symbols-outlined text-[20px]">close</span></button>
+    </div>
+    <div class="font-display font-bold text-xl text-on-surface mb-1" id="modal-name"></div>
+    <div class="text-sm text-on-surface-variant mb-md" id="modal-desc"></div>
+    <div class="font-display font-bold text-2xl text-primary text-center mb-md" id="modal-cost"></div>
+    <div id="not-enough" class="hidden bg-red-50 border border-red-200 rounded-xl p-sm text-sm text-red-600 text-center mb-md">积分不足！去玩游戏赚更多积分吧 🎮</div>
+    <div class="grid grid-cols-2 gap-sm">
+      <button onclick="closeModal()" class="py-md rounded-2xl bg-surface-container text-on-surface-variant font-display font-bold squishy">取消</button>
+      <button id="unlock-btn" onclick="confirmUnlock()" class="py-md rounded-2xl bg-primary text-white font-display font-bold squishy soft-pop">解锁</button>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-on-surface text-surface px-5 py-3 rounded-full text-sm font-bold z-[500] hidden shadow-lg"></div>
 
-<div class="nav-bar">
-  <a href="/play.html" class="nav-item"><div class="nav-icon">🎮</div>互动</a>
-  <a href="/wardrobe.html" class="nav-item active"><div class="nav-icon">👗</div>衣橱</a>
-  <a href="/checkin.html" class="nav-item"><div class="nav-icon">📅</div>签到</a>
-  <a href="/milestone.html" class="nav-item"><div class="nav-icon">🏆</div>成长</a>
-  <a href="/profile.html" class="nav-item"><div class="nav-icon">👤</div>我的</a>
-</div>
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-gutter pb-4 bg-surface-container-low shadow-[0_-4px_10px_rgba(2,103,127,0.08)] rounded-t-2xl">
+  <a href="/play.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">home</span><span class="font-label text-[10px] font-bold">互动</span></a>
+  <a href="/wardrobe.html" class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-105"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">styler</span><span class="font-label text-[10px] font-bold">衣橱</span></a>
+  <a href="/checkin.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">calendar_today</span><span class="font-label text-[10px] font-bold">签到</span></a>
+  <a href="/milestone.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">emoji_events</span><span class="font-label text-[10px] font-bold">成长</span></a>
+  <a href="/profile.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">person</span><span class="font-label text-[10px] font-bold">我的</span></a>
+</nav>
 
 <script>
+
 // All items with SVG art
 const ITEMS = [
   // HATS
@@ -495,6 +455,77 @@ function equipItem(item) {
 function closeModal() { document.getElementById('unlock-modal').classList.remove('visible'); pendingItem=null; }
 function switchCat(cat,el) { currentCat=cat; document.querySelectorAll('.cat-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); renderItems(); }
 function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('visible'); setTimeout(()=>t.classList.remove('visible'),2000); }
+
+
+// Override renderItems for new design
+function renderItems() {
+  const grid = document.getElementById('items-grid');
+  grid.innerHTML = '';
+  const filtered = currentCat==='all' ? ITEMS : ITEMS.filter(i=>i.cat===currentCat);
+  filtered.forEach(item => {
+    const isUnlocked = unlocked.has(item.id);
+    const isEquipped = Object.values(equipped).includes(item.id);
+    const card = document.createElement('div');
+    card.className = 'group cursor-pointer relative';
+    let artHtml = item.cat==='bg'
+      ? `<div class="aspect-square rounded-xl overflow-hidden flex items-center justify-center text-4xl border-2 ${isEquipped?'border-primary':'border-transparent group-hover:border-primary-container'} transition-all ${isEquipped?'shadow-md':''} soft-pop" style="background:${item.svgBg}">${item.bgEmoji||'✨'}</div>`
+      : `<div class="aspect-square rounded-xl overflow-hidden border-2 ${isEquipped?'border-primary':'border-transparent group-hover:border-primary-container'} transition-all ${isEquipped?'shadow-md':''} soft-pop" style="background:${item.svgBg}">${item.svg}</div>`;
+    let costHtml = isEquipped ? '<span class="text-[10px] text-primary font-bold">✓ 已装备</span>'
+      : isUnlocked ? '<span class="text-[10px] text-tertiary font-bold">✓ 已解锁</span>'
+      : item.cost===0 ? '<span class="text-[10px] text-tertiary font-bold">免费</span>'
+      : `<span class="text-[10px] text-secondary font-bold">🪙 ${item.cost}</span>`;
+    card.innerHTML = `${artHtml}<p class="mt-1 text-center font-display font-bold text-on-surface text-xs leading-tight">${item.name}</p><div class="text-center">${costHtml}</div>${isEquipped?'<div class="absolute top-2 right-2 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-[10px] font-bold">✓</div>':''}${!isUnlocked&&item.cost>0?'<div class="absolute top-2 right-2 text-sm">🔒</div>':''}`;
+    card.onclick = () => onItemClick(item);
+    grid.appendChild(card);
+  });
+}
+
+// Override switchCat
+function switchCat(cat, el) {
+  currentCat = cat;
+  document.querySelectorAll('.flex.gap-2 button').forEach(b => {
+    b.className = 'px-md py-2 bg-surface-container text-on-surface-variant rounded-full font-display font-bold text-sm whitespace-nowrap squishy transition-colors';
+  });
+  el.className = 'px-md py-2 bg-primary-container text-on-primary-container rounded-full font-display font-bold text-sm whitespace-nowrap squishy transition-colors';
+  renderItems();
+}
+
+// Override showToast
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 2500);
+}
+
+// Override not-enough show/hide
+const origOnItemClick = onItemClick;
+function onItemClick(item) {
+  const isUnlocked = unlocked.has(item.id);
+  const isEquipped = Object.values(equipped).includes(item.id);
+  if (isEquipped) { equipped[item.cat]=null; saveData(); renderAll(); return; }
+  if (isUnlocked) { equipItem(item); return; }
+  pendingItem = item;
+  if (item.cat==='bg') {
+    document.getElementById('modal-art').innerHTML = `<div style="width:64px;height:64px;border-radius:14px;background:${item.svgBg};display:flex;align-items:center;justify-content:center;font-size:28px;">${item.bgEmoji||'✨'}</div>`;
+  } else {
+    document.getElementById('modal-art').innerHTML = `<div style="width:64px;height:64px;border-radius:14px;background:${item.svgBg}">${item.svg}</div>`;
+  }
+  document.getElementById('modal-name').textContent = item.name;
+  document.getElementById('modal-desc').textContent = item.desc;
+  document.getElementById('not-enough').classList.add('hidden');
+  if (item.cost===0) {
+    document.getElementById('modal-cost').textContent = '免费解锁！';
+    document.getElementById('unlock-btn').disabled = false;
+    document.getElementById('unlock-btn').textContent = '免费获取';
+  } else {
+    document.getElementById('modal-cost').textContent = `🪙 ${item.cost} 积分`;
+    const has = coins >= item.cost;
+    document.getElementById('unlock-btn').disabled = !has;
+    document.getElementById('unlock-btn').textContent = has ? '解锁' : '积分不足';
+    if (!has) document.getElementById('not-enough').classList.remove('hidden');
+  }
+  document.getElementById('unlock-modal').classList.add('visible');
+}
 </script>
-</body>
-</html>
+</body></html>
