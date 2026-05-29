@@ -64,7 +64,7 @@ tailwind.config = {
   <!-- Hero: Level card -->
   <div class="bg-white/80 backdrop-blur rounded-2xl p-md soft-pop mb-md border border-white animate-fade-up">
     <div class="flex items-center gap-md mb-md">
-      <div id="hero-pet-img" class="w-16 h-16 rounded-2xl bg-primary-container flex items-center justify-center text-3xl overflow-hidden soft-pop animate-float">🐾</div>
+      <div id="hero-pet-img" data-ids="hero-img hero-emoji" class="w-16 h-16 rounded-2xl bg-primary-container flex items-center justify-center text-3xl overflow-hidden soft-pop animate-float">🐾</div>
       <div class="flex-1">
         <div class="font-display font-extrabold text-xl text-primary" id="hero-name">加载中...</div>
         <div class="text-xs text-on-surface-variant font-label" id="hero-title">🌱 小宠物</div>
@@ -159,6 +159,11 @@ let pet = null;
 let claimedLevels = new Set();
 
 window.addEventListener('load', async () => {
+  // Sync coins display
+  const wardrobe = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}');
+  const el = document.getElementById('coins-display');
+  if (el) el.textContent = (wardrobe.coins || 0) + ' 积分';
+
   claimedLevels = new Set(JSON.parse(localStorage.getItem('pw_claimed_levels') || '[]'));
   await loadData();
   renderAll();
@@ -194,10 +199,10 @@ function renderHero() {
   const pct = Math.min(100, Math.floor((exp / expNeeded) * 100));
 
   if (pet.cartoon_url) {
-    const img = document.getElementById('hero-img');
+    const img = document.getElementById('hero-pet-img');
     img.src = pet.cartoon_url;
     img.style.display = 'block';
-    document.getElementById('hero-emoji').style.display = 'none';
+    document.getElementById('hero-pet-img').style.display = 'none';
   }
   document.getElementById('hero-name').textContent = pet.name;
   document.getElementById('hero-title').textContent = lv.emoji + ' ' + lv.title;
