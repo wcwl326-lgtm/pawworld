@@ -422,7 +422,8 @@ window.addEventListener('load', () => {
     if (s.user && s.token) {
       const lastVisit = localStorage.getItem('pw_last_visit');
       const now = Date.now();
-      if (lastVisit && (now - parseInt(lastVisit)) > 24 * 3600 * 1000) {
+      // Only trigger missing if lastVisit exists AND is a reasonable timestamp (> year 2020)
+      if (lastVisit && parseInt(lastVisit) > 1577836800000 && (now - parseInt(lastVisit)) > 24 * 3600 * 1000) {
         localStorage.setItem('pw_last_visit', now.toString());
         window.location.href = '/missing.html';
         return;
@@ -432,7 +433,12 @@ window.addEventListener('load', () => {
       updateBestScores();
       applyDailyBonus(s.token);
     } else { window.location.href = '/'; }
-  } catch { window.location.href = '/'; }
+  } catch (e) {
+    // Don't redirect on API errors - only redirect if truly no session
+    console.error('play.html load error:', e);
+    const s2 = localStorage.getItem('pw_session');
+    if (!s2) window.location.href = '/';
+  }
 });
 
 async function applyDailyBonus(token) {
