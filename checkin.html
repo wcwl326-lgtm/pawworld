@@ -4,7 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>PawWorld — 每日签到</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries">function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  setTimeout(() => t.classList.add('hidden'), 2500);
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Quicksand:wght@700&family=Be+Vietnam+Pro:wght@400&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <script>
@@ -51,7 +58,7 @@ tailwind.config = {
     <h1 class="font-display font-extrabold text-xl text-primary">PawWorld</h1>
     <div class="bg-secondary-container px-sm py-xs rounded-full flex items-center gap-xs soft-pop">
       <span class="material-symbols-outlined text-secondary text-[18px]" style="font-variation-settings:'FILL' 1;">local_fire_department</span>
-      <span class="font-display font-bold text-sm text-on-secondary-container" id="streak-display">0天连签</span>
+      <span class="font-display font-bold text-sm text-on-secondary-container" id="streak-num">0天连签</span>
     </div>
   </div>
 </header>
@@ -64,7 +71,7 @@ tailwind.config = {
       <div class="w-14 h-14 rounded-2xl bg-secondary-container flex items-center justify-center text-3xl soft-pop">📅</div>
       <div>
         <h2 class="font-display font-bold text-xl text-on-surface">每日签到</h2>
-        <p class="text-xs text-on-surface-variant font-label mt-0.5" id="checkin-date">今天还没签到</p>
+        <p class="text-xs text-on-surface-variant font-label mt-0.5" id="streak-msg">今天还没签到</p>
       </div>
     </div>
     <!-- 7-day grid -->
@@ -84,7 +91,7 @@ tailwind.config = {
       <span class="material-symbols-outlined">calendar_today</span>
       <span>立即签到！</span>
     </button>
-    <p class="text-center text-xs text-on-surface-variant mt-sm font-label" id="checkin-note">每日签到领取奖励</p>
+    <p class="text-center text-xs text-on-surface-variant mt-sm font-label" id="next-checkin">每日签到领取奖励</p>
   </div>
 
   <!-- Rewards list -->
@@ -123,6 +130,16 @@ tailwind.config = {
       </div>
     </div>
   </div>
+
+  <!-- Hidden elements for JS compatibility -->
+  <div id="already-checked" style="display:none;" class="bg-tertiary-fixed rounded-2xl p-md text-center soft-pop border border-white">
+    <div class="text-3xl mb-sm" id="reward-emoji">🎁</div>
+    <div class="font-display font-bold text-lg text-on-surface" id="reward-name">今日奖励</div>
+    <div class="font-display font-bold text-2xl text-primary" id="reward-amount">+20 积分</div>
+    <p class="text-sm text-on-surface-variant mt-sm" id="already-checked-sub">明天再来签到！</p>
+  </div>
+  <div id="streak-best" style="display:none;"></div>
+  <div id="history-list" style="display:none;"></div>
 </main>
 
 <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-on-surface text-surface px-5 py-3 rounded-full text-sm font-bold z-[500] hidden shadow-lg font-sans"></div>
@@ -258,7 +275,7 @@ function renderTodayCard() {
 }
 
 function renderCalendar() {
-  const grid = document.getElementById('days-grid');
+  const grid = document.getElementById('checkin-grid');
   grid.innerHTML = '';
   const today = new Date();
   const dayNames = ['日','一','二','三','四','五','六'];
@@ -285,7 +302,7 @@ function renderCalendar() {
 }
 
 function renderMilestones() {
-  const list = document.getElementById('milestone-list');
+  const list = document.getElementById('rewards-list');
   list.innerHTML = '';
   MILESTONES.forEach(m => {
     const achieved = checkinData.streak >= m.days;
