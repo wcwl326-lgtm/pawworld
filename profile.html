@@ -158,7 +158,7 @@ window.addEventListener('load', async () => {
     }
 
     renderProfile();
-  } catch { window.location.href = '/'; }
+  } catch (e) { console.error(e); renderProfile(); }
 });
 
 function renderProfile() {
