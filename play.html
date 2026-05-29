@@ -4,346 +4,307 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>PawWorld — 互动</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --orange: #F97316; --orange-light: #FFF7ED; --orange-mid: #FED7AA;
-    --purple: #8B5CF6; --purple-light: #EDE9FE;
-    --green: #10B981; --green-light: #ECFDF5;
-    --blue: #3B82F6; --pink: #EC4899;
-    --gray-100: #F3F4F6; --gray-200: #E5E7EB; --gray-400: #9CA3AF;
-    --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937;
-    --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px; --radius-xl: 32px;
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Quicksand:wght@700&family=Be+Vietnam+Pro:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "primary": "#02677f", "primary-container": "#7ec8e3", "on-primary": "#ffffff",
+        "on-primary-container": "#005468", "primary-fixed": "#b7eaff", "primary-fixed-dim": "#87d1ec",
+        "secondary": "#705d00", "secondary-container": "#fdd73b", "on-secondary-container": "#715d00",
+        "tertiary": "#2d6a44", "tertiary-container": "#8dcc9f", "on-tertiary-container": "#185834",
+        "tertiary-fixed": "#b0f1c2",
+        "surface": "#fff9f0", "surface-bright": "#fff9f0", "surface-container-low": "#f9f3ea",
+        "surface-container": "#f3ede4", "surface-container-high": "#ede7df",
+        "surface-container-highest": "#e7e2d9",
+        "on-surface": "#1d1b16", "on-surface-variant": "#3f484c",
+        "outline": "#6f787d", "outline-variant": "#bfc8cd",
+      },
+      borderRadius: { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" },
+      spacing: { "xs": "4px", "sm": "12px", "md": "24px", "lg": "40px", "xl": "64px", "gutter": "16px", "container-padding": "20px" },
+      fontFamily: { "sans": ["Be Vietnam Pro","sans-serif"], "display": ["Plus Jakarta Sans","sans-serif"], "label": ["Quicksand","sans-serif"] }
+    }
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: 'Nunito', sans-serif; background: #FFF9F5; min-height: 100vh; overflow-x: hidden; transition: background 0.8s ease; }
-  body.sleeping { background: #0F172A; }
-  body::before { content: ''; position: fixed; top: -120px; right: -120px; width: 400px; height: 400px; background: radial-gradient(circle, #FED7AA 0%, transparent 70%); z-index: 0; pointer-events: none; transition: opacity 0.8s; }
-  body.sleeping::before { opacity: 0; }
-
-  .page { max-width: 560px; margin: 0 auto; padding: 20px 16px 100px; position: relative; z-index: 1; }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  @keyframes floatUp { 0% { opacity:1; transform:translateY(0) scale(1); } 100% { opacity:0; transform:translateY(-70px) scale(0.5); } }
-  @keyframes shake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-6px); } 75% { transform:translateX(6px); } }
-  @keyframes pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
-  @keyframes stars { 0% { opacity:0; transform:translateY(0) scale(0); } 50% { opacity:1; } 100% { opacity:0; transform:translateY(-40px) scale(1.5); } }
-
-  /* Pet action animations */
-  @keyframes pet-happy { 0%,100% { transform:translateY(0) rotate(0deg) scale(1); } 20% { transform:translateY(-18px) rotate(-8deg) scale(1.1); } 40% { transform:translateY(-22px) rotate(8deg) scale(1.12); } 60% { transform:translateY(-14px) rotate(-5deg) scale(1.08); } 80% { transform:translateY(-8px) rotate(3deg) scale(1.05); } }
-  @keyframes pet-sad { 0%,100% { transform:translateY(0) rotate(0deg); filter:saturate(0.5) brightness(0.85); } 30% { transform:translateY(6px) rotate(-4deg); } 70% { transform:translateY(4px) rotate(3deg); } }
-  @keyframes pet-eat { 0%,100% { transform:translateY(0) scale(1); } 15% { transform:translateY(-4px) scale(1.06); } 30% { transform:translateY(2px) scale(0.96); } 45% { transform:translateY(-3px) scale(1.04); } 60% { transform:translateY(1px) scale(0.98); } }
-  @keyframes pet-poke { 0%,100% { transform:rotate(0deg) scale(1); } 15% { transform:rotate(-10deg) scale(1.08); } 35% { transform:rotate(10deg) scale(1.1); } 55% { transform:rotate(-6deg) scale(1.06); } 75% { transform:rotate(4deg) scale(1.03); } }
-  @keyframes pet-play { 0%,100% { transform:translateY(0) scale(1) rotate(0deg); } 25% { transform:translateY(-20px) scale(1.12) rotate(-12deg); } 50% { transform:translateY(-10px) scale(1.08) rotate(12deg); } 75% { transform:translateY(-16px) scale(1.1) rotate(-6deg); } }
-  @keyframes pet-bath { 0%,100% { transform:rotate(0deg); filter:hue-rotate(0deg); } 20% { transform:rotate(-5deg); filter:hue-rotate(20deg) brightness(1.1); } 40% { transform:rotate(5deg); filter:hue-rotate(-20deg) brightness(1.15); } 60% { transform:rotate(-3deg); filter:hue-rotate(10deg); } }
-  @keyframes pet-levelup { 0% { transform:scale(1) rotate(0deg); filter:brightness(1); } 20% { transform:scale(1.2) rotate(-5deg); filter:brightness(1.3) saturate(1.5); } 40% { transform:scale(1.3) rotate(5deg); filter:brightness(1.5) saturate(2); } 60% { transform:scale(1.15) rotate(-3deg); filter:brightness(1.3) saturate(1.5); } 80% { transform:scale(1.1) rotate(2deg); filter:brightness(1.1); } 100% { transform:scale(1) rotate(0deg); filter:brightness(1); } }
-  @keyframes pet-idle { 0%,100% { transform:translateY(0) rotate(0deg); } 25% { transform:translateY(-6px) rotate(-1deg); } 75% { transform:translateY(-3px) rotate(1deg); } }
-
-  /* Animation classes */
+}
+</script>
+<style>
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .soft-pop { box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 12px rgba(2,103,127,0.15); }
+  .squishy:active { transform: scale(0.95) translateY(2px); box-shadow: none !important; }
+  .care-btn-gradient { background: linear-gradient(180deg,rgba(255,255,255,0.2) 0%,rgba(255,255,255,0) 100%); }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  @keyframes pet-happy { 0%,100%{transform:translateY(0) rotate(0) scale(1)} 20%{transform:translateY(-18px) rotate(-8deg) scale(1.1)} 40%{transform:translateY(-22px) rotate(8deg) scale(1.12)} 60%{transform:translateY(-14px) rotate(-5deg) scale(1.08)} 80%{transform:translateY(-8px) rotate(3deg) scale(1.05)} }
+  @keyframes pet-eat { 0%,100%{transform:translateY(0) scale(1)} 15%{transform:translateY(-4px) scale(1.06)} 30%{transform:translateY(2px) scale(0.96)} 45%{transform:translateY(-3px) scale(1.04)} }
+  @keyframes pet-poke { 0%,100%{transform:rotate(0) scale(1)} 15%{transform:rotate(-10deg) scale(1.08)} 35%{transform:rotate(10deg) scale(1.1)} 55%{transform:rotate(-6deg) scale(1.06)} }
+  @keyframes pet-play { 0%,100%{transform:translateY(0) scale(1) rotate(0)} 25%{transform:translateY(-20px) scale(1.12) rotate(-12deg)} 50%{transform:translateY(-10px) scale(1.08) rotate(12deg)} 75%{transform:translateY(-16px) scale(1.1) rotate(-6deg)} }
+  @keyframes pet-bath { 0%,100%{transform:rotate(0);filter:hue-rotate(0)} 20%{transform:rotate(-5deg);filter:hue-rotate(20deg) brightness(1.1)} 40%{transform:rotate(5deg);filter:hue-rotate(-20deg) brightness(1.15)} }
+  @keyframes pet-sad { 0%,100%{transform:translateY(0) rotate(0);filter:saturate(0.5) brightness(0.85)} 30%{transform:translateY(6px) rotate(-4deg)} 70%{transform:translateY(4px) rotate(3deg)} }
+  @keyframes pet-levelup { 0%{transform:scale(1) rotate(0);filter:brightness(1)} 20%{transform:scale(1.2) rotate(-5deg);filter:brightness(1.3) saturate(1.5)} 40%{transform:scale(1.3) rotate(5deg);filter:brightness(1.5) saturate(2)} 100%{transform:scale(1) rotate(0);filter:brightness(1)} }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  @keyframes floatUp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-70px) scale(0.5)} }
+  @keyframes stars { 0%{opacity:0;transform:translateY(0) scale(0)} 50%{opacity:1} 100%{opacity:0;transform:translateY(-40px) scale(1.5)} }
+  .floating-pet { animation: float 4s ease-in-out infinite; }
   .pet-anim-happy { animation: pet-happy 0.8s ease-in-out 2 !important; }
-  .pet-anim-sad { animation: pet-sad 1.5s ease-in-out 2 !important; }
   .pet-anim-eat { animation: pet-eat 0.6s ease-in-out 3 !important; }
   .pet-anim-poke { animation: pet-poke 0.5s ease-in-out 2 !important; }
   .pet-anim-play { animation: pet-play 0.7s ease-in-out 3 !important; }
   .pet-anim-bath { animation: pet-bath 0.8s ease-in-out 4 !important; }
+  .pet-anim-sad { animation: pet-sad 1.5s ease-in-out 2 !important; }
   .pet-anim-levelup { animation: pet-levelup 1s ease-in-out 3 !important; }
-  .pet-img { width: 130px; height: 195px; object-fit: cover; object-position: center top; border-radius: 20px; border: 3px solid var(--orange); animation: pet-idle 3s ease-in-out infinite; transition: border-color 0.5s ease, filter 0.5s ease; }
-
-  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-  .logo { font-family: 'Fredoka One', sans-serif; font-size: 22px; color: var(--orange); }
-  .logo span { color: var(--purple); }
-  .back-btn { background: white; border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; color: var(--gray-600); cursor: pointer; text-decoration: none; display: inline-block; }
-  .back-btn:hover { border-color: var(--orange); color: var(--orange); }
-
-  /* Pet arena */
-  .pet-arena { background: white; border-radius: var(--radius-xl); padding: 20px; border: 1.5px solid var(--gray-200); margin-bottom: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; overflow: hidden; min-height: 200px; transition: all 0.8s ease; cursor: pointer; }
-  .pet-arena.sleeping-mode { background: #1E293B; border-color: #334155; }
-  .pet-arena.bath-mode { background: linear-gradient(180deg, #EFF6FF 0%, #BFDBFE 100%); border-color: #93C5FD; }
-  .pet-img.sleeping { border-color: #4B5563; filter: brightness(0.7); animation: none; }
-  .pet-img.in-bath { border-radius: var(--radius-lg); border-color: #3B82F6; width: 120px; height: 180px; }
-  .pet-emoji-fallback { font-size: 80px; animation: float 3s ease-in-out infinite; }
-  .pet-name-label { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); transition: color 0.5s; }
-  .sleeping-mode .pet-name-label { color: #94A3B8; }
-  .pet-level { background: var(--purple-light); color: var(--purple); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
-  .sleep-overlay { display: none; position: absolute; inset: 0; background: rgba(15,23,42,0.7); align-items: center; justify-content: center; flex-direction: column; gap: 8px; border-radius: var(--radius-xl); }
-  .sleep-overlay.visible { display: flex; }
-  .sleep-text { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: #94A3B8; }
-  .sleep-zzz { font-size: 36px; animation: float 2s ease-in-out infinite; }
-  .stars-container { position: absolute; top: 10px; right: 10px; pointer-events: none; }
-  .star { position: absolute; font-size: 14px; animation: stars 2s ease-out infinite; }
-  .bath-bubbles { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(0deg, #BFDBFE, transparent); border-radius: 0 0 var(--radius-xl) var(--radius-xl); }
-  .heart-float { position: absolute; pointer-events: none; font-size: 20px; animation: floatUp 1s ease-out forwards; }
-
-  /* Status bars */
-  .status-card { background: white; border-radius: var(--radius-xl); padding: 16px 18px; border: 1.5px solid var(--gray-200); margin-bottom: 14px; transition: all 0.5s; }
-  .sleeping-mode-card { background: #1E293B; border-color: #334155; }
-  .status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-  .status-row:last-child { margin-bottom: 0; }
-  .status-icon { font-size: 16px; width: 22px; text-align: center; }
-  .status-bar-bg { flex: 1; height: 9px; background: var(--gray-100); border-radius: 10px; overflow: hidden; }
-  .status-bar-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
-  .fill-orange { background: var(--orange); }
-  .fill-purple { background: var(--purple); }
-  .fill-pink { background: var(--pink); }
-  .status-val { font-family: 'Fredoka One', sans-serif; font-size: 13px; color: var(--gray-700); width: 28px; text-align: right; }
-
-  /* Action buttons */
-  .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; transition: all 0.3s; }
-  .action-btn { background: white; border: 1.5px solid var(--gray-200); border-radius: var(--radius-md); padding: 12px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; font-family: 'Nunito', sans-serif; font-size: 11px; color: var(--gray-600); font-weight: 700; transition: all 0.2s; user-select: none; }
-  .action-btn:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-light); transform: translateY(-2px); }
-  .action-btn:active { transform: scale(0.93); }
-  .action-icon { font-size: 24px; }
-  .wakeup-btn { width: 100%; background: #1E293B; color: #94A3B8; border: 1.5px solid #334155; border-radius: var(--radius-md); padding: 16px; font-family: 'Fredoka One', sans-serif; font-size: 18px; cursor: pointer; display: none; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; transition: all 0.2s; }
-  .wakeup-btn:hover { background: #334155; color: white; }
-  .wakeup-btn.visible { display: flex; }
-
-  /* Modal overlay */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-end; justify-content: center; padding-bottom: 0; }
-  .modal-overlay.visible { display: flex; }
-  .modal-sheet { background: white; border-radius: 24px 24px 0 0; padding: 20px 16px 40px; width: 100%; max-width: 560px; animation: slideUp 0.3s ease; max-height: 85vh; overflow-y: auto; }
-  @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
-  .modal-title { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--gray-800); margin-bottom: 16px; text-align: center; }
-  .modal-close { position: absolute; top: 16px; right: 16px; background: var(--gray-100); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-  /* Food grid */
-  .food-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .food-item { background: var(--gray-100); border: 2px solid transparent; border-radius: var(--radius-md); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; }
-  .food-item:hover { background: var(--orange-light); border-color: var(--orange-mid); transform: translateY(-2px); }
-  .food-item:active { transform: scale(0.95); }
-  .food-emoji { font-size: 32px; }
-  .food-name { font-family: 'Fredoka One', sans-serif; font-size: 12px; color: var(--gray-700); }
-  .food-stat { font-size: 10px; color: var(--green); font-weight: 700; }
-
-  /* Bath items */
-  .bath-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .bath-item { background: var(--blue-light, #EFF6FF); border: 2px solid transparent; border-radius: var(--radius-md); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; }
-  .bath-item:hover { border-color: #93C5FD; transform: translateY(-2px); }
-  .bath-item:active { transform: scale(0.95); }
-  .bath-emoji { font-size: 32px; }
-  .bath-name { font-family: 'Fredoka One', sans-serif; font-size: 12px; color: var(--gray-700); }
-  .bath-stat { font-size: 10px; color: var(--blue); font-weight: 700; }
-  .bath-used { opacity: 0.4; pointer-events: none; }
-
-  /* Games modal */
-  .game-list { display: flex; flex-direction: column; gap: 10px; }
-  .game-card { background: var(--gray-100); border-radius: var(--radius-md); padding: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
-  .game-card:hover { background: var(--purple-light); border-color: var(--purple); transform: translateX(4px); }
-  .game-icon { font-size: 36px; }
-  .game-info { flex: 1; }
-  .game-name { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: var(--gray-800); }
-  .game-desc { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
-  .game-best { font-size: 11px; color: var(--purple); font-weight: 700; margin-top: 4px; }
-  .game-arrow { font-size: 20px; color: var(--gray-400); }
-
-  /* Game screens */
-  .game-screen { display: none; position: fixed; inset: 0; background: white; z-index: 300; flex-direction: column; }
-  .game-screen.visible { display: flex; }
-  .game-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--gray-200); }
-  .game-title { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); }
-  .game-score { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: var(--orange); }
-  .game-exit { background: var(--gray-100); border: none; border-radius: 10px; padding: 6px 14px; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; color: var(--gray-600); cursor: pointer; }
-  .game-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow: hidden; }
-
-  /* Dodge game */
-  #dodge-canvas { border: 2px solid var(--gray-200); border-radius: var(--radius-lg); touch-action: none; cursor: pointer; max-width: 100%; }
-  .game-tap-hint { font-size: 13px; color: var(--gray-400); margin-top: 8px; font-weight: 600; }
-  .game-start-overlay { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-  .game-start-title { font-family: 'Fredoka One', sans-serif; font-size: 24px; color: var(--gray-800); }
-  .game-start-sub { font-size: 14px; color: var(--gray-400); text-align: center; }
-  .game-start-btn { background: var(--orange); color: white; border: none; border-radius: var(--radius-md); padding: 14px 36px; font-family: 'Fredoka One', sans-serif; font-size: 18px; cursor: pointer; transition: all 0.2s; }
-  .game-start-btn:hover { transform: scale(1.05); }
-  .game-over-overlay { display: none; flex-direction: column; align-items: center; gap: 12px; }
-  .game-over-title { font-family: 'Fredoka One', sans-serif; font-size: 28px; color: var(--gray-800); }
-  .game-over-score { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--orange); }
-  .game-over-best { font-size: 14px; color: var(--purple); font-weight: 700; }
-
-  /* Memory game */
-  .memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 340px; }
-  .memory-card { aspect-ratio: 1; background: var(--purple); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 28px; cursor: pointer; transition: all 0.3s; border: none; user-select: none; }
-  .memory-card.flipped { background: white; border: 2px solid var(--purple); }
-  .memory-card.matched { background: var(--green-light); border: 2px solid var(--green); pointer-events: none; }
-  .memory-card.hidden-face { color: transparent; }
-  .memory-info { display: flex; gap: 20px; margin-bottom: 16px; }
-  .memory-stat { text-align: center; }
-  .memory-stat-val { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--orange); }
-  .memory-stat-label { font-size: 11px; color: var(--gray-400); font-weight: 700; }
-
-  /* Tap game */
-  .tap-area { width: 100%; max-width: 340px; height: 340px; background: var(--gray-100); border-radius: var(--radius-xl); position: relative; overflow: hidden; cursor: pointer; border: 2px solid var(--gray-200); user-select: none; }
-  .tap-target { position: absolute; transition: all 0.15s; cursor: pointer; user-select: none; font-size: 70px; transform: translate(-50%, -50%); }
-  .tap-info { display: flex; gap: 24px; margin-bottom: 16px; }
-  .tap-countdown { font-family: 'Fredoka One', sans-serif; font-size: 48px; color: var(--orange); }
-
-  /* Notification toast */
-  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 700; z-index: 500; display: none; animation: fadeUp 0.3s ease; font-family: 'Nunito', sans-serif; }
-  .toast.visible { display: block; }
-
-  .nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; background: white; border-top: 1px solid var(--gray-200); display: flex; z-index: 100; transition: all 0.5s; }
-  .nav-bar.dark { background: #1E293B; border-color: #334155; }
-  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 14px; cursor: pointer; color: var(--gray-400); font-size: 10px; font-weight: 700; border: none; background: none; transition: color 0.2s; font-family: 'Nunito', sans-serif; }
-  .nav-item.active { color: var(--orange); }
-  .nav-icon { font-size: 22px; }
+  .heart-float { position:absolute; pointer-events:none; font-size:20px; animation:floatUp 1s ease-out forwards; }
+  .star-anim { animation: stars 2s ease-out infinite; }
+  body { background-color:#fff9f0; min-height:100dvh; }
+  .speech-bubble::after { content:''; position:absolute; bottom:-8px; left:20px; border-width:8px 8px 0; border-style:solid; border-color:#ffffff transparent; }
+  .game-screen { display:none; position:fixed; inset:0; background:white; z-index:300; flex-direction:column; }
+  .game-screen.visible { display:flex; }
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; align-items:flex-end; justify-content:center; }
+  .modal-overlay.visible { display:flex; }
+  .modal-sheet { background:white; border-radius:24px 24px 0 0; padding:20px 16px 40px; width:100%; max-width:560px; animation:slideUp 0.3s ease; max-height:85vh; overflow-y:auto; }
+  .memory-card { aspect-ratio:1; background:#7ec8e3; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:28px; cursor:pointer; transition:all 0.3s; border:none; }
+  .memory-card.flipped { background:white; border:2px solid #7ec8e3; }
+  .memory-card.matched { background:#b0f1c2; border:2px solid #8dcc9f; pointer-events:none; }
+  .memory-card.hidden-face { color:transparent; }
+  .tap-area { width:100%; max-width:340px; height:300px; background:#f3ede4; border-radius:24px; position:relative; overflow:hidden; cursor:pointer; border:2px solid #bfc8cd; }
+  .tap-target { position:absolute; transition:all 0.15s; cursor:pointer; font-size:60px; transform:translate(-50%,-50%); }
+  #dodge-canvas { border:2px solid #bfc8cd; border-radius:16px; touch-action:none; max-width:100%; }
 </style>
 </head>
-<body>
-<div class="page">
-  <div class="top-bar">
-    <div class="logo">Paw<span>World</span></div>
-    
+<body class="font-sans text-on-surface overflow-x-hidden">
+
+<!-- Background -->
+<div class="fixed inset-0 z-0 opacity-40 pointer-events-none">
+  <div class="absolute inset-0" style="background:radial-gradient(ellipse at 20% 20%, #b7eaff 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, #b0f1c2 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, #fdd73b33 0%, transparent 70%);"></div>
+</div>
+
+<!-- Top Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface-bright/80 backdrop-blur-md">
+  <div class="flex justify-between items-center px-container-padding py-sm w-full max-w-lg mx-auto">
+    <div class="flex items-center gap-sm">
+      <div id="header-avatar" class="w-10 h-10 rounded-full bg-primary-container border-2 border-primary flex items-center justify-center overflow-hidden text-lg">🐾</div>
+      <div>
+        <h1 class="font-display font-extrabold text-primary text-lg leading-tight" id="header-pet-name">PawWorld</h1>
+        <p class="text-xs text-on-surface-variant font-label" id="header-pet-level">Lv.1</p>
+      </div>
+    </div>
+    <div class="bg-secondary-container px-sm py-xs rounded-full flex items-center gap-xs soft-pop">
+      <span class="material-symbols-outlined text-secondary text-[18px]" style="font-variation-settings:'FILL' 1;">pets</span>
+      <span class="font-display font-bold text-sm text-on-secondary-container" id="header-coins">0</span>
+      <span class="text-xs text-on-secondary-container font-label">积分</span>
+    </div>
   </div>
+</header>
+
+<main class="relative z-10 w-full min-h-screen flex flex-col items-center pt-20 pb-28 px-container-padding max-w-lg mx-auto">
+
+  <!-- Status Bars -->
+  <section class="w-full bg-surface-container/70 backdrop-blur-lg rounded-2xl p-md mb-md soft-pop border border-white/60">
+    <div class="flex flex-col gap-sm">
+      <div class="flex flex-col gap-1">
+        <div class="flex justify-between items-center px-1">
+          <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-tertiary">restaurant</span><span class="font-label text-xs text-on-surface-variant">饱食度</span></div>
+          <span class="font-display font-bold text-sm text-on-surface" id="val-hunger">80</span>
+        </div>
+        <div class="h-3 w-full bg-surface-container-highest rounded-full overflow-hidden p-0.5">
+          <div class="h-full bg-gradient-to-r from-tertiary-fixed to-tertiary rounded-full transition-all duration-700" id="bar-hunger" style="width:80%"></div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-1">
+        <div class="flex justify-between items-center px-1">
+          <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-primary">bolt</span><span class="font-label text-xs text-on-surface-variant">活力</span></div>
+          <span class="font-display font-bold text-sm text-on-surface" id="val-energy">80</span>
+        </div>
+        <div class="h-3 w-full bg-surface-container-highest rounded-full overflow-hidden p-0.5">
+          <div class="h-full bg-gradient-to-r from-primary-fixed to-primary rounded-full transition-all duration-700" id="bar-energy" style="width:80%"></div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-1">
+        <div class="flex justify-between items-center px-1">
+          <div class="flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-secondary">sentiment_satisfied</span><span class="font-label text-xs text-on-surface-variant">心情</span></div>
+          <span class="font-display font-bold text-sm text-on-surface" id="val-mood">80</span>
+        </div>
+        <div class="h-3 w-full bg-surface-container-highest rounded-full overflow-hidden p-0.5">
+          <div class="h-full bg-gradient-to-r from-secondary-container to-secondary rounded-full transition-all duration-700" id="bar-mood" style="width:80%"></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- Pet Arena -->
-  <div class="pet-arena" id="pet-arena" onclick="arenaTap(event)">
-    <div id="pet-wrap" style="position:relative;display:inline-block;width:130px;height:195px;z-index:1;">
-      <img id="pet-display-img" src="" alt="宠物" class="pet-img" style="display:none;">
-      <div id="pet-display-emoji" class="pet-emoji-fallback">🐾</div>
-      <!-- Accessory layers -->
+  <div class="w-full flex-1 flex flex-col items-center justify-center relative mb-md" id="pet-arena" onclick="arenaTap(event)">
+    <!-- Speech bubble -->
+    <div class="speech-bubble bg-white px-md py-sm rounded-2xl shadow-md mb-md relative max-w-[240px] text-center" id="speech-bubble">
+      <p class="text-sm text-on-surface-variant font-sans" id="speech-text">点击我或跟我说话吧！😊</p>
+    </div>
+
+    <!-- Pet display -->
+    <div class="floating-pet relative cursor-pointer" id="pet-wrap" style="position:relative;display:inline-block;">
       <div id="play-acc-bg" style="display:none;"></div>
+      <div class="w-52 h-52 rounded-full bg-primary-container/20 flex items-center justify-center">
+        <img id="pet-display-img" src="" alt="宠物" style="display:none;width:130px;height:195px;object-fit:cover;object-position:center top;border-radius:20px;border:3px solid #02677f;position:relative;z-index:2;" class="drop-shadow-xl">
+        <div id="pet-display-emoji" class="text-8xl">🐾</div>
+      </div>
       <div id="play-acc-hat" style="display:none;position:absolute;top:2%;left:50%;transform:translateX(-50%);z-index:3;pointer-events:none;"></div>
       <div id="play-acc-glasses" style="display:none;position:absolute;top:26%;left:50%;transform:translateX(-50%);z-index:3;pointer-events:none;"></div>
       <div id="play-acc-neck" style="display:none;position:absolute;top:36%;left:50%;transform:translateX(-50%);z-index:3;pointer-events:none;"></div>
+      <!-- Shadow -->
+      <div class="w-32 h-4 bg-on-surface/10 blur-xl rounded-full absolute -bottom-4 left-1/2 -translate-x-1/2"></div>
     </div>
-    <div class="pet-name-label" id="pet-arena-name">加载中...</div>
-    <div class="pet-level" id="pet-arena-level">Lv.1</div>
-    <div class="sleep-overlay" id="sleep-overlay">
-      <div class="sleep-zzz">😴</div>
-      <div class="sleep-text" id="sleep-text">正在睡觉...</div>
-    </div>
-    <div class="stars-container" id="stars-container" style="display:none;">
-      <div class="star" style="animation-delay:0s;">⭐</div>
-      <div class="star" style="animation-delay:0.5s; left:20px;">✨</div>
-      <div class="star" style="animation-delay:1s; left:-10px; top:20px;">🌟</div>
-    </div>
-  </div>
 
-  <!-- Status -->
-  <div class="status-card" id="status-card">
-    <div class="status-row"><div class="status-icon">🍖</div><div class="status-bar-bg"><div class="status-bar-fill fill-orange" id="bar-hunger"></div></div><div class="status-val" id="val-hunger">80</div></div>
-    <div class="status-row"><div class="status-icon">⚡</div><div class="status-bar-bg"><div class="status-bar-fill fill-purple" id="bar-energy"></div></div><div class="status-val" id="val-energy">80</div></div>
-    <div class="status-row"><div class="status-icon">😊</div><div class="status-bar-bg"><div class="status-bar-fill fill-pink" id="bar-mood"></div></div><div class="status-val" id="val-mood">80</div></div>
+    <!-- Stars for sleep -->
+    <div id="stars-container" style="display:none;" class="absolute top-4 right-4 pointer-events-none">
+      <div class="star-anim text-xl" style="animation-delay:0s;">⭐</div>
+      <div class="star-anim text-xl absolute" style="animation-delay:0.5s;left:20px;">✨</div>
+    </div>
+
+    <!-- Sleep overlay -->
+    <div id="sleep-overlay" class="hidden absolute inset-0 bg-slate-900/70 rounded-3xl flex flex-col items-center justify-center gap-3">
+      <div class="text-4xl" style="animation:float 2s ease-in-out infinite;">😴</div>
+      <p class="font-display font-bold text-slate-300 text-lg">正在睡觉...</p>
+    </div>
   </div>
 
   <!-- Action Buttons -->
-  <div class="action-grid" id="action-grid">
-    <button class="action-btn" onclick="openFood()"><div class="action-icon">🍖</div>喂食</button>
-    <button class="action-btn" onclick="openGames()"><div class="action-icon">🎮</div>玩耍</button>
-    <button class="action-btn" onclick="startSleep()"><div class="action-icon">💤</div>休息</button>
-    <button class="action-btn" onclick="openBath()"><div class="action-icon">🛁</div>洗澡</button>
+  <div class="w-full grid grid-cols-4 gap-sm mb-md" id="action-grid">
+    <button onclick="openFood()" class="flex flex-col items-center justify-center w-full aspect-square rounded-2xl bg-tertiary-container text-on-tertiary-container care-btn-gradient soft-pop squishy gap-1">
+      <span class="material-symbols-outlined text-[28px]">restaurant</span>
+      <span class="font-label text-xs font-bold">喂食</span>
+    </button>
+    <button onclick="openGames()" class="flex flex-col items-center justify-center w-full aspect-square rounded-2xl bg-primary-container text-on-primary-container care-btn-gradient soft-pop squishy gap-1">
+      <span class="material-symbols-outlined text-[28px]">sports_esports</span>
+      <span class="font-label text-xs font-bold">玩耍</span>
+    </button>
+    <button onclick="startSleep()" class="flex flex-col items-center justify-center w-full aspect-square rounded-2xl bg-surface-container-high text-on-surface-variant care-btn-gradient soft-pop squishy gap-1">
+      <span class="material-symbols-outlined text-[28px]">bedtime</span>
+      <span class="font-label text-xs font-bold">休息</span>
+    </button>
+    <button onclick="openBath()" class="flex flex-col items-center justify-center w-full aspect-square rounded-2xl bg-primary-fixed text-primary care-btn-gradient soft-pop squishy gap-1">
+      <span class="material-symbols-outlined text-[28px]">water_drop</span>
+      <span class="font-label text-xs font-bold">洗澡</span>
+    </button>
   </div>
 
-  <!-- Wakeup Button -->
-  <button class="wakeup-btn" id="wakeup-btn" onclick="wakeUp()">🌅 起床啦！</button>
+  <!-- Wake up button -->
+  <button id="wakeup-btn" onclick="wakeUp()" class="hidden w-full py-md rounded-2xl bg-slate-800 text-slate-300 font-display font-bold text-lg flex items-center justify-center gap-2 mb-md squishy soft-pop">
+    ☀️ 起床啦！
+  </button>
 
   <!-- Chat -->
-  <div class="status-card" style="padding:14px 16px;">
-    <div id="chat-messages" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;min-height:60px;max-height:160px;overflow-y:auto;"></div>
-    <div id="chat-typing" style="font-size:12px;color:var(--gray-400);font-style:italic;display:none;margin-bottom:8px;">宠物正在回复...</div>
-    <div style="display:flex;gap:8px;">
-      <input id="chat-input" placeholder="跟你的宠物说话..." style="flex:1;background:var(--gray-100);border:1.5px solid transparent;border-radius:12px;padding:9px 13px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--gray-800);outline:none;" onkeydown="if(event.key==='Enter')sendChat()">
-      <button onclick="sendChat()" style="background:var(--orange);border:none;border-radius:12px;padding:9px 14px;color:white;font-size:15px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;">发送</button>
+  <div class="w-full bg-white/80 backdrop-blur rounded-2xl p-md soft-pop border border-white">
+    <div id="chat-messages" class="flex flex-col gap-sm mb-sm min-h-[60px] max-h-[140px] overflow-y-auto"></div>
+    <div id="chat-typing" class="hidden text-xs text-on-surface-variant italic mb-sm">宠物正在回复...</div>
+    <div class="flex gap-sm items-center">
+      <div class="flex-1 relative">
+        <input id="chat-input" placeholder="跟你的宠物说话..." class="w-full bg-surface-container-low border-2 border-primary-container rounded-full py-sm px-md focus:outline-none focus:border-primary text-sm placeholder:text-on-surface-variant/50" onkeydown="if(event.key==='Enter')sendChat()">
+        <button onclick="sendChat()" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
+          <span class="material-symbols-outlined text-[16px]">send</span>
+        </button>
+      </div>
     </div>
   </div>
-</div>
+</main>
 
 <!-- FOOD MODAL -->
 <div class="modal-overlay" id="food-modal">
-  <div class="modal-sheet" style="position:relative;">
-    <button class="modal-close" onclick="closeModal('food-modal')">✕</button>
-    <div class="modal-title">🍖 选择食物</div>
-    <div class="food-grid">
-      <div class="food-item" onclick="feedPet('🍖','肉骨头',25,5,8)"><div class="food-emoji">🍖</div><div class="food-name">肉骨头</div><div class="food-stat">饱食+25 心情+8</div></div>
-      <div class="food-item" onclick="feedPet('🐟','小鱼干',20,0,10)"><div class="food-emoji">🐟</div><div class="food-name">小鱼干</div><div class="food-stat">饱食+20 心情+10</div></div>
-      <div class="food-item" onclick="feedPet('🍎','苹果',12,3,5)"><div class="food-emoji">🍎</div><div class="food-name">苹果</div><div class="food-stat">饱食+12 活力+3</div></div>
-      <div class="food-item" onclick="feedPet('🍌','香蕉',15,8,3)"><div class="food-emoji">🍌</div><div class="food-name">香蕉</div><div class="food-stat">饱食+15 活力+8</div></div>
-      <div class="food-item" onclick="feedPet('🧁','小蛋糕',10,0,20)"><div class="food-emoji">🧁</div><div class="food-name">小蛋糕</div><div class="food-stat">饱食+10 心情+20</div></div>
-      <div class="food-item" onclick="feedPet('🥛','牛奶',8,12,5)"><div class="food-emoji">🥛</div><div class="food-name">牛奶</div><div class="food-stat">饱食+8 活力+12</div></div>
-      <div class="food-item" onclick="feedPet('🍣','寿司',30,5,12)"><div class="food-emoji">🍣</div><div class="food-name">寿司</div><div class="food-stat">饱食+30 心情+12</div></div>
-      <div class="food-item" onclick="feedPet('🍪','饼干',8,0,15)"><div class="food-emoji">🍪</div><div class="food-name">饼干</div><div class="food-stat">饱食+8 心情+15</div></div>
-      <div class="food-item" onclick="feedPet('🥩','牛排',35,10,15)"><div class="food-emoji">🥩</div><div class="food-name">牛排</div><div class="food-stat">饱食+35 全属性+</div></div>
+  <div class="modal-sheet">
+    <div class="flex justify-between items-center mb-md">
+      <h3 class="font-display font-bold text-xl text-on-surface">🍖 选择食物</h3>
+      <button onclick="closeModal('food-modal')" class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant squishy"><span class="material-symbols-outlined text-[20px]">close</span></button>
+    </div>
+    <div class="grid grid-cols-3 gap-sm">
+      <div onclick="feedPet('🍖','肉骨头',25,5,8)" class="bg-surface-container-low rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-tertiary-fixed transition-colors">
+        <div class="text-3xl">🍖</div><div class="font-display font-bold text-xs text-on-surface">肉骨头</div><div class="text-[10px] text-tertiary font-bold">饱+25 情+8</div>
+      </div>
+      <div onclick="feedPet('🐟','小鱼干',20,0,10)" class="bg-surface-container-low rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-tertiary-fixed transition-colors">
+        <div class="text-3xl">🐟</div><div class="font-display font-bold text-xs text-on-surface">小鱼干</div><div class="text-[10px] text-tertiary font-bold">饱+20 情+10</div>
+      </div>
+      <div onclick="feedPet('🍎','苹果',12,3,5)" class="bg-surface-container-low rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-tertiary-fixed transition-colors">
+        <div class="text-3xl">🍎</div><div class="font-display font-bold text-xs text-on-surface">苹果</div><div class="text-[10px] text-tertiary font-bold">饱+12 力+3</div>
+      </div>
+      <div onclick="feedPet('🍌','香蕉',15,8,3)" class="bg-surface-container-low rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-tertiary-fixed transition-colors">
+        <div class="text-3xl">🍌</div><div class="font-display font-bold text-xs text-on-surface">香蕉</div><div class="text-[10px] text-tertiary font-bold">饱+15 力+8</div>
+      </div>
+      <div onclick="feedPet('🧁','小蛋糕',10,0,20)" class="bg-surface-container-low rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-tertiary-fixed transition-colors">
+        <div class="text-3xl">🧁</div><div class="font-display font-bold text-xs text-on-surface">小蛋糕</div><div class="text-[10px] text-tertiary font-bold">饱+10 情+20</div>
+      </div>
+      <div onclick="feedPet('🥛','牛奶',8,12,5)" class="bg-surface-container-low rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-tertiary-fixed transition-colors">
+        <div class="text-3xl">🥛</div><div class="font-display font-bold text-xs text-on-surface">牛奶</div><div class="text-[10px] text-tertiary font-bold">饱+8 力+12</div>
+      </div>
+      <div onclick="feedPet('🍣','寿司',30,5,12)" class="bg-surface-container-low rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-tertiary-fixed transition-colors">
+        <div class="text-3xl">🍣</div><div class="font-display font-bold text-xs text-on-surface">寿司</div><div class="text-[10px] text-tertiary font-bold">饱+30 情+12</div>
+      </div>
+      <div onclick="feedPet('🍪','饼干',8,0,15)" class="bg-surface-container-low rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-tertiary-fixed transition-colors">
+        <div class="text-3xl">🍪</div><div class="font-display font-bold text-xs text-on-surface">饼干</div><div class="text-[10px] text-tertiary font-bold">饱+8 情+15</div>
+      </div>
+      <div onclick="feedPet('🥩','牛排',35,10,15)" class="bg-surface-container-low rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-tertiary-fixed transition-colors">
+        <div class="text-3xl">🥩</div><div class="font-display font-bold text-xs text-on-surface">牛排</div><div class="text-[10px] text-tertiary font-bold">全属性+</div>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- BATH MODAL -->
 <div class="modal-overlay" id="bath-modal">
-  <div class="modal-sheet" style="position:relative;">
-    <button class="modal-close" onclick="endBath()">✕</button>
-    <div class="modal-title">🛁 给宠物洗澡</div>
-    <div style="text-align:center;margin-bottom:14px;font-size:13px;color:var(--gray-400);">使用所有清洁用品，洗澡完成！</div>
-    <div class="bath-grid" id="bath-grid">
-      <div class="bath-item" id="bath-soap" onclick="useBathItem(this,'🧼','肥皂',0,0,15,'bath-soap')"><div class="bath-emoji">🧼</div><div class="bath-name">肥皂</div><div class="bath-stat">清洁+心情+15</div></div>
-      <div class="bath-item" id="bath-shampoo" onclick="useBathItem(this,'🧴','洗发水',0,5,10,'bath-shampoo')"><div class="bath-emoji">🧴</div><div class="bath-name">洗发水</div><div class="bath-stat">清洁+活力+5</div></div>
-      <div class="bath-item" id="bath-brush" onclick="useBathItem(this,'🪥','毛刷',0,3,12,'bath-brush')"><div class="bath-emoji">🪥</div><div class="bath-name">毛刷</div><div class="bath-stat">清洁+心情+12</div></div>
-      <div class="bath-item" id="bath-towel" onclick="useBathItem(this,'🪣','花洒',0,8,8,'bath-towel')"><div class="bath-emoji">🪣</div><div class="bath-name">花洒</div><div class="bath-stat">清洁+活力+8</div></div>
-      <div class="bath-item" id="bath-perfume" onclick="useBathItem(this,'🌸','香水',0,0,20,'bath-perfume')"><div class="bath-emoji">🌸</div><div class="bath-name">香水</div><div class="bath-stat">心情+20</div></div>
-      <div class="bath-item" id="bath-dryer" onclick="useBathItem(this,'💨','吹风机',0,10,5,'bath-dryer')"><div class="bath-emoji">💨</div><div class="bath-name">吹风机</div><div class="bath-stat">活力+10</div></div>
+  <div class="modal-sheet">
+    <div class="flex justify-between items-center mb-sm">
+      <h3 class="font-display font-bold text-xl text-on-surface">🛁 给宠物洗澡</h3>
+      <button onclick="endBath()" class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant squishy"><span class="material-symbols-outlined text-[20px]">close</span></button>
     </div>
-    <div style="margin-top:14px;background:var(--gray-100);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--gray-600);font-weight:600;">
-      进度：<span id="bath-progress">0</span>/6 件物品使用完毕
+    <p class="text-xs text-on-surface-variant mb-md">使用所有清洁用品，洗澡完成！</p>
+    <div class="grid grid-cols-3 gap-sm mb-md" id="bath-grid">
+      <div id="bath-soap" onclick="useBathItem(this,'🧼','肥皂',0,0,15,'bath-soap')" class="bg-primary-fixed/40 rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-primary-fixed transition-colors"><div class="text-3xl">🧼</div><div class="font-display font-bold text-xs text-on-surface">肥皂</div><div class="text-[10px] text-primary font-bold">情+15</div></div>
+      <div id="bath-shampoo" onclick="useBathItem(this,'🧴','洗发水',0,5,10,'bath-shampoo')" class="bg-primary-fixed/40 rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-primary-fixed transition-colors"><div class="text-3xl">🧴</div><div class="font-display font-bold text-xs text-on-surface">洗发水</div><div class="text-[10px] text-primary font-bold">力+5 情+10</div></div>
+      <div id="bath-brush" onclick="useBathItem(this,'🪥','毛刷',0,3,12,'bath-brush')" class="bg-primary-fixed/40 rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-primary-fixed transition-colors"><div class="text-3xl">🪥</div><div class="font-display font-bold text-xs text-on-surface">毛刷</div><div class="text-[10px] text-primary font-bold">情+12</div></div>
+      <div id="bath-towel" onclick="useBathItem(this,'🪣','花洒',0,8,8,'bath-towel')" class="bg-primary-fixed/40 rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-primary-fixed transition-colors"><div class="text-3xl">🪣</div><div class="font-display font-bold text-xs text-on-surface">花洒</div><div class="text-[10px] text-primary font-bold">力+8</div></div>
+      <div id="bath-perfume" onclick="useBathItem(this,'🌸','香水',0,0,20,'bath-perfume')" class="bg-primary-fixed/40 rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-primary-fixed transition-colors"><div class="text-3xl">🌸</div><div class="font-display font-bold text-xs text-on-surface">香水</div><div class="text-[10px] text-primary font-bold">情+20</div></div>
+      <div id="bath-dryer" onclick="useBathItem(this,'💨','吹风机',0,10,5,'bath-dryer')" class="bg-primary-fixed/40 rounded-2xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy hover:bg-primary-fixed transition-colors"><div class="text-3xl">💨</div><div class="font-display font-bold text-xs text-on-surface">吹风机</div><div class="text-[10px] text-primary font-bold">力+10</div></div>
+    </div>
+    <div class="bg-surface-container-low rounded-xl px-md py-sm flex items-center justify-between">
+      <span class="text-sm text-on-surface-variant font-sans">进度</span>
+      <span class="font-display font-bold text-primary"><span id="bath-progress">0</span>/6 完成</span>
     </div>
   </div>
 </div>
 
 <!-- GAMES MODAL -->
 <div class="modal-overlay" id="games-modal">
-  <div class="modal-sheet" style="position:relative;">
-    <button class="modal-close" onclick="closeModal('games-modal')">✕</button>
-    <div class="modal-title">🎮 选择游戏</div>
-    <div class="game-list">
-      <div class="game-card" onclick="startGame('dodge')">
-        <div class="game-icon">🏃</div>
-        <div class="game-info">
-          <div class="game-name">闪避大师</div>
-          <div class="game-desc">点击屏幕让宠物跳跃，躲避障碍物</div>
-          <div class="game-best" id="best-dodge">最高分：0</div>
-        </div>
-        <div class="game-arrow">→</div>
+  <div class="modal-sheet">
+    <div class="flex justify-between items-center mb-md">
+      <h3 class="font-display font-bold text-xl text-on-surface">🎮 选择游戏</h3>
+      <button onclick="closeModal('games-modal')" class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant squishy"><span class="material-symbols-outlined text-[20px]">close</span></button>
+    </div>
+    <div class="flex flex-col gap-sm">
+      <div onclick="startGame('dodge')" class="flex items-center gap-md bg-surface-container-low rounded-2xl p-md cursor-pointer squishy hover:bg-primary-container/20 transition-colors">
+        <div class="w-14 h-14 rounded-2xl bg-primary-container flex items-center justify-center text-3xl soft-pop">🏃</div>
+        <div class="flex-1"><div class="font-display font-bold text-on-surface">闪避大师</div><div class="text-xs text-on-surface-variant mt-0.5">点击跳跃，躲避障碍！</div><div class="text-xs text-primary font-bold mt-1" id="best-dodge">最高分：0</div></div>
+        <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
       </div>
-      <div class="game-card" onclick="startGame('memory')">
-        <div class="game-icon">🃏</div>
-        <div class="game-info">
-          <div class="game-name">记忆配对</div>
-          <div class="game-desc">翻开卡片，找到所有配对</div>
-          <div class="game-best" id="best-memory">最高分：0</div>
-        </div>
-        <div class="game-arrow">→</div>
+      <div onclick="startGame('memory')" class="flex items-center gap-md bg-surface-container-low rounded-2xl p-md cursor-pointer squishy hover:bg-primary-container/20 transition-colors">
+        <div class="w-14 h-14 rounded-2xl bg-tertiary-container flex items-center justify-center text-3xl soft-pop">🃏</div>
+        <div class="flex-1"><div class="font-display font-bold text-on-surface">记忆配对</div><div class="text-xs text-on-surface-variant mt-0.5">翻牌找配对！</div><div class="text-xs text-primary font-bold mt-1" id="best-memory">最高分：0</div></div>
+        <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
       </div>
-      <div class="game-card" onclick="startGame('tap')">
-        <div class="game-icon">👆</div>
-        <div class="game-info">
-          <div class="game-name">快速点击</div>
-          <div class="game-desc">10秒内尽量多点击宠物！</div>
-          <div class="game-best" id="best-tap">最高分：0</div>
-        </div>
-        <div class="game-arrow">→</div>
+      <div onclick="startGame('tap')" class="flex items-center gap-md bg-surface-container-low rounded-2xl p-md cursor-pointer squishy hover:bg-primary-container/20 transition-colors">
+        <div class="w-14 h-14 rounded-2xl bg-secondary-container flex items-center justify-center text-3xl soft-pop">👆</div>
+        <div class="flex-1"><div class="font-display font-bold text-on-surface">快速点击</div><div class="text-xs text-on-surface-variant mt-0.5">10秒内疯狂点击！</div><div class="text-xs text-primary font-bold mt-1" id="best-tap">最高分：0</div></div>
+        <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
       </div>
-      <div class="game-card" onclick="window.location.href='/game-runner.html'">
-        <div class="game-icon">🏄</div>
-        <div class="game-info">
-          <div class="game-name">跑酷大冒险</div>
-          <div class="game-desc">三条跑道滑动换道，躲障碍收金币！</div>
-          <div class="game-best" id="best-runner">最高分：0</div>
-        </div>
-        <div class="game-arrow">→</div>
+      <div onclick="window.location.href='/game-runner.html'" class="flex items-center gap-md bg-surface-container-low rounded-2xl p-md cursor-pointer squishy hover:bg-primary-container/20 transition-colors">
+        <div class="w-14 h-14 rounded-2xl bg-primary-fixed flex items-center justify-center text-3xl soft-pop">🏄</div>
+        <div class="flex-1"><div class="font-display font-bold text-on-surface">跑酷大冒险</div><div class="text-xs text-on-surface-variant mt-0.5">滑动换道，躲障碍！</div><div class="text-xs text-primary font-bold mt-1" id="best-runner">最高分：0</div></div>
+        <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
       </div>
-      <div class="game-card" onclick="window.location.href='/game-fruit.html'">
-        <div class="game-icon">🍉</div>
-        <div class="game-info">
-          <div class="game-name">水果忍者</div>
-          <div class="game-desc">划过水果切断，连击得高分！小心炸弹！</div>
-          <div class="game-best" id="best-fruit">最高分：0</div>
-        </div>
-        <div class="game-arrow">→</div>
+      <div onclick="window.location.href='/game-fruit.html'" class="flex items-center gap-md bg-surface-container-low rounded-2xl p-md cursor-pointer squishy hover:bg-primary-container/20 transition-colors">
+        <div class="w-14 h-14 rounded-2xl bg-tertiary-fixed flex items-center justify-center text-3xl soft-pop">🍉</div>
+        <div class="flex-1"><div class="font-display font-bold text-on-surface">水果忍者</div><div class="text-xs text-on-surface-variant mt-0.5">划过切水果！小心炸弹！</div><div class="text-xs text-primary font-bold mt-1" id="best-fruit">最高分：0</div></div>
+        <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
       </div>
-      <div class="game-card" onclick="window.location.href='/game-candy.html'">
-        <div class="game-icon">🍬</div>
-        <div class="game-info">
-          <div class="game-name">萌宠消消乐</div>
-          <div class="game-desc">交换食物消除3个以上，达到目标分数！</div>
-          <div class="game-best" id="best-candy">最高分：0</div>
-        </div>
-        <div class="game-arrow">→</div>
+      <div onclick="window.location.href='/game-candy.html'" class="flex items-center gap-md bg-surface-container-low rounded-2xl p-md cursor-pointer squishy hover:bg-primary-container/20 transition-colors">
+        <div class="w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center text-3xl soft-pop">🍬</div>
+        <div class="flex-1"><div class="font-display font-bold text-on-surface">萌宠消消乐</div><div class="text-xs text-on-surface-variant mt-0.5">消除3个以上！</div><div class="text-xs text-primary font-bold mt-1" id="best-candy">最高分：0</div></div>
+        <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
       </div>
     </div>
   </div>
@@ -351,141 +312,108 @@
 
 <!-- DODGE GAME -->
 <div class="game-screen" id="game-dodge">
-  <div class="game-header">
-    <div class="game-title">🏃 闪避大师</div>
-    <div class="game-score">分数：<span id="dodge-score">0</span></div>
-    <button class="game-exit" onclick="exitGame('dodge')">退出</button>
+  <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant">
+    <div class="font-display font-bold text-lg text-on-surface">🏃 闪避大师</div>
+    <div class="font-display font-bold text-primary">分数：<span id="dodge-score">0</span></div>
+    <button onclick="exitGame('dodge')" class="bg-surface-container px-4 py-2 rounded-full text-sm font-bold text-on-surface-variant squishy">退出</button>
   </div>
-  <div class="game-body">
-    <div id="dodge-start" class="game-start-overlay">
-      <div style="font-size:60px;">🏃</div>
-      <div class="game-start-title">闪避大师</div>
-      <div class="game-start-sub">点击屏幕让宠物跳跃<br>躲避迎面而来的障碍物！</div>
-      <button class="game-start-btn" onclick="startDodge()">开始游戏</button>
+  <div class="flex-1 flex flex-col items-center justify-center p-5 gap-4">
+    <div id="dodge-start" class="flex flex-col items-center gap-4">
+      <div class="text-6xl">🏃</div>
+      <h2 class="font-display font-bold text-2xl text-on-surface">闪避大师</h2>
+      <p class="text-sm text-on-surface-variant text-center">点击屏幕让宠物跳跃<br>躲避迎面而来的障碍物！</p>
+      <button onclick="startDodge()" class="bg-primary text-white px-10 py-4 rounded-2xl font-display font-bold text-lg squishy soft-pop">开始游戏</button>
     </div>
-    <div id="dodge-game" style="display:none;flex-direction:column;align-items:center;gap:8px;width:100%;">
+    <div id="dodge-game" style="display:none" class="flex flex-col items-center gap-2 w-full">
       <canvas id="dodge-canvas" width="340" height="240"></canvas>
-      <div class="game-tap-hint">点击屏幕跳跃</div>
+      <p class="text-xs text-on-surface-variant">点击屏幕跳跃</p>
     </div>
-    <div id="dodge-over" class="game-over-overlay">
-      <div style="font-size:60px;">💥</div>
-      <div class="game-over-title">游戏结束！</div>
-      <div class="game-over-score">得分：<span id="dodge-final-score">0</span></div>
-      <div class="game-over-best" id="dodge-best-text"></div>
-      <button class="game-start-btn" onclick="startDodge()">再玩一次</button>
+    <div id="dodge-over" style="display:none" class="flex flex-col items-center gap-3">
+      <div class="text-5xl">💥</div>
+      <h2 class="font-display font-bold text-2xl text-on-surface">游戏结束！</h2>
+      <p class="font-display font-bold text-xl text-primary">得分：<span id="dodge-final-score">0</span></p>
+      <p class="text-sm text-on-surface-variant" id="dodge-best-text"></p>
+      <button onclick="startDodge()" class="bg-primary text-white px-10 py-4 rounded-2xl font-display font-bold text-lg squishy soft-pop">再玩一次</button>
     </div>
   </div>
 </div>
 
 <!-- MEMORY GAME -->
 <div class="game-screen" id="game-memory">
-  <div class="game-header">
-    <div class="game-title">🃏 记忆配对</div>
-    <div class="game-score">步数：<span id="memory-moves">0</span></div>
-    <button class="game-exit" onclick="exitGame('memory')">退出</button>
+  <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant">
+    <div class="font-display font-bold text-lg text-on-surface">🃏 记忆配对</div>
+    <div class="font-display font-bold text-primary">步数：<span id="memory-moves">0</span></div>
+    <button onclick="exitGame('memory')" class="bg-surface-container px-4 py-2 rounded-full text-sm font-bold text-on-surface-variant squishy">退出</button>
   </div>
-  <div class="game-body">
-    <div id="memory-start" class="game-start-overlay">
-      <div style="font-size:60px;">🃏</div>
-      <div class="game-start-title">记忆配对</div>
-      <div class="game-start-sub">翻开卡片找到配对<br>步数越少分数越高！</div>
-      <button class="game-start-btn" onclick="startMemory()">开始游戏</button>
+  <div class="flex-1 flex flex-col items-center justify-center p-5 gap-4">
+    <div id="memory-start" class="flex flex-col items-center gap-4">
+      <div class="text-6xl">🃏</div>
+      <h2 class="font-display font-bold text-2xl text-on-surface">记忆配对</h2>
+      <p class="text-sm text-on-surface-variant text-center">翻开卡片找到配对<br>步数越少分数越高！</p>
+      <button onclick="startMemory()" class="bg-primary text-white px-10 py-4 rounded-2xl font-display font-bold text-lg squishy soft-pop">开始游戏</button>
     </div>
-    <div id="memory-game" style="display:none;flex-direction:column;align-items:center;gap:12px;width:100%;">
-      <div class="memory-info">
-        <div class="memory-stat"><div class="memory-stat-val" id="memory-pairs">0/8</div><div class="memory-stat-label">配对</div></div>
-        <div class="memory-stat"><div class="memory-stat-val" id="memory-moves-display">0</div><div class="memory-stat-label">步数</div></div>
-        <div class="memory-stat"><div class="memory-stat-val" id="memory-time">0</div><div class="memory-stat-label">秒</div></div>
+    <div id="memory-game" style="display:none" class="flex flex-col items-center gap-3 w-full">
+      <div class="flex gap-6">
+        <div class="text-center"><div class="font-display font-bold text-xl text-primary" id="memory-pairs">0/8</div><div class="text-xs text-on-surface-variant font-label">配对</div></div>
+        <div class="text-center"><div class="font-display font-bold text-xl text-primary" id="memory-moves-display">0</div><div class="text-xs text-on-surface-variant font-label">步数</div></div>
+        <div class="text-center"><div class="font-display font-bold text-xl text-primary" id="memory-time">0</div><div class="text-xs text-on-surface-variant font-label">秒</div></div>
       </div>
-      <div class="memory-grid" id="memory-grid"></div>
+      <div class="grid grid-cols-4 gap-2 w-full max-w-[320px]" id="memory-grid"></div>
     </div>
-    <div id="memory-over" class="game-over-overlay">
-      <div style="font-size:60px;">🎉</div>
-      <div class="game-over-title">配对完成！</div>
-      <div class="game-over-score">得分：<span id="memory-final-score">0</span></div>
-      <div class="game-over-best" id="memory-best-text"></div>
-      <button class="game-start-btn" onclick="startMemory()">再玩一次</button>
+    <div id="memory-over" style="display:none" class="flex flex-col items-center gap-3">
+      <div class="text-5xl">🎉</div>
+      <h2 class="font-display font-bold text-2xl text-on-surface">配对完成！</h2>
+      <p class="font-display font-bold text-xl text-primary">得分：<span id="memory-final-score">0</span></p>
+      <p class="text-sm text-on-surface-variant" id="memory-best-text"></p>
+      <button onclick="startMemory()" class="bg-primary text-white px-10 py-4 rounded-2xl font-display font-bold text-lg squishy soft-pop">再玩一次</button>
     </div>
   </div>
 </div>
 
 <!-- TAP GAME -->
 <div class="game-screen" id="game-tap">
-  <div class="game-header">
-    <div class="game-title">👆 快速点击</div>
-    <div class="game-score">点击：<span id="tap-score">0</span></div>
-    <button class="game-exit" onclick="exitGame('tap')">退出</button>
+  <div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant">
+    <div class="font-display font-bold text-lg text-on-surface">👆 快速点击</div>
+    <div class="font-display font-bold text-primary">点击：<span id="tap-score">0</span></div>
+    <button onclick="exitGame('tap')" class="bg-surface-container px-4 py-2 rounded-full text-sm font-bold text-on-surface-variant squishy">退出</button>
   </div>
-  <div class="game-body">
-    <div id="tap-start" class="game-start-overlay">
-      <div style="font-size:60px;">👆</div>
-      <div class="game-start-title">快速点击</div>
-      <div class="game-start-sub">10秒内尽量多点击<br>随机出现的宠物！</div>
-      <button class="game-start-btn" onclick="startTap()">开始游戏</button>
+  <div class="flex-1 flex flex-col items-center justify-center p-5 gap-4">
+    <div id="tap-start" class="flex flex-col items-center gap-4">
+      <div class="text-6xl">👆</div>
+      <h2 class="font-display font-bold text-2xl text-on-surface">快速点击</h2>
+      <p class="text-sm text-on-surface-variant text-center">10秒内尽量多点击<br>随机出现的宠物！</p>
+      <button onclick="startTap()" class="bg-primary text-white px-10 py-4 rounded-2xl font-display font-bold text-lg squishy soft-pop">开始游戏</button>
     </div>
-    <div id="tap-game" style="display:none;flex-direction:column;align-items:center;gap:12px;width:100%;">
-      <div class="tap-info">
-        <div class="memory-stat"><div class="tap-countdown" id="tap-timer">10</div><div class="memory-stat-label">剩余秒数</div></div>
-        <div class="memory-stat"><div class="memory-stat-val" id="tap-count" style="font-size:32px;">0</div><div class="memory-stat-label">点击次数</div></div>
+    <div id="tap-game" style="display:none" class="flex flex-col items-center gap-4 w-full">
+      <div class="flex gap-8">
+        <div class="text-center"><div class="font-display font-bold text-5xl text-primary" id="tap-timer">10</div><div class="text-xs text-on-surface-variant font-label">剩余秒数</div></div>
+        <div class="text-center"><div class="font-display font-bold text-4xl text-on-surface" id="tap-count">0</div><div class="text-xs text-on-surface-variant font-label">点击次数</div></div>
       </div>
-      <div class="tap-area" id="tap-area">
-        <div class="tap-target" id="tap-target">🐾</div>
-      </div>
+      <div class="tap-area" id="tap-area"><div class="tap-target" id="tap-target">🐾</div></div>
     </div>
-    <div id="tap-over" class="game-over-overlay">
-      <div style="font-size:60px;">🏆</div>
-      <div class="game-over-title">时间到！</div>
-      <div class="game-over-score">点击次数：<span id="tap-final-score">0</span></div>
-      <div class="game-over-best" id="tap-best-text"></div>
-      <button class="game-start-btn" onclick="startTap()">再玩一次</button>
+    <div id="tap-over" style="display:none" class="flex flex-col items-center gap-3">
+      <div class="text-5xl">🏆</div>
+      <h2 class="font-display font-bold text-2xl text-on-surface">时间到！</h2>
+      <p class="font-display font-bold text-xl text-primary">点击：<span id="tap-final-score">0</span>次</p>
+      <p class="text-sm text-on-surface-variant" id="tap-best-text"></p>
+      <button onclick="startTap()" class="bg-primary text-white px-10 py-4 rounded-2xl font-display font-bold text-lg squishy soft-pop">再玩一次</button>
     </div>
   </div>
 </div>
 
 <!-- Toast -->
-<div class="toast" id="toast"></div>
+<div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface px-5 py-3 rounded-full text-sm font-bold z-[500] hidden shadow-lg font-sans" style="--tw-text-opacity:1;color:#f6f0e7;"></div>
 
-<div class="nav-bar" id="nav-bar">
-  <button class="nav-item active"><div class="nav-icon">🎮</div>互动</button>
-  <a href="/wardrobe.html" class="nav-item"><div class="nav-icon">👗</div>衣橱</a>
-  <a href="/checkin.html" class="nav-item"><div class="nav-icon">📅</div>签到</a>
-  <a href="/milestone.html" class="nav-item"><div class="nav-icon">🏆</div>成长</a>
-  <a href="/profile.html" class="nav-item"><div class="nav-icon">👤</div>我的</a>
-</div>
+<!-- Nav Bar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-gutter pb-4 bg-surface-container-low shadow-[0_-4px_10px_rgba(2,103,127,0.08)] rounded-t-2xl" id="nav-bar">
+  <button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-105"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">home</span><span class="font-label text-[10px] font-bold">互动</span></button>
+  <a href="/wardrobe.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-primary-fixed transition-colors rounded-xl"><span class="material-symbols-outlined">styler</span><span class="font-label text-[10px] font-bold">衣橱</span></a>
+  <a href="/checkin.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-primary-fixed transition-colors rounded-xl"><span class="material-symbols-outlined">calendar_today</span><span class="font-label text-[10px] font-bold">签到</span></a>
+  <a href="/milestone.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-primary-fixed transition-colors rounded-xl"><span class="material-symbols-outlined">emoji_events</span><span class="font-label text-[10px] font-bold">成长</span></a>
+  <a href="/profile.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-primary-fixed transition-colors rounded-xl"><span class="material-symbols-outlined">person</span><span class="font-label text-[10px] font-bold">我的</span></a>
+</nav>
 
 <script>
-// State
-let pet = null;
-let chatHistory = [];
-let isSleeping = false;
-let isBathing = false;
-let bathItemsUsed = 0;
-const BATH_TOTAL = 6;
-let scores = JSON.parse(localStorage.getItem('pw_scores') || '{"dodge":0,"memory":0,"tap":0}');
-
-// Load pet from session
-window.addEventListener('load', () => {
-  const saved = localStorage.getItem('pw_session');
-  if (!saved) { window.location.href = '/'; return; }
-  try {
-    const s = JSON.parse(saved);
-    if (s.user && s.token) {
-      // Check if pet is missing owner
-      const lastVisit = localStorage.getItem('pw_last_visit');
-      const now = Date.now();
-      if (lastVisit && (now - parseInt(lastVisit)) > 24 * 3600 * 1000) {
-        localStorage.setItem('pw_last_visit', now.toString());
-        window.location.href = '/missing.html';
-        return;
-      }
-      localStorage.setItem('pw_last_visit', now.toString());
-      loadPet(s.token);
-      updateBestScores();
-      applyDailyBonus(s.token);
-    } else { window.location.href = '/'; }
-  } catch { window.location.href = '/'; }
-});
-
 async function applyDailyBonus(token) {
   const bonus = JSON.parse(localStorage.getItem('pw_daily_bonus') || '{}');
   if (!bonus.energy && !bonus.mood) return;
@@ -589,14 +517,24 @@ function renderAccessories() {
 
 function renderPet() {
   if (!pet) return;
-  document.getElementById('pet-arena-name').textContent = pet.name;
-  document.getElementById('pet-arena-level').textContent = 'Lv.' + pet.level;
+  document.getElementById('header-pet-name').textContent = pet.name;
+  document.getElementById('header-pet-level').textContent = 'Lv.' + pet.level;
+  // Update coins display
+  const wardrobe = JSON.parse(localStorage.getItem('pw_wardrobe') || '{}');
+  document.getElementById('header-coins').textContent = wardrobe.coins || 0;
   if (pet.cartoon_url) {
     const img = document.getElementById('pet-display-img');
     img.src = pet.cartoon_url;
     img.style.display = 'block';
     document.getElementById('pet-display-emoji').style.display = 'none';
     document.getElementById('tap-target').innerHTML = `<img src="${pet.cartoon_url}" style="width:70px;height:70px;object-fit:cover;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">`;
+    // Update header avatar
+    const av = document.getElementById('header-avatar');
+    const avImg = document.createElement('img');
+    avImg.src = pet.cartoon_url;
+    avImg.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+    av.innerHTML = '';
+    av.appendChild(avImg);
   }
   updateBars();
 }
@@ -638,8 +576,9 @@ function savePet() {
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.classList.add('visible');
-  setTimeout(() => t.classList.remove('visible'), 2000);
+  t.classList.remove('hidden');
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
 }
 
 // Play pet animation
@@ -667,10 +606,8 @@ function arenaTap(e) {
   pet.mood = Math.min(100, (pet.mood||80) + 2);
   pet.exp = (pet.exp||0) + 1;
   updateBars();
-  if (Math.random() < 0.25) {
-    const msgs = [`${pet.name}：嘿嘿，摸摸我！❤️`, `${pet.name}：再来一下！✨`, `${pet.name}：好舒服～😊`];
-    addChatMsg('pet', msgs[Math.floor(Math.random()*3)]);
-  }
+  const tapMsgs = ['嘿嘿，摸摸我！❤️','再来一下！✨','好舒服～😊','喜欢主人！💕'];
+  document.getElementById('speech-text').textContent = tapMsgs[Math.floor(Math.random()*tapMsgs.length)];
 }
 
 function spawnHeart(x, y) {
@@ -711,16 +648,16 @@ function startSleep() {
   isSleeping = true;
   const arena = document.getElementById('pet-arena');
   arena.classList.add('sleeping-mode');
-  document.getElementById('sleep-overlay').classList.add('visible');
+  document.getElementById('sleep-overlay').classList.remove('hidden'); document.getElementById('sleep-overlay').style.display='flex';
   document.getElementById('stars-container').style.display = 'block';
   document.getElementById('action-grid').style.display = 'none';
-  document.getElementById('wakeup-btn').classList.add('visible');
-  document.getElementById('nav-bar').classList.add('dark');
-  document.body.classList.add('sleeping');
-  document.getElementById('status-card').classList.add('sleeping-mode-card');
+  document.getElementById('wakeup-btn').classList.remove('hidden'); document.getElementById('wakeup-btn').style.display='flex';
+  document.getElementById('nav-bar').style.background='#1e293b';
+  
+  
   const img = document.getElementById('pet-display-img');
-  if (img.src) img.classList.add('sleeping');
-  addChatMsg('pet', `${pet?.name || '宠物'}：呼呼...💤 晚安主人...`);
+  if (img.src) { img.style.filter='brightness(0.6)'; img.style.animation='none'; }
+  document.getElementById('speech-text').textContent = '呼呼...💤 晚安主人...'; addChatMsg('pet', `${pet?.name || '宠物'}：呼呼...💤 晚安主人...`);
   // Slowly restore energy while sleeping
   window._sleepInterval = setInterval(() => {
     if (!pet || !isSleeping) return;
@@ -734,21 +671,21 @@ function wakeUp() {
   clearInterval(window._sleepInterval);
   const arena = document.getElementById('pet-arena');
   arena.classList.remove('sleeping-mode');
-  document.getElementById('sleep-overlay').classList.remove('visible');
+  document.getElementById('sleep-overlay').style.display='none';
   document.getElementById('stars-container').style.display = 'none';
   document.getElementById('action-grid').style.display = 'grid';
-  document.getElementById('wakeup-btn').classList.remove('visible');
-  document.getElementById('nav-bar').classList.remove('dark');
-  document.body.classList.remove('sleeping');
-  document.getElementById('status-card').classList.remove('sleeping-mode-card');
+  document.getElementById('wakeup-btn').style.display='none';
+  document.getElementById('nav-bar').style.background='';
+  
+  
   const img = document.getElementById('pet-display-img');
-  img.classList.remove('sleeping');
+  img.style.filter=''; img.style.animation='';
   if (pet) {
     pet.mood = Math.min(100, (pet.mood||80) + 10);
     updateBars();
     savePet();
   }
-  addChatMsg('pet', `${pet?.name || '宠物'}：早安主人！☀️ 睡得好香！`);
+  document.getElementById('speech-text').textContent = '早安主人！☀️ 睡得好香！'; addChatMsg('pet', `${pet?.name || '宠物'}：早安主人！☀️ 睡得好香！`);
   showToast('☀️ 宠物醒来啦！');
 }
 
@@ -760,9 +697,9 @@ function openBath() {
   document.getElementById('bath-progress').textContent = '0';
   document.querySelectorAll('.bath-item').forEach(el => el.classList.remove('bath-used'));
   document.getElementById('bath-modal').classList.add('visible');
-  document.getElementById('pet-arena').classList.add('bath-mode');
+  
   const img = document.getElementById('pet-display-img');
-  if (img.src) img.classList.add('in-bath');
+  
   addChatMsg('pet', `${pet?.name || '宠物'}：洗澡时间！🛁`);
 }
 
@@ -784,9 +721,9 @@ function useBathItem(el, emoji, name, hunger, energy, mood, id) {
 function endBath() {
   isBathing = false;
   closeModal('bath-modal');
-  document.getElementById('pet-arena').classList.remove('bath-mode');
+  
   const img = document.getElementById('pet-display-img');
-  img.classList.remove('in-bath');
+  
   if (pet && bathItemsUsed > 0) {
     pet.mood = Math.min(100, (pet.mood||80) + 5);
     savePet();
@@ -1058,7 +995,7 @@ function checkLevelUp() {
   if ((pet.exp||0) >= pet.level * 100) {
     pet.level = (pet.level||1) + 1;
     pet.exp = 0;
-    document.getElementById('pet-arena-level').textContent = 'Lv.' + pet.level;
+    document.getElementById('header-pet-level').textContent = 'Lv.' + (pet?.level||1);
     showToast('🎉 升级了！现在是 Lv.' + pet.level);
     addChatMsg('pet', `${pet.name}：我升级了！现在是 Lv.${pet.level}！🎉`);
   }
@@ -1069,10 +1006,10 @@ function addChatMsg(role, text) {
   const container = document.getElementById('chat-messages');
   const div = document.createElement('div');
   const isUser = role === 'user';
-  div.style.cssText = `display:flex;gap:8px;align-items:flex-end;${isUser?'flex-direction:row-reverse;':''}`;
+  div.style.cssText = `display:flex;gap:8px;align-items:flex-end;margin-bottom:4px;${isUser?'flex-direction:row-reverse;':''}`;
   div.innerHTML = isUser
-    ? `<div style="background:var(--orange);color:white;border-radius:14px 14px 4px 14px;padding:8px 12px;font-size:13px;max-width:75%;">${text}</div><div style="font-size:20px;">👤</div>`
-    : `<div style="font-size:20px;">🐾</div><div style="background:var(--gray-100);border-radius:14px 14px 14px 4px;padding:8px 12px;font-size:13px;max-width:75%;color:var(--gray-700);">${text}</div>`;
+    ? `<div style="background:#7ec8e3;color:#005468;border-radius:18px 18px 4px 18px;padding:8px 14px;font-size:13px;max-width:75%;font-family:'Be Vietnam Pro',sans-serif;">${text}</div><div style="font-size:18px;flex-shrink:0;">👤</div>`
+    : `<div style="font-size:18px;flex-shrink:0;">🐾</div><div style="background:#f9f3ea;border-radius:18px 18px 18px 4px;padding:8px 14px;font-size:13px;max-width:75%;color:#1d1b16;font-family:'Be Vietnam Pro',sans-serif;border:1px solid #bfc8cd;">${text}</div>`;
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
   if (role === 'assistant') chatHistory.push({ role: 'assistant', content: text });
@@ -1104,3 +1041,5 @@ async function sendChat() {
 </script>
 </body>
 </html>
+</script>
+</body></html>
