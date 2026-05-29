@@ -2,377 +2,260 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>PawWorld 🐾</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --orange: #F97316; --orange-light: #FFF7ED; --orange-mid: #FED7AA;
-    --purple: #8B5CF6; --purple-light: #EDE9FE;
-    --green: #10B981; --green-light: #ECFDF5;
-    --blue: #3B82F6; --blue-light: #EFF6FF;
-    --pink: #EC4899; --pink-light: #FDF2F8;
-    --gray-100: #F3F4F6; --gray-200: #E5E7EB; --gray-400: #9CA3AF;
-    --gray-600: #4B5563; --gray-700: #374151; --gray-800: #1F2937;
-    --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px; --radius-xl: 32px;
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Quicksand:wght@700&family=Be+Vietnam+Pro:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        "primary":"#02677f","primary-container":"#7ec8e3","on-primary":"#ffffff","on-primary-container":"#005468",
+        "primary-fixed":"#b7eaff","primary-fixed-dim":"#87d1ec",
+        "secondary":"#705d00","secondary-container":"#fdd73b","on-secondary-container":"#715d00",
+        "tertiary":"#2d6a44","tertiary-container":"#8dcc9f","on-tertiary-container":"#185834","tertiary-fixed":"#b0f1c2",
+        "surface":"#fff9f0","surface-bright":"#fff9f0","surface-container-low":"#f9f3ea",
+        "surface-container":"#f3ede4","surface-container-high":"#ede7df","surface-container-highest":"#e7e2d9",
+        "on-surface":"#1d1b16","on-surface-variant":"#3f484c",
+        "outline":"#6f787d","outline-variant":"#bfc8cd",
+      },
+      borderRadius:{"DEFAULT":"1rem","lg":"2rem","xl":"3rem","full":"9999px"},
+      spacing:{"xs":"4px","sm":"12px","md":"24px","lg":"40px","xl":"64px","gutter":"16px","container-padding":"20px"},
+      fontFamily:{"sans":["Be Vietnam Pro","sans-serif"],"display":["Plus Jakarta Sans","sans-serif"],"label":["Quicksand","sans-serif"]}
+    }
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Nunito', sans-serif; background: #FFF9F5; min-height: 100vh; }
-  body::before { content: ''; position: fixed; top: -120px; right: -120px; width: 400px; height: 400px; background: radial-gradient(circle, #FED7AA 0%, transparent 70%); z-index: 0; pointer-events: none; }
-  body::after { content: ''; position: fixed; bottom: -100px; left: -100px; width: 350px; height: 350px; background: radial-gradient(circle, #DDD6FE 0%, transparent 70%); z-index: 0; pointer-events: none; }
-  .page { position: relative; z-index: 1; max-width: 560px; margin: 0 auto; padding: 28px 20px 80px; display: none; }
-  .page.active { display: block; }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
-  @keyframes pop { 0% { transform:scale(1); } 50% { transform:scale(1.25); } 100% { transform:scale(1); } }
-  @keyframes floatUp { 0% { opacity:1; transform:translateY(0) scale(1); } 100% { opacity:0; transform:translateY(-70px) scale(0.5); } }
+}
+</script>
+<style>
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .soft-pop{box-shadow:inset 0 2px 4px rgba(255,255,255,0.4),0 4px 12px rgba(2,103,127,0.15);}
+  .squishy:active{transform:scale(0.95) translateY(2px);box-shadow:none!important;}
+  body{background-color:#fff9f0;min-height:100dvh;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pop{0%{transform:scale(0.8);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(-100px) rotate(720deg);opacity:0}}
+  .animate-float{animation:float 3s ease-in-out infinite;}
+  .animate-fade-up{animation:fadeUp 0.4s ease both;}
+</style>
 
-  .logo { font-family: 'Fredoka One', sans-serif; font-size: 36px; color: var(--orange); letter-spacing: 1px; }
-  .logo span { color: var(--purple); }
-
-  /* Auth page */
-  .auth-header { text-align: center; margin-bottom: 32px; animation: fadeUp 0.5s ease; }
-  .auth-tagline { font-size: 14px; color: var(--gray-600); margin-top: 6px; font-weight: 600; }
-  .auth-card { background: white; border-radius: var(--radius-xl); padding: 28px 24px; border: 1.5px solid var(--gray-200); animation: fadeUp 0.5s ease 0.1s both; }
-  .auth-tabs { display: flex; background: var(--gray-100); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 24px; }
-  .auth-tab { flex: 1; padding: 10px; text-align: center; font-family: 'Fredoka One', sans-serif; font-size: 15px; color: var(--gray-400); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
-  .auth-tab.active { background: white; color: var(--orange); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  .auth-form { display: flex; flex-direction: column; gap: 14px; }
-  .auth-input { width: 100%; background: var(--gray-100); border: 1.5px solid transparent; border-radius: var(--radius-sm); padding: 13px 16px; font-family: 'Nunito', sans-serif; font-size: 15px; color: var(--gray-800); outline: none; transition: all 0.2s; }
-  .auth-input:focus { background: white; border-color: var(--orange); }
-  .auth-input::placeholder { color: var(--gray-400); }
-  .auth-btn { background: var(--orange); color: white; border: none; border-radius: var(--radius-sm); padding: 15px; font-family: 'Fredoka One', sans-serif; font-size: 18px; cursor: pointer; transition: all 0.2s; margin-top: 4px; }
-  .auth-btn:hover { background: #EA6C0A; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(249,115,22,0.3); }
-  .auth-btn:disabled { background: var(--gray-400); cursor: not-allowed; transform: none; box-shadow: none; }
-  .auth-error { background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #DC2626; display: none; }
-  .auth-error.visible { display: block; }
-  .auth-success { background: var(--green-light); border: 1px solid #6EE7B7; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #065F46; display: none; }
-  .auth-success.visible { display: block; }
-
-  /* Nav bar */
-  .nav-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 560px; background: white; border-top: 1px solid var(--gray-200); display: flex; z-index: 100; }
-  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 14px; cursor: pointer; color: var(--gray-400); font-size: 10px; font-weight: 700; border: none; background: none; transition: color 0.2s; }
-  .nav-item.active { color: var(--orange); }
-  .nav-icon { font-size: 22px; }
-
-  /* Top bar */
-  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-  .user-badge { display: flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--gray-200); border-radius: 20px; padding: 6px 14px 6px 8px; }
-  .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--orange-light); display: flex; align-items: center; justify-content: center; font-size: 14px; }
-  .user-email { font-size: 12px; color: var(--gray-600); font-weight: 700; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .logout-btn { font-size: 12px; color: var(--gray-400); cursor: pointer; border: none; background: none; font-family: 'Nunito', sans-serif; font-weight: 700; }
-  .logout-btn:hover { color: var(--orange); }
-
-  /* Generate page */
-  .section-card { background: white; border-radius: var(--radius-xl); padding: 20px; margin-bottom: 16px; border: 1.5px solid var(--gray-200); animation: fadeUp 0.4s ease both; }
-  .section-title { font-family: 'Fredoka One', sans-serif; font-size: 16px; color: var(--gray-800); margin-bottom: 14px; }
-  .optional-badge { background: var(--gray-200); color: var(--gray-600); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; font-family: 'Nunito', sans-serif; margin-left: 6px; }
-  .upload-zone { border: 2px dashed var(--orange-mid); border-radius: var(--radius-lg); padding: 22px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s; }
-  .upload-zone:hover { border-color: var(--orange); background: var(--orange-light); }
-  .upload-zone.has-image { border-style: solid; border-color: var(--orange); background: var(--orange-light); padding: 14px; }
-  .upload-icon { width: 52px; height: 52px; background: var(--orange-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-  .upload-title { font-family: 'Fredoka One', sans-serif; font-size: 15px; color: var(--gray-800); }
-  .upload-sub { font-size: 12px; color: var(--gray-400); text-align: center; }
-  #file-input { display: none; }
-  .preview-wrap { display: none; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
-  .preview-wrap.visible { display: flex; }
-  .preview-img { width: 140px; height: 140px; object-fit: cover; border-radius: var(--radius-md); border: 3px solid var(--orange); }
-  .change-btn { background: none; border: 1.5px solid var(--gray-200); border-radius: 10px; padding: 5px 12px; font-family: 'Nunito', sans-serif; font-size: 12px; color: var(--gray-600); cursor: pointer; font-weight: 600; }
-  .or-divider { display: flex; align-items: center; gap: 10px; margin: 12px 0; }
-  .or-line { flex: 1; height: 1px; background: var(--gray-200); }
-  .or-text { font-size: 12px; color: var(--gray-400); font-weight: 700; }
-  .pet-input { width: 100%; background: var(--gray-100); border: 1.5px solid transparent; border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'Nunito', sans-serif; font-size: 15px; color: var(--gray-800); outline: none; transition: all 0.2s; }
-  .pet-input:focus { background: white; border-color: var(--orange); }
-  .pet-input::placeholder { color: var(--gray-400); }
-  .pet-textarea { width: 100%; background: var(--gray-100); border: 1.5px solid transparent; border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'Nunito', sans-serif; font-size: 14px; color: var(--gray-800); outline: none; transition: all 0.2s; resize: none; height: 82px; line-height: 1.6; }
-  .pet-textarea:focus { background: white; border-color: var(--orange); }
-  .pet-textarea::placeholder { color: var(--gray-400); }
-  .style-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .style-card { background: var(--gray-100); border: 2px solid transparent; border-radius: var(--radius-md); padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; }
-  .style-card:hover { background: var(--orange-light); transform: translateY(-2px); }
-  .style-card.selected { border-color: var(--orange); background: var(--orange-light); }
-  .style-emoji { font-size: 26px; }
-  .style-name { font-family: 'Fredoka One', sans-serif; font-size: 13px; color: var(--gray-700); }
-  .style-desc { font-size: 10px; color: var(--gray-400); text-align: center; }
-  .generate-btn { width: 100%; background: var(--orange); color: white; border: none; border-radius: var(--radius-md); padding: 17px; font-family: 'Fredoka One', sans-serif; font-size: 19px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
-  .generate-btn:hover { background: #EA6C0A; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(249,115,22,0.3); }
-  .loading-area { display: none; flex-direction: column; align-items: center; gap: 14px; padding: 50px 0; }
-  .loading-area.visible { display: flex; }
-  .loading-ring { width: 60px; height: 60px; border: 4px solid var(--orange-mid); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.9s linear infinite; }
-  .loading-text { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); }
-  .loading-steps { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 240px; }
-  .loading-step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--gray-400); font-weight: 600; transition: color 0.3s; }
-  .loading-step.active { color: var(--orange); }
-  .loading-step.done { color: var(--green); }
-  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gray-200); flex-shrink: 0; }
-  .loading-step.active .step-dot { background: var(--orange); }
-  .loading-step.done .step-dot { background: var(--green); }
-  .result-area { display: none; flex-direction: column; align-items: center; gap: 18px; }
-  .result-area.visible { display: flex; animation: fadeUp 0.5s ease; }
-  .result-title { font-family: 'Fredoka One', sans-serif; font-size: 24px; color: var(--gray-800); text-align: center; }
-  .result-images { display: grid; gap: 14px; width: 100%; }
-  .result-card { background: white; border-radius: var(--radius-lg); overflow: hidden; border: 2px solid var(--gray-200); }
-  .result-card.highlight { border-color: var(--orange); }
-  .result-card-img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; }
-  .result-card-label { padding: 8px 12px; font-size: 12px; font-weight: 700; color: var(--gray-600); text-align: center; }
-  .result-card.highlight .result-card-label { color: var(--orange); }
-  .result-desc { background: var(--orange-light); border-radius: var(--radius-md); padding: 14px; width: 100%; }
-  .result-desc-title { font-family: 'Fredoka One', sans-serif; font-size: 14px; color: var(--orange); margin-bottom: 6px; }
-  .result-desc-text { font-size: 13px; color: var(--gray-700); line-height: 1.7; }
-  .result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-  .result-btn { padding: 13px; border-radius: var(--radius-sm); font-family: 'Fredoka One', sans-serif; font-size: 15px; cursor: pointer; border: none; transition: all 0.2s; text-align: center; }
-  .result-btn.primary { background: var(--orange); color: white; }
-  .result-btn.secondary { background: white; color: var(--gray-700); border: 2px solid var(--gray-200); }
-  .result-btn.purple { background: var(--purple); color: white; }
-  .result-btn:hover { transform: translateY(-2px); }
-  .save-note { font-size: 12px; color: var(--green); font-weight: 700; text-align: center; }
-
-  /* Play page */
-  .play-arena { background: white; border-radius: var(--radius-xl); padding: 24px 20px; border: 1.5px solid var(--gray-200); margin-bottom: 16px; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; overflow: hidden; min-height: 220px; cursor: pointer; }
-  .play-pet-emoji { font-size: 90px; animation: float 3s ease-in-out infinite; user-select: none; transition: transform 0.15s; display: block; }
-  .play-pet-emoji:active { transform: scale(1.2) rotate(8deg); animation: none; }
-  .play-pet-name { font-family: 'Fredoka One', sans-serif; font-size: 18px; color: var(--gray-800); }
-  .play-pet-level { background: var(--purple-light); color: var(--purple); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
-  .play-pet-img { width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid var(--orange); animation: float 3s ease-in-out infinite; }
-
-  .status-card { background: white; border-radius: var(--radius-xl); padding: 18px 20px; border: 1.5px solid var(--gray-200); margin-bottom: 16px; }
-  .status-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-  .status-row:last-child { margin-bottom: 0; }
-  .status-icon { font-size: 18px; width: 24px; text-align: center; }
-  .status-bar-bg { flex: 1; height: 10px; background: var(--gray-100); border-radius: 10px; overflow: hidden; }
-  .status-bar-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
-  .fill-orange { background: var(--orange); }
-  .fill-purple { background: var(--purple); }
-  .fill-pink { background: var(--pink); }
-  .status-val { font-family: 'Fredoka One', sans-serif; font-size: 14px; color: var(--gray-700); width: 32px; text-align: right; }
-
-  .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
-  .action-btn { background: white; border: 1.5px solid var(--gray-200); border-radius: var(--radius-md); padding: 12px 6px; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; font-family: 'Nunito', sans-serif; font-size: 11px; color: var(--gray-600); font-weight: 700; transition: all 0.2s; }
-  .action-btn:hover { border-color: var(--orange); color: var(--orange); transform: translateY(-2px); background: var(--orange-light); }
-  .action-btn:active { transform: scale(0.95); }
-  .action-icon { font-size: 24px; }
-
-  .chat-card { background: white; border-radius: var(--radius-xl); padding: 16px; border: 1.5px solid var(--gray-200); }
-  .chat-messages { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; min-height: 80px; max-height: 200px; overflow-y: auto; }
-  .chat-msg { display: flex; gap: 8px; align-items: flex-end; }
-  .chat-msg.user { flex-direction: row-reverse; }
-  .chat-avatar { font-size: 22px; flex-shrink: 0; }
-  .chat-bubble { background: var(--gray-100); border-radius: 14px 14px 14px 4px; padding: 9px 13px; font-size: 13px; color: var(--gray-700); line-height: 1.5; max-width: 75%; }
-  .chat-msg.user .chat-bubble { background: var(--orange); color: white; border-radius: 14px 14px 4px 14px; }
-  .chat-input-row { display: flex; gap: 8px; }
-  .chat-input { flex: 1; background: var(--gray-100); border: 1.5px solid transparent; border-radius: 12px; padding: 10px 14px; font-family: 'Nunito', sans-serif; font-size: 14px; color: var(--gray-800); outline: none; transition: all 0.2s; }
-  .chat-input:focus { background: white; border-color: var(--orange); }
-  .chat-send { background: var(--orange); border: none; border-radius: 12px; padding: 10px 16px; color: white; font-size: 16px; cursor: pointer; transition: all 0.2s; font-family: 'Nunito', sans-serif; font-weight: 700; }
-  .chat-send:hover { background: #EA6C0A; }
-  .chat-typing { font-size: 12px; color: var(--gray-400); font-style: italic; display: none; }
-  .chat-typing.visible { display: block; }
-
-  .heart-float { position: absolute; pointer-events: none; font-size: 20px; animation: floatUp 1s ease-out forwards; }
-  .no-pet-msg { text-align: center; padding: 40px 20px; }
-  .no-pet-title { font-family: 'Fredoka One', sans-serif; font-size: 20px; color: var(--gray-700); margin-bottom: 10px; }
-  .no-pet-sub { font-size: 14px; color: var(--gray-400); margin-bottom: 20px; }
-  .no-pet-btn { background: var(--orange); color: white; border: none; border-radius: var(--radius-md); padding: 14px 28px; font-family: 'Fredoka One', sans-serif; font-size: 16px; cursor: pointer; }
-
-  .error-box { background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: var(--radius-md); padding: 14px; display: none; margin-top: 12px; }
-  .error-box.visible { display: block; }
-  .error-text { font-size: 13px; color: #DC2626; }
+<style>
+.sparkle-gradient{background:linear-gradient(135deg,#7ec8e3 0%,#02677f 100%);position:relative;overflow:hidden;}
+.sparkle-gradient::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,255,255,0.15) 0%,transparent 70%);animation:rotate 10s linear infinite;}
+@keyframes rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.glass-pod{background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);border:2px solid rgba(255,255,255,0.8);}
+.auth-input:focus{outline:none;border-color:#02677f;background:white;}
+/* Page system */
+.page{display:none;} .page.active{display:block;}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.page.active{animation:fadeUp 0.3s ease;}
 </style>
 </head>
-<body>
+<body class="font-sans text-on-surface min-h-screen">
 
-<!-- AUTH PAGE -->
+<!-- Background -->
+<div class="fixed inset-0 z-0 pointer-events-none" style="background:radial-gradient(ellipse at 15% 15%,#b7eaff 0%,transparent 45%),radial-gradient(ellipse at 85% 85%,#b0f1c2 0%,transparent 45%),radial-gradient(ellipse at 50% 50%,#fdd73b22 0%,transparent 70%),#fff9f0;"></div>
+
+<!-- ===== AUTH PAGE ===== -->
 <div class="page active" id="page-auth">
-  <div class="auth-header">
-    <div class="logo">Paw<span>World</span> 🐾</div>
-    <div class="auth-tagline">给你的宠物创建专属卡通形象</div>
-  </div>
-  <div class="auth-card">
-    <div class="auth-tabs">
-      <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">登录</div>
-      <div class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">注册</div>
+  <div class="relative z-10 min-h-screen flex flex-col items-center justify-center px-container-padding py-lg max-w-lg mx-auto">
+    <!-- Logo -->
+    <div class="text-center mb-lg animate-fade-up">
+      <div class="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center mx-auto mb-md soft-pop text-5xl">🐾</div>
+      <h1 class="font-display font-extrabold text-4xl text-primary tracking-tight">PawWorld</h1>
+      <p class="text-on-surface-variant mt-sm font-sans">给你的宠物创建专属卡通形象</p>
     </div>
-    <div class="auth-form">
-      <input class="auth-input" id="auth-email" type="email" placeholder="邮箱地址">
-      <input class="auth-input" id="auth-password" type="password" placeholder="密码（至少6位）">
-      <div class="auth-error" id="auth-error"></div>
-      <div class="auth-success" id="auth-success"></div>
-      <button class="auth-btn" id="auth-btn" onclick="doAuth()">登录</button>
+
+    <!-- Auth card -->
+    <div class="w-full bg-white/80 backdrop-blur rounded-2xl p-md soft-pop border border-white animate-fade-up" style="animation-delay:0.1s">
+      <!-- Tabs -->
+      <div class="flex bg-surface-container rounded-xl p-1 mb-md">
+        <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-lg font-display font-bold text-sm transition-all bg-white text-primary shadow-sm">登录</button>
+        <button id="tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2 rounded-lg font-display font-bold text-sm transition-all text-on-surface-variant">注册</button>
+      </div>
+      <div class="flex flex-col gap-sm">
+        <input id="auth-email" type="email" placeholder="邮箱地址" class="auth-input w-full bg-surface-container-low border-2 border-outline-variant rounded-xl px-md py-sm font-sans text-sm transition-all">
+        <input id="auth-password" type="password" placeholder="密码（至少6位）" class="auth-input w-full bg-surface-container-low border-2 border-outline-variant rounded-xl px-md py-sm font-sans text-sm transition-all">
+        <div id="auth-error" class="hidden bg-red-50 border border-red-200 rounded-xl px-md py-sm text-sm text-red-600"></div>
+        <div id="auth-success" class="hidden bg-tertiary-fixed border border-tertiary-container rounded-xl px-md py-sm text-sm text-tertiary"></div>
+        <button id="auth-btn" onclick="doAuth()" class="w-full py-md rounded-xl sparkle-gradient text-white font-display font-bold text-lg soft-pop squishy shadow-lg">登录</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- GENERATE PAGE -->
+<!-- ===== GENERATE PAGE ===== -->
 <div class="page" id="page-generate">
-  <div class="top-bar">
-    <div class="logo" style="font-size:24px;">Paw<span>World</span></div>
-    <div class="user-badge">
-      <div class="user-avatar">🐾</div>
-      <div class="user-email" id="user-email-display"></div>
-      <button class="logout-btn" onclick="doLogout()">退出</button>
+  <!-- Top bar -->
+  <header class="fixed top-0 w-full z-50 bg-surface-bright/80 backdrop-blur-md">
+    <div class="flex justify-between items-center px-container-padding py-sm w-full max-w-lg mx-auto">
+      <div class="flex items-center gap-sm">
+        <div id="gen-avatar" class="w-10 h-10 rounded-full bg-primary-container border-2 border-primary flex items-center justify-center text-lg overflow-hidden">🐾</div>
+        <h1 class="font-display font-extrabold text-xl text-primary">AI Pet Lab</h1>
+      </div>
+      <div class="flex items-center gap-sm">
+        <button onclick="doLogout()" class="text-xs text-on-surface-variant font-label font-bold bg-surface-container px-sm py-xs rounded-full">退出</button>
+      </div>
     </div>
-  </div>
+  </header>
 
-  <div id="gen-form">
-    <div class="section-card" style="animation-delay:0.05s">
-      <div class="section-title">🐾 宠物名字</div>
-      <input class="pet-input" id="pet-name" type="text" placeholder="例如：小橘、奶茶、豆豆..." maxlength="20">
-    </div>
-    <div class="section-card" style="animation-delay:0.1s">
-      <div class="section-title">📷 上传宠物照片 <span class="optional-badge">选填</span></div>
-      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
-        <input type="file" id="file-input" accept="image/*" onchange="onFileSelected(event)">
-        <div id="upload-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-          <div class="upload-icon">📷</div>
-          <div class="upload-title">点击或拖拽上传</div>
-          <div class="upload-sub">AI 会分析照片特征</div>
+  <div class="relative z-10 pt-20 pb-10 px-container-padding max-w-lg mx-auto">
+    <div id="gen-form">
+      <!-- Welcome -->
+      <div class="text-center mb-lg animate-fade-up">
+        <h2 class="font-display font-extrabold text-2xl text-primary">创建你的 AI 宠物</h2>
+        <p class="text-on-surface-variant text-sm mt-xs">上传照片，AI 帮你生成专属卡通形象！</p>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="glass-pod rounded-2xl p-md mb-md animate-fade-up relative overflow-hidden" style="animation-delay:0.05s">
+        <div class="absolute inset-0 pointer-events-none opacity-20">
+          <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary-container rounded-full blur-3xl"></div>
+          <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-tertiary-container rounded-full blur-3xl"></div>
         </div>
-        <div class="preview-wrap" id="preview-wrap">
-          <img class="preview-img" id="preview-img" src="" alt="预览">
-          <div style="font-size:12px;color:var(--green);font-weight:700;">✓ 照片已选择</div>
-          <button class="change-btn" onclick="event.stopPropagation();resetImage()">更换</button>
+        <div id="upload-content" class="flex flex-col items-center gap-md py-lg relative z-10 cursor-pointer" onclick="document.getElementById('file-input').click()">
+          <div class="w-20 h-20 bg-surface-container-highest rounded-full flex items-center justify-center soft-pop text-primary">
+            <span class="material-symbols-outlined text-[48px]">add_a_photo</span>
+          </div>
+          <div class="text-center">
+            <div class="font-display font-bold text-lg text-primary">上传宠物照片</div>
+            <div class="font-label text-xs text-on-surface-variant uppercase tracking-widest mt-1">JPG · PNG · HEIC · 选填</div>
+          </div>
+          <input id="file-input" type="file" accept="image/*" class="hidden" onchange="onFileSelected(event)">
+        </div>
+        <div id="preview-wrap" class="hidden flex-col items-center gap-sm relative z-10">
+          <img id="preview-img" src="" class="w-40 h-40 object-cover rounded-2xl border-3 border-primary soft-pop">
+          <div class="flex items-center gap-2 text-tertiary text-sm font-bold"><span class="material-symbols-outlined text-[18px]">check_circle</span>照片已选择</div>
+          <button onclick="resetImage()" class="text-xs text-on-surface-variant bg-surface-container px-sm py-xs rounded-full font-label font-bold">更换照片</button>
         </div>
       </div>
-      <div class="or-divider"><div class="or-line"></div><div class="or-text">或</div><div class="or-line"></div></div>
-      <div style="font-size:13px;font-weight:700;color:var(--gray-600);margin-bottom:8px;">✏️ 文字描述外貌 <span class="optional-badge">选填</span></div>
-      <textarea class="pet-textarea" id="pet-desc" placeholder="例如：白色博美犬，毛茸茸，大眼睛，超可爱..."></textarea>
-    </div>
-    <div class="section-card" style="animation-delay:0.15s">
-      <div class="section-title">🎨 卡通风格</div>
-      <div class="style-grid">
-        <div class="style-card selected" data-style="pixar" onclick="selectStyle(this)"><div class="style-emoji">🎬</div><div class="style-name">皮克斯风</div><div class="style-desc">迪士尼3D质感</div></div>
-        <div class="style-card" data-style="realistic3d" onclick="selectStyle(this)"><div class="style-emoji">💎</div><div class="style-name">写实3D</div><div class="style-desc">超真实毛发渲染</div></div>
-        <div class="style-card" data-style="chibi" onclick="selectStyle(this)"><div class="style-emoji">🌸</div><div class="style-name">Q版3D</div><div class="style-desc">圆润可爱3D感</div></div>
-      </div>
-    </div>
-    <button class="generate-btn" onclick="generate()">✨ 生成卡通形象</button>
-    <div class="error-box" id="gen-error"><div class="error-text" id="gen-error-text"></div></div>
-  </div>
 
-  <div class="loading-area" id="loading-area">
-    <div class="loading-ring"></div>
-    <div class="loading-text">AI 正在施展魔法...</div>
-    <div class="loading-steps">
-      <div class="loading-step active" id="step-1"><div class="step-dot"></div>分析宠物特征</div>
-      <div class="loading-step" id="step-2"><div class="step-dot"></div>生成卡通描述</div>
-      <div class="loading-step" id="step-3"><div class="step-dot"></div>AI 绘制卡通图</div>
-      <div class="loading-step" id="step-4"><div class="step-dot"></div>保存到账号</div>
-    </div>
-  </div>
+      <!-- Pet name -->
+      <div class="bg-white/80 backdrop-blur rounded-2xl p-md mb-md soft-pop border border-white animate-fade-up" style="animation-delay:0.1s">
+        <label class="font-display font-bold text-sm text-on-surface mb-sm block flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-primary">pets</span>宠物名字</label>
+        <input id="pet-name" type="text" placeholder="例如：小橘、奶茶、豆豆..." maxlength="20" class="auth-input w-full bg-surface-container-low border-2 border-outline-variant rounded-xl px-md py-sm font-sans text-sm transition-all">
+      </div>
 
-  <div class="result-area" id="result-area">
-    <div class="result-title" id="result-title">🎉 生成成功！</div>
-    <div class="result-images" id="result-images">
-      <div class="result-card" id="original-card" style="display:none;">
-        <img class="result-card-img" id="original-thumb" src="" alt="原图">
-        <div class="result-card-label">📷 原始照片</div>
+      <!-- Description -->
+      <div class="bg-white/80 backdrop-blur rounded-2xl p-md mb-md soft-pop border border-white animate-fade-up" style="animation-delay:0.12s">
+        <label class="font-display font-bold text-sm text-on-surface mb-sm block flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-secondary">edit_note</span>外貌描述 <span class="text-xs text-on-surface-variant font-label ml-1">选填</span></label>
+        <textarea id="pet-desc" placeholder="例如：白色博美犬，毛茸茸，大眼睛，超可爱..." rows="2" class="auth-input w-full bg-surface-container-low border-2 border-outline-variant rounded-xl px-md py-sm font-sans text-sm transition-all resize-none"></textarea>
       </div>
-      <div class="result-card highlight">
-        <img class="result-card-img" id="cartoon-img" src="" alt="卡通形象">
-        <div class="result-card-label">✨ AI 卡通形象</div>
+
+      <!-- Style selector -->
+      <div class="bg-white/80 backdrop-blur rounded-2xl p-md mb-lg soft-pop border border-white animate-fade-up" style="animation-delay:0.14s">
+        <label class="font-display font-bold text-sm text-on-surface mb-sm block flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-tertiary">palette</span>卡通风格</label>
+        <div class="grid grid-cols-3 gap-sm">
+          <div data-style="pixar" onclick="selectStyle(this)" class="style-card selected bg-primary-container/30 border-2 border-primary rounded-xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy transition-all">
+            <div class="text-2xl">🎬</div>
+            <div class="font-display font-bold text-xs text-on-surface">皮克斯风</div>
+            <div class="text-[10px] text-on-surface-variant font-label">迪士尼3D</div>
+          </div>
+          <div data-style="realistic3d" onclick="selectStyle(this)" class="style-card bg-surface-container border-2 border-transparent rounded-xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy transition-all hover:border-outline-variant">
+            <div class="text-2xl">💎</div>
+            <div class="font-display font-bold text-xs text-on-surface">写实3D</div>
+            <div class="text-[10px] text-on-surface-variant font-label">超真实毛发</div>
+          </div>
+          <div data-style="chibi" onclick="selectStyle(this)" class="style-card bg-surface-container border-2 border-transparent rounded-xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy transition-all hover:border-outline-variant">
+            <div class="text-2xl">🌸</div>
+            <div class="font-display font-bold text-xs text-on-surface">Q版3D</div>
+            <div class="text-[10px] text-on-surface-variant font-label">圆润可爱</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="gen-error" class="hidden bg-red-50 border border-red-200 rounded-xl px-md py-sm text-sm text-red-600 mb-md"></div>
+
+      <button onclick="generate()" class="w-full py-md rounded-2xl sparkle-gradient text-white font-display font-bold text-xl soft-pop squishy shadow-xl flex items-center justify-center gap-sm mb-sm animate-fade-up" style="animation-delay:0.16s">
+        <span>生成 AI 宠物</span>
+        <span class="material-symbols-outlined text-[28px]" style="font-variation-settings:'FILL' 1;">auto_awesome</span>
+      </button>
+      <p class="text-center text-xs text-on-surface-variant font-label">大约需要 30-60 秒</p>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading-area" class="hidden flex flex-col items-center gap-md py-xl">
+      <div class="w-16 h-16 rounded-full border-4 border-primary-container border-t-primary animate-spin"></div>
+      <div class="font-display font-bold text-xl text-on-surface">AI 正在施展魔法...</div>
+      <div class="flex flex-col gap-sm w-full max-w-xs">
+        <div id="step-1" class="flex items-center gap-sm text-sm text-on-surface-variant"><div class="w-2 h-2 rounded-full bg-outline-variant"></div>分析宠物特征</div>
+        <div id="step-2" class="flex items-center gap-sm text-sm text-on-surface-variant"><div class="w-2 h-2 rounded-full bg-outline-variant"></div>生成卡通描述</div>
+        <div id="step-3" class="flex items-center gap-sm text-sm text-on-surface-variant"><div class="w-2 h-2 rounded-full bg-outline-variant"></div>AI 绘制卡通图</div>
+        <div id="step-4" class="flex items-center gap-sm text-sm text-on-surface-variant"><div class="w-2 h-2 rounded-full bg-outline-variant"></div>保存到账号</div>
       </div>
     </div>
-    <div class="result-desc"><div class="result-desc-title">🐾 AI 的描述</div><div class="result-desc-text" id="result-desc-text"></div></div>
-    <div class="save-note" id="save-note"></div>
-    <div class="result-actions">
-      <button class="result-btn secondary" onclick="downloadImage()">⬇ 下载图片</button>
-      <button class="result-btn purple" onclick="resetGenerate()">🔄 重新生成</button>
+
+    <!-- Result -->
+    <div id="result-area" class="hidden flex-col items-center gap-md">
+      <h2 class="font-display font-extrabold text-2xl text-on-surface text-center" id="result-title">🎉 生成成功！</h2>
+      <div class="grid gap-md w-full" id="result-images">
+        <div id="original-card" class="hidden bg-white rounded-2xl overflow-hidden border-2 border-outline-variant soft-pop">
+          <img id="original-thumb" src="" class="w-full aspect-[2/3] object-cover">
+          <div class="py-sm text-center text-xs font-bold text-on-surface-variant font-label">📷 原始照片</div>
+        </div>
+        <div class="bg-white rounded-2xl overflow-hidden border-2 border-primary soft-pop">
+          <img id="cartoon-img" src="" class="w-full aspect-[2/3] object-cover">
+          <div class="py-sm text-center text-xs font-bold text-primary font-label">✨ AI 卡通形象</div>
+        </div>
+      </div>
+      <div class="w-full bg-secondary-container/30 rounded-2xl p-md">
+        <div class="font-display font-bold text-sm text-secondary mb-xs flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">auto_awesome</span>AI 的描述</div>
+        <div class="text-sm text-on-surface font-sans leading-relaxed" id="result-desc-text"></div>
+      </div>
+      <div class="font-label font-bold text-sm text-primary text-center" id="save-note"></div>
+      <div class="grid grid-cols-2 gap-sm w-full">
+        <button onclick="downloadImage()" class="py-md rounded-xl bg-surface-container text-on-surface-variant font-display font-bold squishy soft-pop flex items-center justify-center gap-1">
+          <span class="material-symbols-outlined text-[18px]">download</span>下载
+        </button>
+        <button onclick="resetGenerate()" class="py-md rounded-xl bg-primary-container text-on-primary-container font-display font-bold squishy soft-pop flex items-center justify-center gap-1">
+          <span class="material-symbols-outlined text-[18px]">refresh</span>重新生成
+        </button>
+      </div>
+      <button onclick="showConfirmSave()" class="w-full py-md rounded-2xl sparkle-gradient text-white font-display font-bold text-xl soft-pop squishy shadow-xl flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">save</span>
+        确认保存这个形象
+      </button>
+      <p class="text-xs text-on-surface-variant text-center font-label">⚠️ 保存后将无法更改宠物形象</p>
     </div>
-    <button class="result-btn primary" style="width:100%;margin-top:8px;font-size:18px;padding:16px;" onclick="showConfirmSave()">✅ 确认保存这个形象</button>
-    <div style="font-size:11px;color:var(--gray-400);text-align:center;margin-top:6px;">⚠️ 保存后将无法更改宠物形象</div>
   </div>
 </div>
 
-<!-- PLAY PAGE -->
+<!-- PLAY PAGE (minimal - just redirects) -->
 <div class="page" id="page-play">
-  <div class="top-bar">
-    <div class="logo" style="font-size:24px;">Paw<span>World</span></div>
-    <div class="user-badge">
-      <div class="user-avatar">🐾</div>
-      <div class="user-email" id="user-email-play"></div>
-    </div>
-  </div>
-
-  <div id="no-pet-msg" class="no-pet-msg" style="display:none;">
-    <div style="font-size:60px;margin-bottom:12px;">🐾</div>
-    <div class="no-pet-title">还没有宠物</div>
-    <div class="no-pet-sub">先去生成你的专属卡通宠物吧！</div>
-    <button class="no-pet-btn" onclick="switchPage('generate')">去生成 →</button>
-  </div>
-
-  <div id="pet-play-area" style="display:none;">
-    <div class="play-arena" id="play-arena" onclick="petTapped(event)">
-      <img id="play-cartoon-img" src="" alt="宠物" class="play-pet-img" style="display:none;">
-      <div id="play-pet-emoji" class="play-pet-emoji">🐾</div>
-      <div class="play-pet-name" id="play-pet-name">加载中...</div>
-      <div class="play-pet-level" id="play-pet-level">Lv.1</div>
-    </div>
-
-    <div class="status-card">
-      <div class="status-row">
-        <div class="status-icon">🍖</div>
-        <div class="status-bar-bg"><div class="status-bar-fill fill-orange" id="bar-hunger"></div></div>
-        <div class="status-val" id="val-hunger">80</div>
-      </div>
-      <div class="status-row">
-        <div class="status-icon">⚡</div>
-        <div class="status-bar-bg"><div class="status-bar-fill fill-purple" id="bar-energy"></div></div>
-        <div class="status-val" id="val-energy">80</div>
-      </div>
-      <div class="status-row">
-        <div class="status-icon">😊</div>
-        <div class="status-bar-bg"><div class="status-bar-fill fill-pink" id="bar-mood"></div></div>
-        <div class="status-val" id="val-mood">80</div>
-      </div>
-    </div>
-
-    <div class="action-grid">
-      <button class="action-btn" onclick="doAction('feed')"><div class="action-icon">🍖</div>喂食</button>
-      <button class="action-btn" onclick="doAction('play')"><div class="action-icon">🎾</div>玩耍</button>
-      <button class="action-btn" onclick="doAction('sleep')"><div class="action-icon">💤</div>休息</button>
-      <button class="action-btn" onclick="doAction('bath')"><div class="action-icon">🛁</div>洗澡</button>
-    </div>
-
-    <div class="chat-card">
-      <div class="chat-messages" id="chat-messages">
-        <div class="chat-msg">
-          <div class="chat-avatar" id="chat-avatar">🐾</div>
-          <div class="chat-bubble" id="welcome-msg">主人你好！我是你的宠物，点击我或者跟我说话吧！😊</div>
-        </div>
-      </div>
-      <div class="chat-typing" id="chat-typing">宠物正在回复...</div>
-      <div class="chat-input-row">
-        <input class="chat-input" id="chat-input" placeholder="跟你的宠物说点什么..." onkeydown="if(event.key==='Enter')sendChat()">
-        <button class="chat-send" onclick="sendChat()">发送</button>
-      </div>
+  <div class="flex items-center justify-center min-h-screen">
+    <div class="text-center">
+      <div class="text-6xl mb-md">🐾</div>
+      <div class="font-display font-bold text-xl text-on-surface mb-sm" id="no-pet-msg-text">还没有宠物</div>
+      <div class="text-sm text-on-surface-variant mb-md">先去生成你的专属卡通宠物吧！</div>
+      <button onclick="switchPage('generate')" class="bg-primary text-white px-lg py-md rounded-2xl font-display font-bold squishy soft-pop">去生成 →</button>
     </div>
   </div>
 </div>
 
-<!-- CONFIRM SAVE MODAL -->
-<div id="confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center;">
-  <div style="background:white;border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:560px;animation:slideUp 0.3s ease;">
-    <div style="font-size:48px;text-align:center;margin-bottom:10px;" id="confirm-pet-emoji">🐾</div>
-    <div style="font-family:Fredoka One,sans-serif;font-size:20px;color:#1F2937;text-align:center;margin-bottom:6px;" id="confirm-pet-name"></div>
-    <div style="font-size:13px;color:#9CA3AF;text-align:center;margin-bottom:20px;line-height:1.6;">确定要保存这个形象和名字吗？<br><strong style="color:#F97316;">保存后将无法更改形象</strong>，请确认满意再保存！</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <button onclick="closeConfirm()" style="padding:14px;border-radius:12px;border:2px solid #E5E7EB;background:white;font-family:Fredoka One,sans-serif;font-size:16px;cursor:pointer;color:#374151;">再想想</button>
-      <button onclick="confirmSave()" id="confirm-save-btn" style="padding:14px;border-radius:12px;border:none;background:#F97316;color:white;font-family:Fredoka One,sans-serif;font-size:16px;cursor:pointer;">确认保存！</button>
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 z-[200] flex items-end justify-center">
+  <div class="bg-white rounded-t-3xl p-md pb-10 w-full max-w-lg" style="animation:slideUp 0.3s ease">
+    <div class="text-5xl text-center mb-sm">🐾</div>
+    <h3 class="font-display font-bold text-xl text-on-surface text-center mb-sm" id="confirm-pet-name"></h3>
+    <p class="text-sm text-on-surface-variant text-center mb-md leading-relaxed">确定要保存这个形象和名字吗？<br><strong class="text-primary">保存后将无法更改形象</strong>，请确认满意再保存！</p>
+    <div class="grid grid-cols-2 gap-sm">
+      <button onclick="closeConfirm()" class="py-md rounded-xl bg-surface-container text-on-surface-variant font-display font-bold squishy">再想想</button>
+      <button onclick="confirmSave()" id="confirm-save-btn" class="py-md rounded-xl sparkle-gradient text-white font-display font-bold squishy soft-pop">确认保存！</button>
     </div>
   </div>
 </div>
 
-<!-- NAV BAR -->
-<div class="nav-bar" id="nav-bar" style="display:none;">
-  <button class="nav-item" id="nav-generate" onclick="goToGenerate()" style="display:none;">
-    <div class="nav-icon">✨</div>新宠物
-  </button>
-  <button class="nav-item active" id="nav-play" onclick="switchPage('play')">
-    <div class="nav-icon">🎮</div>互动
-  </button>
-</div>
+<!-- NAV (hidden on auth page) -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-gutter pb-4 bg-surface-container-low shadow-[0_-4px_10px_rgba(2,103,127,0.08)] rounded-t-2xl" id="nav-bar" style="display:none;">
+  <button id="nav-generate" onclick="goToGenerate()" style="display:none;" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">add_circle</span><span class="font-label text-[10px] font-bold">新宠物</span></button>
+  <button id="nav-play" onclick="switchPage('play')" class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-105"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">home</span><span class="font-label text-[10px] font-bold">互动</span></button>
+</nav>
 
 <script>
+
 // State
 let currentUser = null;
 let currentPet = null;
@@ -919,6 +802,128 @@ async function sendChat() {
     addChatMsg('pet', `${currentPet.name}：主人，我现在说不了话...🥺`);
   }
 }
+
+
+// Override style card selection for new design
+function selectStyle(el) {
+  document.querySelectorAll('.style-card').forEach(c => {
+    c.classList.remove('bg-primary-container/30','border-primary','selected');
+    c.classList.add('bg-surface-container','border-transparent');
+  });
+  el.classList.remove('bg-surface-container','border-transparent');
+  el.classList.add('bg-primary-container/30','border-primary','selected');
+  selectedStyle = el.dataset.style;
+}
+
+// Override setStep for new loading UI
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('step-' + i);
+    if (!el) continue;
+    const dot = el.querySelector('div');
+    if (i < n) { dot.className = 'w-2 h-2 rounded-full bg-tertiary'; el.className = 'flex items-center gap-sm text-sm text-tertiary font-bold'; }
+    else if (i === n) { dot.className = 'w-2 h-2 rounded-full bg-primary animate-pulse'; el.className = 'flex items-center gap-sm text-sm text-primary font-bold'; }
+    else { dot.className = 'w-2 h-2 rounded-full bg-outline-variant'; el.className = 'flex items-center gap-sm text-sm text-on-surface-variant'; }
+  }
+}
+
+// Override showMainApp
+function showMainApp() {
+  document.getElementById('nav-bar').style.display = 'flex';
+  document.getElementById('user-email-display') && (document.getElementById('user-email-display').textContent = currentUser.email);
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-generate').classList.add('active');
+}
+
+// Override auth tabs
+function switchAuthTab(tab) {
+  const loginBtn = document.getElementById('tab-login');
+  const signupBtn = document.getElementById('tab-signup');
+  if (tab === 'login') {
+    loginBtn.className = 'flex-1 py-2 rounded-lg font-display font-bold text-sm transition-all bg-white text-primary shadow-sm';
+    signupBtn.className = 'flex-1 py-2 rounded-lg font-display font-bold text-sm transition-all text-on-surface-variant';
+  } else {
+    signupBtn.className = 'flex-1 py-2 rounded-lg font-display font-bold text-sm transition-all bg-white text-primary shadow-sm';
+    loginBtn.className = 'flex-1 py-2 rounded-lg font-display font-bold text-sm transition-all text-on-surface-variant';
+  }
+  document.getElementById('auth-btn').textContent = tab === 'login' ? '登录' : '注册';
+  document.getElementById('auth-error').classList.add('hidden');
+  document.getElementById('auth-success').classList.add('hidden');
+}
+
+// Override auth error/success display
+const origDoAuth = doAuth;
+async function doAuth() {
+  const btn = document.getElementById('auth-btn');
+  const errEl = document.getElementById('auth-error');
+  const sucEl = document.getElementById('auth-success');
+  errEl.classList.add('hidden');
+  sucEl.classList.add('hidden');
+  const action = document.getElementById('tab-login').classList.contains('text-primary') ? 'login' : 'signup';
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value.trim();
+  if (!email || !password) { errEl.textContent='请填写邮箱和密码'; errEl.classList.remove('hidden'); return; }
+  if (password.length < 6) { errEl.textContent='密码至少需要6位'; errEl.classList.remove('hidden'); return; }
+  btn.disabled = true; btn.textContent = '处理中...';
+  try {
+    const res = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action,email,password}) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '操作失败');
+    if (action === 'signup') { sucEl.textContent='注册成功！请检查邮箱确认后再登录。'; sucEl.classList.remove('hidden'); }
+    else {
+      currentUser = data.user; currentUser.token = data.access_token;
+      currentUser.id = getUserIdFromToken(data.access_token) || data.user.id || data.user.sub;
+      localStorage.setItem('pw_session', JSON.stringify({user:data.user,token:data.access_token}));
+      showMainApp(); loadPet();
+    }
+  } catch(err) { errEl.textContent=err.message; errEl.classList.remove('hidden'); }
+  finally { btn.disabled=false; btn.textContent=action==='login'?'登录':'注册'; }
+}
+
+// Override result display
+function showResult(data) {
+  document.getElementById('loading-area').classList.add('hidden');
+  document.getElementById('result-area').classList.remove('hidden');
+  document.getElementById('result-area').style.display = 'flex';
+}
+
+// Override confirm modal
+function showConfirmSave() {
+  if (!window._pendingPet) return;
+  document.getElementById('confirm-pet-name').textContent = window._pendingPet.petName;
+  document.getElementById('confirm-modal').classList.remove('hidden');
+}
+function closeConfirm() { document.getElementById('confirm-modal').classList.add('hidden'); }
+
+// Override loading/result areas show/hide
+function showLoading() {
+  document.getElementById('gen-form').style.display = 'none';
+  document.getElementById('loading-area').classList.remove('hidden');
+  document.getElementById('loading-area').style.display = 'flex';
+  document.getElementById('result-area').classList.add('hidden');
+  document.getElementById('result-area').style.display = 'none';
+}
+
+// Fix generate to use correct show/hide with new class names
+window.addEventListener('DOMContentLoaded', () => {
+  // Patch loading area show
+  const origGen = window.generate;
+  if (origGen) {
+    window.generate = async function() {
+      document.getElementById('gen-form').style.display = 'none';
+      document.getElementById('loading-area').classList.remove('hidden');
+      document.getElementById('loading-area').style.display = 'flex';
+      document.getElementById('result-area').style.display = 'none';
+      document.getElementById('gen-error').classList.add('hidden');
+      try { await origGen.call(this); }
+      catch(e) {
+        document.getElementById('loading-area').classList.add('hidden');
+        document.getElementById('gen-form').style.display = '';
+        document.getElementById('gen-error').textContent = e.message;
+        document.getElementById('gen-error').classList.remove('hidden');
+      }
+    };
+  }
+});
 </script>
-</body>
-</html>
+</body></html>
