@@ -559,24 +559,27 @@ function renderAccessories() {
   };
   const BG_EMOJIS = { bg_heart:'💕', bg_snow:'❄️', bg_rainbow:'🌈', bg_night:'⭐', bg_space:'🚀', bg_fire:'🔥' };
 
-  const setEl = (id, html, display) => {
+  const setAcc = (id, item, w, h) => {
     const el = document.getElementById(id);
     if (!el) return;
-    if (display) { el.innerHTML = html; el.style.display = 'block'; }
-    else { el.style.display = 'none'; el.innerHTML = ''; }
+    if (item && item.svg) {
+      const svg = item.svg.replace(/width="[^"]*"/, 'width="'+w+'"').replace(/height="[^"]*"/, 'height="'+h+'"');
+      el.innerHTML = '<div style="width:'+w+'px;height:'+h+'px;overflow:visible;">'+svg+'</div>';
+      el.style.display = 'block';
+    } else { el.style.display = 'none'; el.innerHTML = ''; }
   };
 
-  // Hat
+  // Hat - 88x88
   const hatItem = ITEMS.find(i=>i.id===equipped.hat);
-  setEl('play-acc-hat', hatItem ? hatItem.svg : '', !!hatItem);
+  setAcc('play-acc-hat', hatItem, 88, 88);
 
-  // Glasses
+  // Glasses - 68x33
   const glItem = ITEMS.find(i=>i.id===equipped.glasses);
-  setEl('play-acc-glasses', glItem ? glItem.svg : '', !!glItem);
+  setAcc('play-acc-glasses', glItem, 68, 33);
 
-  // Neck
+  // Neck - 80x44
   const nkItem = ITEMS.find(i=>i.id===equipped.neck);
-  setEl('play-acc-neck', nkItem ? nkItem.svg : '', !!nkItem);
+  setAcc('play-acc-neck', nkItem, 80, 44);
 
   // Background - disabled for now
   const bgEl2 = document.getElementById('play-acc-bg');
