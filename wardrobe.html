@@ -40,7 +40,7 @@
   .preview-card { background: white; border-radius: var(--radius-lg); padding: 20px; border: 1.5px solid var(--gray-200); display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 14px; animation: fadeUp 0.4s ease 0.05s both; position: relative; overflow: hidden; }
   .preview-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, #FFF7ED 0%, #EDE9FE 100%); opacity: 0.4; }
   .pet-preview-wrap { position: relative; width: 140px; height: 210px; animation: float 3s ease-in-out infinite; overflow: visible; }
-  .pet-preview-img { width: 140px; height: 210px; object-fit: cover; object-position: center top; border-radius: 17px; border: 3px solid var(--orange); position: relative; z-index: 2; background: transparent; }
+  .pet-preview-img { width: 140px; height: 210px; object-fit: cover; object-position: center top; border-radius: 17px; border: 3px solid var(--orange); position: relative; z-index: 2; }
   .pet-preview-emoji { font-size: 80px; display: flex; align-items: center; justify-content: center; width: 140px; height: 210px; position: relative; z-index: 2; }
 
   /* Accessory overlay layers */
@@ -372,25 +372,22 @@ function renderEquipped() {
     }
   } else nkEl.style.display = 'none';
 
-  // Background - apply directly to pet image as box-shadow/outline trick
+  // Background
   const petWrap = document.getElementById('pet-preview-wrap');
-  const petImg = document.getElementById('pet-preview-img');
   const bgEl = document.getElementById('acc-bg');
   if (equipped.bg) {
     const item = ITEMS.find(i=>i.id===equipped.bg);
     if (item && item.bgStyle) {
-      petWrap.style.borderRadius = '20px';
       petWrap.style.overflow = 'hidden';
-      bgEl.style.cssText = 'position:absolute;top:0;left:0;width:140px;height:210px;z-index:0;border-radius:17px;display:block;background:'+item.bgStyle+';';
-      bgEl.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;opacity:0.2;">'+( item.bgEmoji||'')+'</div>';
-      if (petImg) petImg.style.position = 'relative';
+      petWrap.style.borderRadius = '20px';
+      bgEl.style.cssText = 'display:block;position:absolute;top:0;left:0;width:140px;height:210px;z-index:0;border-radius:17px;overflow:hidden;background:'+item.bgStyle+';pointer-events:none;';
+      bgEl.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;opacity:0.2;">'+(item.bgEmoji||'')+'</div>';
     }
   } else {
-    petWrap.style.borderRadius = '';
     petWrap.style.overflow = 'visible';
+    petWrap.style.borderRadius = '';
     bgEl.style.cssText = 'display:none;';
     bgEl.innerHTML = '';
-    if (petImg) petImg.style.position = 'relative';
   }
 
 
