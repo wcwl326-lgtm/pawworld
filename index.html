@@ -280,11 +280,11 @@ async function doAuth() {
   const password = document.getElementById('auth-password').value.trim();
   const errEl = document.getElementById('auth-error');
   const sucEl = document.getElementById('auth-success');
-  errEl.classList.remove('visible');
-  sucEl.classList.remove('visible');
+  if(errEl){errEl.classList.add('hidden');errEl.style.display='none';}
+  if(sucEl){sucEl.classList.add('hidden');sucEl.style.display='none';}
 
-  if (!email || !password) { errEl.textContent = '请填写邮箱和密码'; errEl.classList.add('visible'); return; }
-  if (password.length < 6) { errEl.textContent = '密码至少需要6位'; errEl.classList.add('visible'); return; }
+  if (!email || !password) { errEl.textContent = '请填写邮箱和密码'; if(errEl){errEl.classList.remove('hidden');errEl.style.display='block';} return; }
+  if (password.length < 6) { errEl.textContent = '密码至少需要6位'; if(errEl){errEl.classList.remove('hidden');errEl.style.display='block';} return; }
 
   const btn = document.getElementById('auth-btn');
   btn.disabled = true;
@@ -301,7 +301,7 @@ async function doAuth() {
 
     if (action === 'signup') {
       sucEl.textContent = '注册成功！请检查邮箱确认后再登录。';
-      sucEl.classList.add('visible');
+      if(sucEl){sucEl.classList.remove('hidden');sucEl.style.display='block';}
     } else {
       currentUser = data.user;
       currentUser.token = data.access_token;
@@ -450,14 +450,14 @@ async function generate() {
   const petDesc = document.getElementById('pet-desc')?.value?.trim() || '';
   const errEl = document.getElementById('gen-error');
   const errText = errEl; // use errEl directly
-  errEl.classList.remove('visible');
+  if(errEl){errEl.classList.add('hidden');errEl.style.display='none';}
 
-  if (!petName) { errText.textContent = '请填入宠物名字！'; errEl.classList.add('visible'); return; }
-  if (!selectedFile) { errText.textContent = '请上传宠物照片！'; errEl.classList.add('visible'); return; }
+  if (!petName) { errText.textContent = '请填入宠物名字！'; if(errEl){errEl.classList.remove('hidden');errEl.style.display='block';} return; }
+  if (!selectedFile) { errText.textContent = '请上传宠物照片！'; if(errEl){errEl.classList.remove('hidden');errEl.style.display='block';} return; }
 
   document.getElementById('gen-form').style.display = 'none';
-  document.getElementById('loading-area').classList.add('visible');
-  document.getElementById('result-area').classList.remove('visible');
+  document.getElementById('loading-area').classList.remove('hidden'); document.getElementById('loading-area').style.display='flex';
+  document.getElementById('result-area').classList.add('hidden'); document.getElementById('result-area').style.display='none';
 
   try {
     setStep(1);
@@ -509,7 +509,7 @@ async function generate() {
     }
 
     let imageUrl = null;
-    let description = initData.description || '';
+    let description = analyzeData.traits?.description_zh || '';
 
     // If imageUrl returned directly (sync mode)
     if (initData.imageUrl) {
@@ -539,8 +539,8 @@ async function generate() {
 
     setStep(4);
     // Show result — don't save yet, wait for confirmation
-    document.getElementById('loading-area').classList.remove('visible');
-    document.getElementById('result-area').classList.add('visible');
+    document.getElementById('loading-area').classList.add('hidden'); document.getElementById('loading-area').style.display='none';
+    document.getElementById('result-area').classList.remove('hidden'); document.getElementById('result-area').style.display='flex';
     document.getElementById('result-title').textContent = `🎉 ${petName} 的卡通形象来啦！`;
     document.getElementById('cartoon-img').src = data.imageUrl;
     document.getElementById('result-desc-text').textContent = data.description;
@@ -557,7 +557,7 @@ async function generate() {
     // Store pending data for confirmation
     window._pendingPet = { petName, petDesc: petDesc || data.description, imageUrl: data.imageUrl, avatarTraits: data.avatarTraits || window._pendingAvatarTraits || null };
   } catch (err) {
-    document.getElementById('loading-area').classList.remove('visible');
+    document.getElementById('loading-area').classList.add('hidden'); document.getElementById('loading-area').style.display='none';
     document.getElementById('gen-form').style.display = '';
     errText.textContent = err.message;
     if (errEl) { errEl.classList.remove('hidden'); errEl.style.display='block'; }
@@ -575,7 +575,7 @@ function downloadImage() {
 }
 
 function resetGenerate() {
-  document.getElementById('result-area').classList.remove('visible');
+  document.getElementById('result-area').classList.add('hidden'); document.getElementById('result-area').style.display='none';
   document.getElementById('gen-form').style.display = '';
   resetImage();
   generatedImageUrl = null;
