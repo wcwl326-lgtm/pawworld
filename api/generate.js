@@ -1,4 +1,8 @@
-export const config = { runtime: 'edge' };
+// Node.js runtime for longer timeout (60s vs 30s for Edge)
+export const config = {
+  runtime: 'nodejs',
+  maxDuration: 60
+};
 
 // ─────────────────────────────────────────────
 // Supported species whitelist
@@ -241,8 +245,12 @@ export default async function handler(req) {
   };
 
   // ── Step 3: Start Replicate prediction ──────
+  // Use AbortController for explicit timeout on initial call
+  const replicateController = new AbortController();
+  const replicateTimeout = setTimeout(() => replicateController.abort(), 25000);
   const replicateRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions', {
     method: 'POST',
+    signal: replicateController.signal,
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + REPLICATE_KEY,
@@ -260,6 +268,7 @@ export default async function handler(req) {
     })
   });
 
+  clearTimeout(replicateTimeout);
   if (!replicateRes.ok) {
     const err = await replicateRes.json();
     return new Response(JSON.stringify({ error: 'Replicate error: ' + (err.detail || JSON.stringify(err)) }), { status: 500 });
