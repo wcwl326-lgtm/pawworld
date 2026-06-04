@@ -80,17 +80,18 @@ If not supported, respond:
 function buildAvatarPrompt(traits, petName) {
   const { species, breed_display, appearance, morphology, description_en } = traits;
 
+  // Fixed Zootopia-style prompt — consistent across all pets
   const POSE = [
-    'standing upright on two legs like a human',
     'Zootopia Disney animation style',
-    '2D cartoon anthropomorphic character',
-    'full body visible',
+    'anthropomorphic animal character standing upright on two legs',
+    '2D cartoon illustration',
+    'full body visible from head to toe',
     'centered in frame',
+    'arms relaxed at sides',
+    'friendly happy expression',
     'pure white background #FFFFFF',
-    'facing directly toward camera',
-    'arms at sides',
-    'friendly expression',
-    'clean studio lighting'
+    'clean studio lighting',
+    'high quality Disney concept art'
   ].join(', ');
 
   const furDesc = [
