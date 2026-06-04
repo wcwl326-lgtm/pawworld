@@ -1,122 +1,65 @@
-// Node.js runtime for longer timeout (60s vs 30s for Edge)
-export const config = {
-  runtime: 'nodejs',
-  maxDuration: 60
-};
+// Node.js runtime
+export const config = { runtime: 'nodejs', maxDuration: 60 };
 
-// ─────────────────────────────────────────────
-// Supported species whitelist
-// ─────────────────────────────────────────────
 const SUPPORTED_SPECIES = ['dog', 'cat', 'rabbit', 'hamster', 'bird', 'turtle'];
 
-const SPECIES_NAMES_ZH = {
-  dog: '狗', cat: '猫', rabbit: '兔子',
-  hamster: '仓鼠', bird: '鸟', turtle: '乌龟'
-};
-
-// ─────────────────────────────────────────────
-// Claude prompt: Step 1 — Trait extraction
-// ─────────────────────────────────────────────
-function buildTraitPrompt(petName, petDesc) {
-  return `You are a pet trait extractor for a virtual pet app. Analyze the photo and/or description carefully.
+function buildTraitPrompt(petName) {
+  return `You are a pet trait extractor. Analyze this photo carefully.
 
 Pet name: "${petName}"
-${petDesc ? `Owner description: ${petDesc}` : ''}
 
-Your job has TWO parts:
+PART A: Check if the pet is one of: dog, cat, rabbit, hamster, bird, turtle.
+If NOT one of these 6, set "supported": false.
+If the image is not an animal, set "supported": false.
 
-PART A — Species validation:
-Determine if the pet belongs to one of these 6 supported species: dog, cat, rabbit, hamster, bird, turtle.
-If it does NOT belong to any of these 6, set "supported": false and stop.
-If the photo is not an animal at all, set "supported": false and stop.
-If the photo is unclear/blurry, still try your best but set "confidence" lower.
+PART B: If supported, extract traits.
 
-PART B — Trait extraction (only if supported):
-Extract detailed traits for future avatar system migration.
+Reply ONLY with valid JSON, no markdown:
 
-Respond ONLY with valid JSON, no markdown, no explanation:
+If supported:
+{"supported":true,"species":"dog","breed":"golden_retriever","breed_display":"金毛寻回犬","confidence":0.95,"morphology":{"ear_type":"floppy","tail_type":"long","body_size":"large","snout_length":"medium"},"appearance":{"fur_color_primary":"golden","fur_color_secondary":null,"fur_pattern":"solid","fur_length":"long","eye_color":"brown"},"personality_hints":["friendly","energetic"],"description_zh":"金色长毛金毛犬，垂耳长尾，眼神温柔","description_en":"Golden Retriever with golden long fur, floppy ears, long tail"}
 
-{
-  "supported": true,
-  "species": "dog",
-  "breed": "shiba_inu",
-  "breed_display": "柴犬",
-  "confidence": 0.92,
-  "morphology": {
-    "ear_type": "pointy",
-    "ear_size": "medium",
-    "tail_type": "curly",
-    "tail_length": "medium",
-    "body_size": "small",
-    "snout_length": "medium",
-    "face_shape": "round"
-  },
-  "appearance": {
-    "fur_color_primary": "brown",
-    "fur_color_secondary": "white",
-    "fur_color_accent": null,
-    "fur_pattern": "saddle",
-    "fur_length": "short",
-    "eye_color": "brown",
-    "nose_color": "black"
-  },
-  "personality_hints": ["energetic", "loyal", "playful"],
-  "description_zh": "棕白色柴犬，卷尾立耳，短毛，眼神灵动",
-  "description_en": "Shiba Inu with brown and white fur, curly tail, pointed ears, short coat"
+If not supported:
+{"supported":false,"detected":"lizard","message_zh":"抱歉，目前只支持狗、猫、兔子、仓鼠、鸟和乌龟 🐾"}`;
 }
 
-If not supported, respond:
-{
-  "supported": false,
-  "reason": "unsupported_species",
-  "detected": "what you saw (e.g. 'lizard', 'not an animal')",
-  "message_zh": "抱歉，目前只支持狗、猫、兔子、仓鼠、鸟和乌龟六种宠物 🐾"
-}`;
-}
-
-// ─────────────────────────────────────────────
-// Build Zootopia-style prompt from traits
-// ─────────────────────────────────────────────
-function buildAvatarPrompt(traits, petName) {
-  const { species, breed_display, appearance, morphology, description_en } = traits;
-
-  // Fixed Zootopia-style prompt — consistent across all pets
-  const POSE = [
-    'Zootopia Disney animation style',
-    'anthropomorphic animal character standing upright on two legs',
-    '2D cartoon illustration',
-    'full body visible from head to toe',
-    'centered in frame',
-    'arms relaxed at sides',
-    'friendly happy expression',
-    'pure white background #FFFFFF',
-    'clean studio lighting',
-    'high quality Disney concept art'
-  ].join(', ');
+function buildAvatarPrompt(traits) {
+  const { species, breed_display, appearance, morphology } = traits;
 
   const furDesc = [
     appearance.fur_color_primary,
     appearance.fur_color_secondary ? `and ${appearance.fur_color_secondary}` : '',
-    appearance.fur_pattern !== 'solid' ? `${appearance.fur_pattern} pattern` : '',
-    `${appearance.fur_length} fur`
+    appearance.fur_length ? `${appearance.fur_length} fur` : ''
   ].filter(Boolean).join(' ');
 
-  const morphDesc = [
-    morphology.ear_type === 'pointy' ? 'pointed upright ears' :
-    morphology.ear_type === 'floppy' ? 'floppy drooping ears' :
-    morphology.ear_type === 'round'  ? 'small round ears' : 'ears',
-    morphology.tail_type === 'curly' ? 'curled tail' :
-    morphology.tail_type === 'long'  ? 'long flowing tail' :
-    morphology.tail_type === 'short' ? 'short stubby tail' :
-    morphology.tail_type === 'none'  ? 'no tail' : 'tail'
-  ].join(', ');
+  const earDesc = morphology.ear_type === 'pointy' ? 'pointed ears' :
+                  morphology.ear_type === 'floppy' ? 'floppy ears' :
+                  morphology.ear_type === 'round'  ? 'round ears' : 'ears';
 
-  return `anthropomorphic ${species} character, ${breed_display || description_en}, ${furDesc}, ${morphDesc}, ${POSE}, high quality illustration, 4k`;
+  const tailDesc = morphology.tail_type === 'curly' ? 'curled tail' :
+                   morphology.tail_type === 'long'  ? 'long tail' :
+                   morphology.tail_type === 'short' ? 'short tail' :
+                   morphology.tail_type === 'none'  ? 'no tail' : 'tail';
+
+  return [
+    `anthropomorphic ${species} character`,
+    breed_display || '',
+    furDesc,
+    earDesc,
+    tailDesc,
+    'standing upright on two legs',
+    'Zootopia Disney animation style',
+    '2D cartoon illustration',
+    'full body head to toe',
+    'centered in frame',
+    'arms relaxed at sides',
+    'friendly expression',
+    'pure white background',
+    'clean studio lighting',
+    'high quality'
+  ].filter(Boolean).join(', ');
 }
 
-// ─────────────────────────────────────────────
-// Main handler
-// ─────────────────────────────────────────────
 export default async function handler(req) {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
@@ -133,181 +76,179 @@ export default async function handler(req) {
 
   let body;
   try { body = await req.json(); } catch {
-    return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400 });
+    return new Response(JSON.stringify({ error: 'Invalid body' }), { status: 400 });
   }
 
-  const { imageBase64, mediaType, petName, petDesc, style, pollId, userToken } = body;
+  const { imageBase64, mediaType, petName, pollId, userToken } = body;
 
-  // ── Poll mode ──────────────────────────────
+  // ── POLL MODE: just check Replicate status ──────────────────
+  // This is fast (<2s), no timeout risk
   if (pollId) {
-    const pollRes  = await fetch(`https://api.replicate.com/v1/predictions/${pollId}`, {
-      headers: { 'Authorization': 'Bearer ' + REPLICATE_KEY }
-    });
-    const pollData = await pollRes.json();
+    try {
+      const pollRes  = await fetch(`https://api.replicate.com/v1/predictions/${pollId}`, {
+        headers: { 'Authorization': 'Bearer ' + REPLICATE_KEY }
+      });
+      const pollData = await pollRes.json();
 
-    if (pollData.status === 'succeeded') {
-      const tempUrl = pollData.output?.[0];
-      if (!tempUrl) return new Response(JSON.stringify({ status: 'failed', error: '图片生成失败' }), { status: 500 });
-      const permanentUrl = await uploadToStorage(tempUrl, SUPABASE_URL, SUPABASE_KEY, userToken);
-      return new Response(JSON.stringify({ status: 'done', imageUrl: permanentUrl || tempUrl }), {
+      if (pollData.status === 'succeeded') {
+        const tempUrl = pollData.output?.[0];
+        if (!tempUrl) return new Response(JSON.stringify({ status: 'failed', error: '图片生成失败' }), { status: 500 });
+        const permanentUrl = await uploadToStorage(tempUrl, SUPABASE_URL, SUPABASE_KEY, userToken);
+        return new Response(JSON.stringify({ status: 'done', imageUrl: permanentUrl || tempUrl }), {
+          status: 200, headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      if (pollData.status === 'failed') {
+        return new Response(JSON.stringify({ status: 'failed', error: '图片生成失败，请重试' }), { status: 500 });
+      }
+      // still processing
+      return new Response(JSON.stringify({ status: 'pending' }), {
+        status: 200, headers: { 'Content-Type': 'application/json' }
+      });
+    } catch {
+      return new Response(JSON.stringify({ status: 'pending' }), {
         status: 200, headers: { 'Content-Type': 'application/json' }
       });
     }
-    if (pollData.status === 'failed') {
-      return new Response(JSON.stringify({ status: 'failed', error: pollData.error || '生成失败' }), { status: 500 });
-    }
-    return new Response(JSON.stringify({ status: 'pending' }), {
-      status: 200, headers: { 'Content-Type': 'application/json' }
-    });
   }
 
-  // ── Generate mode ──────────────────────────
+  // ── GENERATE MODE ───────────────────────────────────────────
   if (!petName) {
-    return new Response(JSON.stringify({ error: 'Missing petName' }), { status: 400 });
+    return new Response(JSON.stringify({ error: '请填写宠物名字' }), { status: 400 });
+  }
+  if (!imageBase64) {
+    return new Response(JSON.stringify({ error: '请上传宠物照片' }), { status: 400 });
   }
 
-  // ── Step 1: Claude extracts traits ─────────
-  const contentParts = [];
-  if (imageBase64 && mediaType) {
-    contentParts.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } });
-  }
-  contentParts.push({ type: 'text', text: buildTraitPrompt(petName, petDesc) });
-
-  const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 800,
-      messages: [{ role: 'user', content: contentParts }]
-    })
-  });
-
-  if (!claudeRes.ok) {
-    const err = await claudeRes.json();
-    return new Response(JSON.stringify({ error: 'Claude error: ' + (err.error?.message || claudeRes.status) }), { status: 500 });
-  }
-
-  const claudeData = await claudeRes.json();
-  let claudeText = claudeData.content[0].text.trim();
-
-  // Strip markdown code fences if present
-  claudeText = claudeText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+  // Step 1: Claude analyzes traits (~3-5s, well within timeout)
+  const contentParts = [
+    { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: imageBase64 } },
+    { type: 'text', text: buildTraitPrompt(petName) }
+  ];
 
   let traits;
   try {
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: contentParts }]
+      })
+    });
+
+    if (!claudeRes.ok) {
+      return new Response(JSON.stringify({ error: '特征识别失败，请重试' }), { status: 500 });
+    }
+
+    const claudeData = await claudeRes.json();
+    let claudeText = claudeData.content[0].text.trim()
+      .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+
     traits = JSON.parse(claudeText);
   } catch {
     return new Response(JSON.stringify({ error: '特征识别失败，请重试' }), { status: 500 });
   }
 
-  // ── Species validation ──────────────────────
+  // Species check
   if (!traits.supported) {
     return new Response(JSON.stringify({
       error: 'unsupported_species',
-      detected: traits.detected || 'unknown',
-      message: traits.message_zh || '抱歉，目前只支持狗、猫、兔子、仓鼠、鸟和乌龟六种宠物 🐾'
+      message: traits.message_zh || '抱歉，目前只支持狗、猫、兔子、仓鼠、鸟和乌龟 🐾'
     }), { status: 422 });
   }
-
-  // Double-check species against whitelist
   if (!SUPPORTED_SPECIES.includes(traits.species)) {
     return new Response(JSON.stringify({
       error: 'unsupported_species',
-      detected: traits.species,
-      message: '抱歉，目前只支持狗、猫、兔子、仓鼠、鸟和乌龟六种宠物 🐾'
+      message: '抱歉，目前只支持狗、猫、兔子、仓鼠、鸟和乌龟 🐾'
     }), { status: 422 });
   }
 
-  // ── Step 2: Build avatar prompt from traits ─
-  const fullPrompt = buildAvatarPrompt(traits, petName);
+  // Step 2: Start Replicate — fire and return predictionId immediately
+  // Replicate is async, frontend polls separately
+  const prompt = buildAvatarPrompt(traits);
 
-  // Save traits + prompt for future migration
   const avatarTraits = {
     schema_version: '1.0',
     avatar_version: 'ai_v1',
-    species:        traits.species,
-    breed:          traits.breed,
-    breed_display:  traits.breed_display,
-    confidence:     traits.confidence,
-    morphology:     traits.morphology,
-    appearance:     traits.appearance,
+    species:  traits.species,
+    breed:    traits.breed,
+    breed_display: traits.breed_display,
+    confidence: traits.confidence,
+    morphology: traits.morphology,
+    appearance: traits.appearance,
     personality_hints: traits.personality_hints || [],
     generation: {
-      generated_prompt: fullPrompt,
-      model:            'flux-dev',
-      style:            style || 'zootopia',
-      generated_at:     new Date().toISOString()
+      generated_prompt: prompt,
+      model: 'flux-dev',
+      style: 'zootopia',
+      generated_at: new Date().toISOString()
     }
   };
 
-  // ── Step 3: Start Replicate prediction ──────
-  // Use AbortController for explicit timeout on initial call
-  const replicateController = new AbortController();
-  const replicateTimeout = setTimeout(() => replicateController.abort(), 25000);
-  const replicateRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions', {
-    method: 'POST',
-    signal: replicateController.signal,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + REPLICATE_KEY,
-    },
-    body: JSON.stringify({
-      input: {
-        prompt:               fullPrompt,
-        num_outputs:          1,
-        aspect_ratio:         '2:3',
-        output_format:        'webp',
-        output_quality:       85,
-        num_inference_steps:  28,
-        guidance:             3.5
-      }
-    })
-  });
+  try {
+    const replicateRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': 'Bearer ' + REPLICATE_KEY,
+        'Prefer':        'respond-async' // tell Replicate to return immediately
+      },
+      body: JSON.stringify({
+        input: {
+          prompt,
+          num_outputs:         1,
+          aspect_ratio:        '2:3',
+          output_format:       'webp',
+          output_quality:      85,
+          num_inference_steps: 28,
+          guidance:            3.5
+        }
+      })
+    });
 
-  clearTimeout(replicateTimeout);
-  if (!replicateRes.ok) {
-    const err = await replicateRes.json();
-    return new Response(JSON.stringify({ error: 'Replicate error: ' + (err.detail || JSON.stringify(err)) }), { status: 500 });
-  }
+    if (!replicateRes.ok) {
+      const err = await replicateRes.json();
+      return new Response(JSON.stringify({ error: '图片生成启动失败，请重试' }), { status: 500 });
+    }
 
-  const replicateData = await replicateRes.json();
+    const replicateData = await replicateRes.json();
 
-  // If already done (sync mode)
-  if (replicateData.output?.[0]) {
-    const tempUrl      = replicateData.output[0];
-    const permanentUrl = await uploadToStorage(tempUrl, SUPABASE_URL, SUPABASE_KEY, userToken);
+    // If Replicate returned synchronously (rare)
+    if (replicateData.output?.[0]) {
+      const permanentUrl = await uploadToStorage(replicateData.output[0], SUPABASE_URL, SUPABASE_KEY, userToken);
+      return new Response(JSON.stringify({
+        status:       'done',
+        imageUrl:     permanentUrl || replicateData.output[0],
+        description:  traits.description_zh,
+        avatarTraits
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Normal: return predictionId for frontend polling
     return new Response(JSON.stringify({
-      status:       'done',
-      imageUrl:     permanentUrl || tempUrl,
+      status:       'pending',
+      predictionId: replicateData.id,
       description:  traits.description_zh,
-      avatarTraits  // return to frontend so pet.js can save it
+      avatarTraits
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-  }
 
-  // Async polling mode
-  return new Response(JSON.stringify({
-    status:       'pending',
-    predictionId: replicateData.id,
-    description:  traits.description_zh,
-    avatarTraits  // return early so frontend can save with pet record
-  }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  } catch {
+    return new Response(JSON.stringify({ error: '图片生成启动失败，请重试' }), { status: 500 });
+  }
 }
 
-// ─────────────────────────────────────────────
-// Upload to Supabase Storage
-// ─────────────────────────────────────────────
 async function uploadToStorage(tempUrl, supabaseUrl, supabaseKey, userToken) {
   try {
     const imgRes = await fetch(tempUrl);
     if (!imgRes.ok) return null;
     const imgBlob = await imgRes.arrayBuffer();
     const filename = `pets/${Date.now()}_${Math.random().toString(36).slice(2)}.webp`;
-
     const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/pet-images/${filename}`, {
       method: 'POST',
       headers: {
@@ -318,10 +259,7 @@ async function uploadToStorage(tempUrl, supabaseUrl, supabaseKey, userToken) {
       },
       body: imgBlob
     });
-
     if (!uploadRes.ok) return null;
     return `${supabaseUrl}/storage/v1/object/public/pet-images/${filename}`;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
