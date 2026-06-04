@@ -501,7 +501,14 @@ async function generate() {
       body: JSON.stringify({ imageBase64, mediaType, petName, petDesc, style: selectedStyle, userToken: currentUser?.token })
     });
     const initData = await initRes.json();
-    if (!initRes.ok) throw new Error(initData.error || '生成失败');
+    if (!initRes.ok) {
+      if (initRes.status === 422 && initData.error === 'unsupported_species') {
+        throw new Error(initData.message || '抱歉，目前只支持狗、猫、兔子、仓鼠、鸟和乌龟六种宠物 🐾');
+      }
+      throw new Error(initData.error || '生成失败，请重试');
+    }
+    // Store avatarTraits early (available from first response)
+    window._pendingAvatarTraits = initData.avatarTraits || null;
 
     setStep(3);
     let imageUrl = null;
@@ -551,7 +558,7 @@ async function generate() {
       document.getElementById('result-images').style.gridTemplateColumns = '1fr';
     }
     // Store pending data for confirmation
-    window._pendingPet = { petName, petDesc: petDesc || data.description, imageUrl: data.imageUrl };
+    window._pendingPet = { petName, petDesc: petDesc || data.description, imageUrl: data.imageUrl, avatarTraits: data.avatarTraits || window._pendingAvatarTraits || null };
   } catch (err) {
     document.getElementById('loading-area').classList.remove('visible');
     document.getElementById('gen-form').style.display = '';
@@ -721,7 +728,7 @@ async function confirmSave() {
   const btn = document.getElementById('confirm-save-btn');
   btn.textContent = '保存中...';
   btn.disabled = true;
-  const { petName, petDesc, imageUrl } = window._pendingPet;
+  const { petName, petDesc, imageUrl, avatarTraits } = window._pendingPet;
   try {
     const petRes = await fetch('/api/pet', {
       method: 'POST',
@@ -730,7 +737,9 @@ async function confirmSave() {
         user_id: currentUser.id || currentUser.sub,
         name: petName,
         description: petDesc,
-        cartoon_url: imageUrl,
+        cartoon_url:    imageUrl,
+        avatar_traits:  avatarTraits || null,
+        avatar_version: 'ai_v1',
         style: selectedStyle,
         hunger: 80, energy: 80, mood: 80, level: 1, exp: 0
       })
@@ -925,7 +934,7 @@ window.addEventListener('DOMContentLoaded', () => {
       catch(e) {
         document.getElementById('loading-area').classList.add('hidden');
         document.getElementById('gen-form').style.display = '';
-        document.getElementById('gen-error').textContent = e.message;
+        document.getElementById('gen-error').textContent = e.message?.includes('unsupported_species') ? '抱歉，目前只支持狗、猫、兔子、仓鼠、鸟和乌龟六种宠物 🐾' : (e.message || '生成失败，请重试');
         document.getElementById('gen-error').classList.remove('hidden');
       }
     };
