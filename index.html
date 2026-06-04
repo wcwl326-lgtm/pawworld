@@ -468,23 +468,46 @@ async function generate() {
       mediaType = selectedFile.type;
     }
 
+    // Step 1: Claude analyzes traits via /api/analyze (~3-5s)
     setStep(2);
+    const analyzeRes = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ imageBase64, mediaType, petName })
+    });
+    const analyzeData = await analyzeRes.json();
+    if (!analyzeRes.ok) {
+      if (analyzeRes.status === 422) {
+        throw new Error(analyzeData.message || '抱歉，目前只支持狗、猫、兔子、仓鼠、鸟和乌龟 🐾');
+      }
+      throw new Error(analyzeData.error || '特征识别失败，请重试');
+    }
+    const traits = analyzeData.traits;
+    window._pendingAvatarTraits = {
+      schema_version: '1.0',
+      avatar_version: 'ai_v1',
+      species:  traits.species,
+      breed:    traits.breed,
+      breed_display: traits.breed_display,
+      confidence: traits.confidence,
+      morphology: traits.morphology,
+      appearance: traits.appearance,
+      personality_hints: traits.personality_hints || [],
+      generation: { model: 'flux-dev', style: 'zootopia', generated_at: new Date().toISOString() }
+    };
+
+    // Step 2: Start Replicate generation via /api/generate (~1s to kick off)
+    setStep(3);
     const initRes = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64, mediaType, petName, style: 'zootopia', userToken: currentUser?.token })
+      body: JSON.stringify({ traits, petName, userToken: currentUser?.token })
     });
     const initData = await initRes.json();
     if (!initRes.ok) {
-      if (initRes.status === 422 && initData.error === 'unsupported_species') {
-        throw new Error(initData.message || '抱歉，目前只支持狗、猫、兔子、仓鼠、鸟和乌龟六种宠物 🐾');
-      }
-      throw new Error(initData.error || '生成失败，请重试');
+      throw new Error(initData.error || '图片生成启动失败，请重试');
     }
-    // Store avatarTraits early (available from first response)
-    window._pendingAvatarTraits = initData.avatarTraits || null;
 
-    setStep(3);
     let imageUrl = null;
     let description = initData.description || '';
 
@@ -500,7 +523,7 @@ async function generate() {
         const pollRes = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pollId: predictionId, petName, style: 'zootopia', userToken: currentUser?.token })
+          body: JSON.stringify({ pollId: predictionId, userToken: currentUser?.token })
         });
         const pollData = await pollRes.json();
         if (pollData.status === 'done' && pollData.imageUrl) {
