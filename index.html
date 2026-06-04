@@ -447,7 +447,7 @@ function setStep(n) {
 
 async function generate() {
   const petName = document.getElementById('pet-name').value.trim();
-  const petDesc = document.getElementById('pet-desc').value.trim();
+  const petDesc = document.getElementById('pet-desc')?.value?.trim() || '';
   const errEl = document.getElementById('gen-error');
   const errText = document.getElementById('gen-error-text');
   errEl.classList.remove('visible');
