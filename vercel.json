@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/generate.js": {
-      "maxDuration": 90
+      "maxDuration": 60
     },
     "api/pet.js": {
       "maxDuration": 30
