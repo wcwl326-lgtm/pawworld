@@ -414,6 +414,16 @@ tailwind.config = {
 </nav>
 
 <script>
+// ── State ──────────────────────────────────────────────
+let pet = null;
+let chatHistory = [];
+let isSleeping = false;
+let isBathing = false;
+let bathItemsUsed = 0;
+const BATH_TOTAL = 6;
+let scores = JSON.parse(localStorage.getItem('pw_scores') || '{"dodge":0,"memory":0,"tap":0}');
+// ───────────────────────────────────────────────────────
+
 window.addEventListener('load', () => {
   const saved = localStorage.getItem('pw_session');
   if (!saved) { window.location.href = '/'; return; }
@@ -1058,9 +1068,10 @@ async function sendChat() {
   const typing = document.getElementById('chat-typing');
   typing.style.display = 'block';
   try {
+    const sess = JSON.parse(localStorage.getItem('pw_session') || '{}');
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (sess.token || '') },
       body: JSON.stringify({ petName: pet.name, hunger: pet.hunger||80, energy: pet.energy||80, mood: pet.mood||80, message: msg, history: chatHistory.slice(-8) })
     });
     const data = await res.json();
@@ -1071,8 +1082,5 @@ async function sendChat() {
     addChatMsg('pet', `${pet.name}：主人，我现在说不了话...🥺`);
   }
 }
-</script>
-</body>
-</html>
 </script>
 </body></html>
