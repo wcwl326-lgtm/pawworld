@@ -116,7 +116,7 @@ tailwind.config = {
           <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary-container rounded-full blur-3xl"></div>
           <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-tertiary-container rounded-full blur-3xl"></div>
         </div>
-        <div id="upload-content" class="flex flex-col items-center gap-md py-lg relative z-10 cursor-pointer" onclick="document.getElementById('file-input').click()">
+        <div id="upload-placeholder" class="flex flex-col items-center gap-md py-lg relative z-10 cursor-pointer" onclick="document.getElementById('file-input').click()">
           <div class="w-20 h-20 bg-surface-container-highest rounded-full flex items-center justify-center soft-pop text-primary">
             <span class="material-symbols-outlined text-[48px]">add_a_photo</span>
           </div>
@@ -126,7 +126,7 @@ tailwind.config = {
           </div>
           <input id="file-input" type="file" accept="image/*" class="hidden" onchange="onFileSelected(event)">
         </div>
-        <div id="preview-wrap" class="hidden flex-col items-center gap-sm relative z-10">
+        <div id="preview-wrap" style="display:none;" class="flex-col items-center gap-sm relative z-10">
           <img id="preview-img" src="" class="w-40 h-40 object-cover rounded-2xl border-3 border-primary soft-pop">
           <div class="flex items-center gap-2 text-tertiary text-sm font-bold"><span class="material-symbols-outlined text-[18px]">check_circle</span>照片已选择</div>
           <button onclick="resetImage()" class="text-xs text-on-surface-variant bg-surface-container px-sm py-xs rounded-full font-label font-bold">更换照片</button>
@@ -442,17 +442,15 @@ function setPreview(file) {
     document.getElementById('preview-img').src = e.target.result;
     document.getElementById('original-thumb').src = e.target.result;
     document.getElementById('upload-placeholder').style.display = 'none';
-    document.getElementById('preview-wrap').classList.add('visible');
-    document.getElementById('upload-zone').classList.add('has-image');
+    document.getElementById('preview-wrap').style.display = 'flex';
   };
   reader.readAsDataURL(file);
 }
 function resetImage() {
   selectedFile = null;
   document.getElementById('file-input').value = '';
-  document.getElementById('preview-wrap').classList.remove('visible');
+  document.getElementById('preview-wrap').style.display = 'none';
   document.getElementById('upload-placeholder').style.display = '';
-  document.getElementById('upload-zone').classList.remove('has-image');
 }
 function onDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag-over'); }
 function onDragLeave(e) { document.getElementById('upload-zone').classList.remove('drag-over'); }
