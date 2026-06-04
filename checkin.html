@@ -4,14 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>PawWorld — 每日签到</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries">function showToast(msg) {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.remove('hidden');
-  setTimeout(() => t.classList.add('hidden'), 2500);
-}
-</script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Quicksand:wght@700&family=Be+Vietnam+Pro:wght@400&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <script>
@@ -237,8 +230,8 @@ function renderAll() {
 }
 
 function renderStreak() {
-  document.getElementById('streak-num').textContent = checkinData.streak;
-  document.getElementById('streak-best').textContent = checkinData.bestStreak + ' 天';
+  const snEl2 = document.getElementById('streak-num'); if(snEl2) snEl2.textContent = (checkinData.streak||0) + '天连签';
+  const sbEl = document.getElementById('streak-best'); if(sbEl) sbEl.textContent = (checkinData.bestStreak||0) + ' 天';
   const msgs = [
     '开始你的签到之旅！',
     '好的开始！继续加油！',
@@ -250,7 +243,7 @@ function renderStreak() {
     '🎉 连续一周！超厉害！',
   ];
   const msg = msgs[Math.min(checkinData.streak, msgs.length - 1)];
-  document.getElementById('streak-msg').textContent = msg;
+  const smEl = document.getElementById('streak-msg'); if(smEl) smEl.textContent = isCheckedToday() ? '好的开始！继续加油！' : '今天还没签到';
 }
 
 function renderTodayCard() {
@@ -259,27 +252,24 @@ function renderTodayCard() {
   document.getElementById('reward-name').textContent = reward.name;
   document.getElementById('reward-amount').textContent = reward.special ? '🎊 特别奖励！' : '';
 
+  const btn = document.getElementById('checkin-btn');
+  const nextEl = document.getElementById('next-checkin');
   if (isCheckedToday()) {
-    document.getElementById('checkin-btn').style.display = 'none';
-    document.getElementById('already-checked').style.display = 'block';
-    document.getElementById('next-checkin').style.display = 'block';
-    document.getElementById('next-checkin').textContent = `⏰ ${getTimeUntilMidnight()}后可再次签到`;
-    document.getElementById('already-checked-sub').textContent =
-      checkinData.streak >= 7 ? `🔥 已连续签到 ${checkinData.streak} 天，太厉害了！` :
-      `还差 ${7 - checkinData.streak % 7} 天领取大礼包！`;
+    if (btn) { btn.disabled=true; btn.innerHTML='<span class="material-symbols-outlined">check_circle</span><span>今日已签到 ✓</span>'; btn.style.opacity='0.6'; }
+    if (nextEl) nextEl.textContent = `⏰ ${getTimeUntilMidnight()}后可再次签到`;
+    const sub = document.getElementById('already-checked-sub');
+    if (sub) sub.textContent = checkinData.streak >= 7 ? `🔥 已连续签到 ${checkinData.streak} 天，太厉害了！` : `还差 ${7 - checkinData.streak % 7} 天领取大礼包！`;
   } else {
-    document.getElementById('checkin-btn').style.display = 'block';
-    document.getElementById('already-checked').style.display = 'none';
-    document.getElementById('next-checkin').style.display = 'none';
+    if (btn) { btn.disabled=false; btn.innerHTML='<span class="material-symbols-outlined">calendar_today</span><span>立即签到！</span>'; btn.style.opacity='1'; }
+    if (nextEl) nextEl.textContent='每日签到领取奖励';
   }
 }
 
 function renderCalendar() {
   const grid = document.getElementById('checkin-grid');
+  if (!grid) return;
   grid.innerHTML = '';
   const today = new Date();
-  const dayNames = ['日','一','二','三','四','五','六'];
-
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
@@ -288,14 +278,17 @@ function renderCalendar() {
     const isDone = checkinData.history.includes(dateStr);
     const rewardIdx = (checkinData.streak - i + 7) % 7;
     const reward = DAILY_REWARDS[Math.max(0, rewardIdx)];
-
     const div = document.createElement('div');
-    div.className = 'day-item';
-    const circleClass = isDone ? 'done' : isToday ? 'today' : i < 0 ? 'future' : '';
+    div.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px;';
+    let bg, border;
+    if (isDone) { bg='#8dcc9f'; border='#2d6a44'; }
+    else if (isToday) { bg='#7ec8e3'; border='#02677f'; }
+    else { bg='#f3ede4'; border='#bfc8cd'; }
     div.innerHTML = `
-      <div class="day-circle ${circleClass}">${isDone ? '✅' : isToday ? '📅' : reward.emoji}</div>
-      <div class="day-label">${dayNames[d.getDay()]}</div>
-      <div class="day-reward">${isDone ? '' : reward.type === 'coins' ? `+${reward.amount}` : reward.emoji}</div>
+      <div style="width:36px;height:36px;border-radius:12px;background:${bg};border:2px solid ${border};display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:inset 0 2px 4px rgba(255,255,255,0.4);">
+        ${isDone ? '✓' : isToday ? '★' : reward.emoji}
+      </div>
+      <div style="font-size:10px;color:#3f484c;font-family:'Quicksand',sans-serif;font-weight:700;">${isDone ? '' : reward.type==='coins' ? '+'+reward.amount : ''}</div>
     `;
     grid.appendChild(div);
   }
@@ -303,27 +296,26 @@ function renderCalendar() {
 
 function renderMilestones() {
   const list = document.getElementById('rewards-list');
+  if (!list) return;
   list.innerHTML = '';
   MILESTONES.forEach(m => {
     const achieved = checkinData.streak >= m.days;
     const claimed = checkinData.claimedMilestones?.includes(m.days);
-    const isCurrent = checkinData.streak >= m.days - 2 && checkinData.streak < m.days + 3;
-    const item = document.createElement('div');
-    item.className = 'milestone-item' + (achieved ? ' achieved' : isCurrent ? ' current' : '');
-    item.innerHTML = `
-      <div class="milestone-emoji">${m.emoji}</div>
-      <div class="milestone-info">
-        <div class="milestone-name">${m.name}</div>
-        <div class="milestone-days">连续签到 ${m.days} 天</div>
+    const div = document.createElement('div');
+    const bg = achieved ? 'background:#b0f1c2;border:1.5px solid #8dcc9f;' : 'background:#f3ede4;border:1.5px solid #bfc8cd;opacity:0.65;';
+    div.style.cssText = `display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;${bg}cursor:${achieved&&!claimed?'pointer':'default'};`;
+    div.innerHTML = `
+      <div style="font-size:26px;flex-shrink:0;">${m.emoji}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:13px;color:#1d1b16;">${m.name}</div>
+        <div style="font-size:11px;color:#3f484c;margin-top:2px;">连续签到 ${m.days} 天 · ${m.reward}</div>
       </div>
-      <div class="milestone-reward">${m.reward}</div>
-      <div class="milestone-check">${claimed ? '✅' : achieved ? '🎁' : checkinData.streak >= m.days - 3 ? '🔜' : '🔒'}</div>
-    `;
-    if (achieved && !claimed) {
-      item.style.cursor = 'pointer';
-      item.onclick = () => claimMilestone(m);
-    }
-    list.appendChild(item);
+      <div style="flex-shrink:0;">${
+        claimed ? '<span style="font-size:18px;">✅</span>' :
+        achieved ? `<button style="background:#02677f;color:white;border:none;border-radius:20px;padding:5px 12px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:11px;cursor:pointer;" onclick="claimMilestone(${JSON.stringify(m).replace(/"/g,'&quot;')})">领取</button>` :
+        `<span style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:11px;color:#6f787d;">${m.days}天</span>`
+      }</div>`;
+    list.appendChild(div);
   });
 }
 
@@ -441,11 +433,45 @@ function spawnConfetti() {
   }
 }
 
+// ── New design overrides ─────────────────────────────
+function renderMilestones() {
+  const list = document.getElementById('rewards-list');
+  if (!list) return;
+  list.innerHTML = '';
+  MILESTONES.forEach(m => {
+    const achieved = checkinData.streak >= m.days;
+    const claimed = checkinData.claimedMilestones?.includes(m.days);
+    const div = document.createElement('div');
+    const bg = achieved ? 'background:#b0f1c2;border:1px solid #8dcc9f;' : 'background:#f3ede4;border:1px solid #bfc8cd;opacity:0.7;';
+    div.style.cssText = `display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:16px;${bg}margin-bottom:8px;`;
+    div.innerHTML = `
+      <div style="font-size:28px;flex-shrink:0;">${m.emoji}</div>
+      <div style="flex:1;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;color:#1d1b16;">${m.name}</div>
+        <div style="font-size:11px;color:#3f484c;margin-top:2px;">连续签到 ${m.days} 天 · ${m.reward}</div>
+      </div>
+      <div style="flex-shrink:0;">
+        ${claimed ? '<span style="font-size:18px;">✅</span>'
+          : achieved ? `<button onclick="claimMilestone(${JSON.stringify(m).replace(/"/g,'&quot;')})" style="background:#02677f;color:white;border:none;border-radius:20px;padding:6px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:12px;cursor:pointer;">领取</button>`
+          : `<span style="font-family:'Quicksand',sans-serif;font-weight:700;font-size:11px;color:#3f484c;">${m.days}天</span>`}
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function renderHistory() {
+  // Not shown in new design - skip
+}
+// ────────────────────────────────────────────────────
+
 function showToast(msg) {
   const t = document.getElementById('toast');
+  if (!t) return;
   t.textContent = msg;
-  t.classList.add('visible');
-  setTimeout(() => t.classList.remove('visible'), 2500);
+  t.classList.remove('hidden');
+  t.style.display = 'block';
+  setTimeout(() => { t.classList.add('hidden'); t.style.display = 'none'; }, 2500);
 }
 
 </script>
