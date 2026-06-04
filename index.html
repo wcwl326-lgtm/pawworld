@@ -312,7 +312,7 @@ async function doAuth() {
     }
   } catch (err) {
     errEl.textContent = err.message;
-    errEl.classList.add('visible');
+    if (errEl) { errEl.classList.remove('hidden'); errEl.style.display='block'; }
   } finally {
     btn.disabled = false;
     btn.textContent = action === 'login' ? '登录' : '注册';
@@ -331,8 +331,8 @@ function doLogout() {
 
 function showMainApp() {
   document.getElementById('nav-bar').style.display = 'flex';
-  document.getElementById('user-email-display').textContent = currentUser.email;
-  document.getElementById('user-email-play').textContent = currentUser.email;
+  const ued = document.getElementById('user-email-display'); if(ued) ued.textContent = currentUser.email;
+  const uep = document.getElementById('user-email-play'); if(uep) uep.textContent = currentUser.email;
   // Default to generate page; loadPet() will redirect if pet exists
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-generate').classList.add('active');
@@ -449,7 +449,7 @@ async function generate() {
   const petName = document.getElementById('pet-name').value.trim();
   const petDesc = document.getElementById('pet-desc')?.value?.trim() || '';
   const errEl = document.getElementById('gen-error');
-  const errText = document.getElementById('gen-error-text');
+  const errText = errEl; // use errEl directly
   errEl.classList.remove('visible');
 
   if (!petName) { errText.textContent = '请填入宠物名字！'; errEl.classList.add('visible'); return; }
@@ -537,7 +537,7 @@ async function generate() {
     document.getElementById('loading-area').classList.remove('visible');
     document.getElementById('gen-form').style.display = '';
     errText.textContent = err.message;
-    errEl.classList.add('visible');
+    if (errEl) { errEl.classList.remove('hidden'); errEl.style.display='block'; }
   }
 }
 
