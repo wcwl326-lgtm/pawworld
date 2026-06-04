@@ -1,16 +1,9 @@
 {
   "functions": {
-    "api/generate.js": {
-      "maxDuration": 60
-    },
-    "api/pet.js": {
-      "maxDuration": 30
-    },
-    "api/chat.js": {
-      "maxDuration": 30
-    },
-    "api/auth.js": {
-      "maxDuration": 30
-    }
+    "api/analyze.js": { "maxDuration": 10 },
+    "api/generate.js": { "maxDuration": 10 },
+    "api/pet.js": { "maxDuration": 10 },
+    "api/chat.js": { "maxDuration": 10 },
+    "api/auth.js": { "maxDuration": 10 }
   }
 }
