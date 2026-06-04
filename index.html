@@ -107,7 +107,7 @@ tailwind.config = {
       <!-- Welcome -->
       <div class="text-center mb-lg animate-fade-up">
         <h2 class="font-display font-extrabold text-2xl text-primary">创建你的 AI 宠物</h2>
-        <p class="text-on-surface-variant text-sm mt-xs">上传照片，AI 帮你生成专属卡通形象！</p>
+        <p class="text-on-surface-variant text-sm mt-xs">上传宠物照片，AI 生成专属 Zootopia 风格拟人形象！</p>
       </div>
 
       <!-- Upload zone -->
@@ -139,33 +139,9 @@ tailwind.config = {
         <input id="pet-name" type="text" placeholder="例如：小橘、奶茶、豆豆..." maxlength="20" class="auth-input w-full bg-surface-container-low border-2 border-outline-variant rounded-xl px-md py-sm font-sans text-sm transition-all">
       </div>
 
-      <!-- Description -->
-      <div class="bg-white/80 backdrop-blur rounded-2xl p-md mb-md soft-pop border border-white animate-fade-up" style="animation-delay:0.12s">
-        <label class="font-display font-bold text-sm text-on-surface mb-sm block flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-secondary">edit_note</span>外貌描述 <span class="text-xs text-on-surface-variant font-label ml-1">选填</span></label>
-        <textarea id="pet-desc" placeholder="例如：白色博美犬，毛茸茸，大眼睛，超可爱..." rows="2" class="auth-input w-full bg-surface-container-low border-2 border-outline-variant rounded-xl px-md py-sm font-sans text-sm transition-all resize-none"></textarea>
-      </div>
 
-      <!-- Style selector -->
-      <div class="bg-white/80 backdrop-blur rounded-2xl p-md mb-lg soft-pop border border-white animate-fade-up" style="animation-delay:0.14s">
-        <label class="font-display font-bold text-sm text-on-surface mb-sm block flex items-center gap-1"><span class="material-symbols-outlined text-[18px] text-tertiary">palette</span>卡通风格</label>
-        <div class="grid grid-cols-3 gap-sm">
-          <div data-style="pixar" onclick="selectStyle(this)" class="style-card selected bg-primary-container/30 border-2 border-primary rounded-xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy transition-all">
-            <div class="text-2xl">🎬</div>
-            <div class="font-display font-bold text-xs text-on-surface">皮克斯风</div>
-            <div class="text-[10px] text-on-surface-variant font-label">迪士尼3D</div>
-          </div>
-          <div data-style="realistic3d" onclick="selectStyle(this)" class="style-card bg-surface-container border-2 border-transparent rounded-xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy transition-all hover:border-outline-variant">
-            <div class="text-2xl">💎</div>
-            <div class="font-display font-bold text-xs text-on-surface">写实3D</div>
-            <div class="text-[10px] text-on-surface-variant font-label">超真实毛发</div>
-          </div>
-          <div data-style="chibi" onclick="selectStyle(this)" class="style-card bg-surface-container border-2 border-transparent rounded-xl p-sm flex flex-col items-center gap-1 cursor-pointer squishy transition-all hover:border-outline-variant">
-            <div class="text-2xl">🌸</div>
-            <div class="font-display font-bold text-xs text-on-surface">Q版3D</div>
-            <div class="text-[10px] text-on-surface-variant font-label">圆润可爱</div>
-          </div>
-        </div>
-      </div>
+
+
 
       <div id="gen-error" class="hidden bg-red-50 border border-red-200 rounded-xl px-md py-sm text-sm text-red-600 mb-md"></div>
 
@@ -182,7 +158,7 @@ tailwind.config = {
       <div class="font-display font-bold text-xl text-on-surface">AI 正在施展魔法...</div>
       <div class="flex flex-col gap-sm w-full max-w-xs">
         <div id="step-1" class="flex items-center gap-sm text-sm text-on-surface-variant"><div class="w-2 h-2 rounded-full bg-outline-variant"></div>分析宠物特征</div>
-        <div id="step-2" class="flex items-center gap-sm text-sm text-on-surface-variant"><div class="w-2 h-2 rounded-full bg-outline-variant"></div>生成卡通描述</div>
+        <div id="step-2" class="flex items-center gap-sm text-sm text-on-surface-variant"><div class="w-2 h-2 rounded-full bg-outline-variant"></div>识别宠物特征</div>
         <div id="step-3" class="flex items-center gap-sm text-sm text-on-surface-variant"><div class="w-2 h-2 rounded-full bg-outline-variant"></div>AI 绘制卡通图</div>
         <div id="step-4" class="flex items-center gap-sm text-sm text-on-surface-variant"><div class="w-2 h-2 rounded-full bg-outline-variant"></div>保存到账号</div>
       </div>
@@ -477,7 +453,7 @@ async function generate() {
   errEl.classList.remove('visible');
 
   if (!petName) { errText.textContent = '请填入宠物名字！'; errEl.classList.add('visible'); return; }
-  if (!selectedFile && !petDesc) { errText.textContent = '请上传照片或填写描述，至少一种！'; errEl.classList.add('visible'); return; }
+  if (!selectedFile) { errText.textContent = '请上传宠物照片！'; errEl.classList.add('visible'); return; }
 
   document.getElementById('gen-form').style.display = 'none';
   document.getElementById('loading-area').classList.add('visible');
@@ -496,7 +472,7 @@ async function generate() {
     const initRes = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64, mediaType, petName, petDesc, style: selectedStyle, userToken: currentUser?.token })
+      body: JSON.stringify({ imageBase64, mediaType, petName, style: 'zootopia', userToken: currentUser?.token })
     });
     const initData = await initRes.json();
     if (!initRes.ok) {
@@ -524,7 +500,7 @@ async function generate() {
         const pollRes = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pollId: predictionId, petName, style: selectedStyle, userToken: currentUser?.token })
+          body: JSON.stringify({ pollId: predictionId, petName, style: 'zootopia', userToken: currentUser?.token })
         });
         const pollData = await pollRes.json();
         if (pollData.status === 'done' && pollData.imageUrl) {
