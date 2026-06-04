@@ -1,4 +1,4 @@
-export const config = { runtime: 'nodejs', maxDuration: 30 };
+export const config = { runtime: 'edge' };
 
 export default async function handler(req) {
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
