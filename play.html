@@ -448,9 +448,16 @@ window.addEventListener('load', () => {
         return;
       }
       localStorage.setItem('pw_last_visit', now.toString());
-      getValidToken().then(t => { if(t) loadPet(t); else { localStorage.removeItem('pw_session'); window.location.href='/'; } });
-      updateBestScores();
-      applyDailyBonus(s.token);
+      getValidToken().then(t => {
+      if (t) {
+        loadPet(t);
+        updateBestScores();
+        applyDailyBonus(t);
+      } else {
+        localStorage.removeItem('pw_session');
+        window.location.href = '/';
+      }
+    });
     } else { window.location.href = '/'; }
   } catch (e) {
     // Don't redirect on API errors - only redirect if truly no session
@@ -479,7 +486,6 @@ async function applyDailyBonus(token) {
 async function loadPet(token) {
   try {
     const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + token } });
-    // If 401, token expired - redirect to re-login
     if (res.status === 401) {
       localStorage.removeItem('pw_session');
       window.location.href = '/';
@@ -492,18 +498,12 @@ async function loadPet(token) {
       renderAccessories();
       addChatMsg('pet', `${pet.name}：主人来啦！好开心！😊`);
     } else {
-      // No pet yet - show create prompt
       document.getElementById('speech-text').textContent = '还没有宠物！去生成一只吧 🐾';
       document.getElementById('header-pet-name').textContent = 'PawWorld';
     }
   } catch (e) {
     console.error('loadPet error:', e);
-    document.getElementById('speech-text').textContent = '加载中，请稍候... 🐾';
-    // Retry once after 2s
-    setTimeout(() => {
-      const s = JSON.parse(localStorage.getItem('pw_session') || '{}');
-      if (s.token) loadPet(s.token);
-    }, 2000);
+    document.getElementById('speech-text').textContent = '网络错误，请刷新重试 🐾';
   }
 }
 
@@ -589,7 +589,8 @@ function renderPet() {
   const totalEarned = Object.values(scores).reduce((a,b)=>a+(b||0),0);
   const spent = wdata.spentCoins || 0;
   const coins = Math.max(wdata.coins || 0, totalEarned - spent);
-  document.getElementById('header-coins').textContent = coins;
+  const coinsEl = document.getElementById('header-coins');
+  if (coinsEl) coinsEl.textContent = coins;
   // Keep wardrobe coins in sync
   if (coins !== wdata.coins) { wdata.coins = coins; localStorage.setItem('pw_wardrobe', JSON.stringify(wdata)); }
   if (pet.cartoon_url) {
@@ -1067,7 +1068,7 @@ function checkLevelUp() {
   if ((pet.exp||0) >= pet.level * 100) {
     pet.level = (pet.level||1) + 1;
     pet.exp = 0;
-    document.getElementById('header-pet-level').textContent = 'Lv.' + (pet?.level||1);
+    const lvEl = document.getElementById('header-pet-level'); if(lvEl) lvEl.textContent = 'Lv.' + (pet?.level||1);
     showToast('🎉 升级了！现在是 Lv.' + pet.level);
     addChatMsg('pet', `${pet.name}：我升级了！现在是 Lv.${pet.level}！🎉`);
   }
