@@ -110,7 +110,10 @@ window.addEventListener('load', () => {
   if (!saved) { window.location.href = '/'; return; }
   try {
     const s = JSON.parse(saved);
-    if (s.token) getValidToken().then(t => { if(t) loadPet(t); else { localStorage.removeItem('pw_session'); window.location.href='/'; } });
+    if (s.token) getValidToken().then(t => {
+      if (t) loadPet(t);
+      else { localStorage.removeItem('pw_session'); window.location.href = '/'; }
+    });
     else window.location.href = '/';
   } catch { window.location.href = '/'; }
 });
