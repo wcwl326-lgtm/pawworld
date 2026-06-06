@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Quicksand:wght@700&family=Be+Vietnam+Pro:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script>
+tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":"#7ec8e3","on-primary":"#ffffff","on-primary-container":"#005468","secondary":"#705d00","secondary-container":"#fdd73b","on-secondary-container":"#715d00","tertiary":"#2d6a44","tertiary-container":"#8dcc9f","surface-bright":"#fff9f0","surface-container-low":"#f9f3ea","surface-container":"#f3ede4","surface-container-high":"#ede7df","surface-container-highest":"#e7e2d9","on-surface":"#1d1b16","on-surface-variant":"#3f484c","outline-variant":"#bfc8cd"},borderRadius:{"DEFAULT":"1rem","lg":"2rem","xl":"3rem","full":"9999px"},spacing:{"xs":"4px","sm":"12px","md":"24px","lg":"40px","gutter":"16px","container-padding":"20px"},fontFamily:{"sans":["Be Vietnam Pro","sans-serif"],"display":["Plus Jakarta Sans","sans-serif"],"label":["Quicksand","sans-serif"]}}}}
+</script>
+<style>
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .soft-pop{box-shadow:inset 0 2px 4px rgba(255,255,255,0.4),0 4px 12px rgba(2,103,127,0.15);}
+  .squishy:active{transform:scale(0.95);}
+  body{background-color:#fff9f0;min-height:100dvh;}
+</style>
+<title>PawWorld — 游戏中心</title>
+</head>
+<body class="font-sans text-on-surface">
+<div class="fixed inset-0 z-0 opacity-30 pointer-events-none" style="background:radial-gradient(ellipse at 20% 20%,#b7eaff 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,#b0f1c2 0%,transparent 50%);"></div>
+
+<header class="fixed top-0 w-full z-50 bg-surface-bright/80 backdrop-blur-md">
+  <div class="flex justify-between items-center px-container-padding py-sm w-full max-w-lg mx-auto">
+    <h1 class="font-display font-extrabold text-xl text-primary">游戏中心</h1>
+    <a href="/profile.html" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-high transition-colors squishy">
+      <span class="material-symbols-outlined text-on-surface-variant text-[22px]">settings</span>
+    </a>
+  </div>
+</header>
+
+<main class="relative z-10 pt-20 pb-28 min-h-screen flex flex-col gap-md">
+
+  <div class="flex flex-col gap-sm px-container-padding">
+    <a href="/play.html" onclick="sessionStorage.setItem('openGames','1'); return true;" class="flex items-center gap-md bg-white/80 rounded-2xl p-md soft-pop border border-white squishy">
+      <div class="w-14 h-14 rounded-2xl bg-primary-container flex items-center justify-center text-3xl soft-pop">🏃</div>
+      <div class="flex-1"><div class="font-display font-bold text-on-surface">闪避大师</div><div class="text-xs text-on-surface-variant mt-0.5">跳跃躲避障碍</div></div>
+      <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+    </a>
+    <a href="/play.html" onclick="sessionStorage.setItem('openGames','1'); return true;" class="flex items-center gap-md bg-white/80 rounded-2xl p-md soft-pop border border-white squishy">
+      <div class="w-14 h-14 rounded-2xl bg-tertiary-container flex items-center justify-center text-3xl soft-pop">🃏</div>
+      <div class="flex-1"><div class="font-display font-bold text-on-surface">记忆配对</div><div class="text-xs text-on-surface-variant mt-0.5">翻牌找配对</div></div>
+      <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+    </a>
+    <a href="/play.html" onclick="sessionStorage.setItem('openGames','1'); return true;" class="flex items-center gap-md bg-white/80 rounded-2xl p-md soft-pop border border-white squishy">
+      <div class="w-14 h-14 rounded-2xl bg-secondary-container flex items-center justify-center text-3xl soft-pop">👆</div>
+      <div class="flex-1"><div class="font-display font-bold text-on-surface">快速点击</div><div class="text-xs text-on-surface-variant mt-0.5">10秒内疯狂点击</div></div>
+      <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+    </a>
+    <a href="/game-runner.html" class="flex items-center gap-md bg-white/80 rounded-2xl p-md soft-pop border border-white squishy">
+      <div class="w-14 h-14 rounded-2xl bg-primary-fixed flex items-center justify-center text-3xl soft-pop">🏄</div>
+      <div class="flex-1"><div class="font-display font-bold text-on-surface">跑酷大冒险</div><div class="text-xs text-on-surface-variant mt-0.5">滑动换道躲障碍</div></div>
+      <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+    </a>
+    <a href="/game-fruit.html" class="flex items-center gap-md bg-white/80 rounded-2xl p-md soft-pop border border-white squishy">
+      <div class="w-14 h-14 rounded-2xl bg-tertiary-fixed flex items-center justify-center text-3xl soft-pop">🍉</div>
+      <div class="flex-1"><div class="font-display font-bold text-on-surface">水果忍者</div><div class="text-xs text-on-surface-variant mt-0.5">划过切水果</div></div>
+      <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+    </a>
+    <a href="/game-candy.html" class="flex items-center gap-md bg-white/80 rounded-2xl p-md soft-pop border border-white squishy">
+      <div class="w-14 h-14 rounded-2xl bg-surface-container-high flex items-center justify-center text-3xl soft-pop">🍬</div>
+      <div class="flex-1"><div class="font-display font-bold text-on-surface">萌宠消消乐</div><div class="text-xs text-on-surface-variant mt-0.5">消除三个以上</div></div>
+      <span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+    </a>
+  </div>
+</main>
+
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-gutter pb-4 bg-surface-container-low shadow-[0_-4px_10px_rgba(2,103,127,0.08)] rounded-t-2xl">
+  <a href="/play.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">pets</span><span class="font-label text-[10px] font-bold">我的宠物</span></a>
+  <a href="/community.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">group</span><span class="font-label text-[10px] font-bold">社区</span></a>
+  <a href="/chat.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">chat_bubble</span><span class="font-label text-[10px] font-bold">聊天</span></a>
+  <a href="/games.html" class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-105"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">sports_esports</span><span class="font-label text-[10px] font-bold">游戏</span></a>
+</nav>
+</body>
+</html>
