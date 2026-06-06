@@ -404,6 +404,35 @@ const BATH_TOTAL = 6;
 let scores = JSON.parse(localStorage.getItem('pw_scores') || '{"dodge":0,"memory":0,"tap":0}');
 // ───────────────────────────────────────────────────────
 
+
+// Auto-refresh Supabase token if expired
+async function getValidToken() {
+  const saved = localStorage.getItem('pw_session');
+  if (!saved) return null;
+  try {
+    const s = JSON.parse(saved);
+    if (!s.token) return null;
+    // Test if token is valid by checking expiry
+    const payload = JSON.parse(atob(s.token.split('.')[1]));
+    const exp = payload.exp * 1000;
+    if (Date.now() < exp - 60000) return s.token; // still valid
+    // Token expired or expiring soon - refresh
+    if (!s.refresh_token) { localStorage.removeItem('pw_session'); return null; }
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'refresh', refresh_token: s.refresh_token })
+    });
+    if (!res.ok) { localStorage.removeItem('pw_session'); return null; }
+    const data = await res.json();
+    // Save new tokens
+    s.token = data.access_token;
+    if (data.refresh_token) s.refresh_token = data.refresh_token;
+    localStorage.setItem('pw_session', JSON.stringify(s));
+    return data.access_token;
+  } catch { return null; }
+}
+
 window.addEventListener('load', () => {
   const saved = localStorage.getItem('pw_session');
   if (!saved) { window.location.href = '/'; return; }
@@ -419,7 +448,7 @@ window.addEventListener('load', () => {
         return;
       }
       localStorage.setItem('pw_last_visit', now.toString());
-      loadPet(s.token);
+      getValidToken().then(t => { if(t) loadPet(t); else { localStorage.removeItem('pw_session'); window.location.href='/'; } });
       updateBestScores();
       applyDailyBonus(s.token);
     } else { window.location.href = '/'; }
@@ -450,14 +479,32 @@ async function applyDailyBonus(token) {
 async function loadPet(token) {
   try {
     const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + token } });
+    // If 401, token expired - redirect to re-login
+    if (res.status === 401) {
+      localStorage.removeItem('pw_session');
+      window.location.href = '/';
+      return;
+    }
     const data = await res.json();
     if (data.pet) {
       pet = data.pet;
       renderPet();
       renderAccessories();
       addChatMsg('pet', `${pet.name}：主人来啦！好开心！😊`);
+    } else {
+      // No pet yet - show create prompt
+      document.getElementById('speech-text').textContent = '还没有宠物！去生成一只吧 🐾';
+      document.getElementById('header-pet-name').textContent = 'PawWorld';
     }
-  } catch {}
+  } catch (e) {
+    console.error('loadPet error:', e);
+    document.getElementById('speech-text').textContent = '加载中，请稍候... 🐾';
+    // Retry once after 2s
+    setTimeout(() => {
+      const s = JSON.parse(localStorage.getItem('pw_session') || '{}');
+      if (s.token) loadPet(s.token);
+    }, 2000);
+  }
 }
 
 function renderAccessories() {
@@ -583,14 +630,16 @@ function updateBars() {
 
 function savePet() {
   const saved = localStorage.getItem('pw_session');
-  if (!saved) return;
+  if (!saved || !pet?.id) return;
   try {
     const s = JSON.parse(saved);
-    if (s.token && pet?.id) {
+    if (s.token) {
       fetch('/api/pet', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.token },
-        body: JSON.stringify({ id: pet.id, hunger: pet.hunger, energy: pet.energy, mood: pet.mood, level: pet.level, exp: pet.exp })
+        body: JSON.stringify({ id: pet.id, level: pet.level, exp: pet.exp })
+      }).then(r => {
+        if (r.status === 401) { localStorage.removeItem('pw_session'); }
       }).catch(() => {});
     }
   } catch {}
