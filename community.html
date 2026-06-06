@@ -3,46 +3,460 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PawWorld — 社区</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Quicksand:wght@700&family=Be+Vietnam+Pro:wght@400&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <script>
-tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":"#7ec8e3","on-primary":"#ffffff","on-primary-container":"#005468","secondary":"#705d00","secondary-container":"#fdd73b","on-secondary-container":"#715d00","tertiary":"#2d6a44","tertiary-container":"#8dcc9f","surface-bright":"#fff9f0","surface-container-low":"#f9f3ea","surface-container":"#f3ede4","surface-container-high":"#ede7df","surface-container-highest":"#e7e2d9","on-surface":"#1d1b16","on-surface-variant":"#3f484c","outline-variant":"#bfc8cd"},borderRadius:{"DEFAULT":"1rem","lg":"2rem","xl":"3rem","full":"9999px"},spacing:{"xs":"4px","sm":"12px","md":"24px","lg":"40px","gutter":"16px","container-padding":"20px"},fontFamily:{"sans":["Be Vietnam Pro","sans-serif"],"display":["Plus Jakarta Sans","sans-serif"],"label":["Quicksand","sans-serif"]}}}}
+tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":"#7ec8e3","on-primary":"#ffffff","on-primary-container":"#005468","secondary":"#705d00","secondary-container":"#fdd73b","on-secondary-container":"#715d00","tertiary":"#2d6a44","tertiary-container":"#8dcc9f","surface-bright":"#fff9f0","surface-container-low":"#f9f3ea","surface-container":"#f3ede4","surface-container-high":"#ede7df","on-surface":"#1d1b16","on-surface-variant":"#3f484c","outline-variant":"#bfc8cd"},borderRadius:{"DEFAULT":"1rem","lg":"2rem","xl":"3rem","full":"9999px"},spacing:{"xs":"4px","sm":"12px","md":"24px","lg":"40px","gutter":"16px","container-padding":"20px"},fontFamily:{"sans":["Be Vietnam Pro","sans-serif"],"display":["Plus Jakarta Sans","sans-serif"],"label":["Quicksand","sans-serif"]}}}}
 </script>
 <style>
   .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
   .soft-pop{box-shadow:inset 0 2px 4px rgba(255,255,255,0.4),0 4px 12px rgba(2,103,127,0.15);}
   .squishy:active{transform:scale(0.95);}
   body{background-color:#fff9f0;min-height:100dvh;}
+  .post-card{background:white;border-radius:20px;padding:16px;margin-bottom:12px;border:0.5px solid #e8e2d8;}
+  .liked .like-icon{font-variation-settings:'FILL' 1 !important;color:#e53e3e !important;}
+  .liked .like-count{color:#e53e3e !important;}
+  #compose-sheet{transition:transform 0.3s ease;transform:translateY(100%);}
+  #compose-sheet.open{transform:translateY(0);}
+  #sheet-overlay{transition:opacity 0.3s ease;opacity:0;pointer-events:none;}
+  #sheet-overlay.open{opacity:1;pointer-events:all;}
+  .img-preview{position:relative;width:100%;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:#f3ede4;}
+  .img-preview img{width:100%;height:100%;object-fit:cover;}
 </style>
-<title>PawWorld — 社区广场</title>
 </head>
 <body class="font-sans text-on-surface">
-<div class="fixed inset-0 z-0 opacity-30 pointer-events-none" style="background:radial-gradient(ellipse at 20% 20%,#b7eaff 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,#b0f1c2 0%,transparent 50%);"></div>
+<div class="fixed inset-0 z-0 opacity-20 pointer-events-none" style="background:radial-gradient(ellipse at 20% 10%,#b7eaff 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,#b0f1c2 0%,transparent 50%);"></div>
 
-<header class="fixed top-0 w-full z-50 bg-surface-bright/80 backdrop-blur-md">
-  <div class="flex justify-between items-center px-container-padding py-sm w-full max-w-lg mx-auto">
+<!-- Header -->
+<header class="fixed top-0 w-full z-50 bg-surface-bright/90 backdrop-blur-md border-b border-outline-variant/30">
+  <div class="flex justify-between items-center px-container-padding py-sm max-w-lg mx-auto">
     <h1 class="font-display font-extrabold text-xl text-primary">社区广场</h1>
-    <a href="/profile.html" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-high transition-colors squishy">
+    <a href="/profile.html" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center squishy">
       <span class="material-symbols-outlined text-on-surface-variant text-[22px]">settings</span>
     </a>
   </div>
 </header>
 
-<main class="relative z-10 pt-20 pb-28 min-h-screen flex flex-col gap-md">
-
-  <div class="flex flex-col items-center justify-center flex-1 px-container-padding text-center gap-md">
-    <div class="w-24 h-24 rounded-2xl bg-primary-container/30 flex items-center justify-center text-5xl">🔜</div>
-    <div class="font-display font-bold text-lg text-on-surface">即将上线</div>
-    <div class="text-sm text-on-surface-variant max-w-xs leading-relaxed">即将上线 — 和全球宠物主人分享你的宠物故事</div>
+<!-- Feed -->
+<main class="relative z-10 pt-20 pb-28 px-container-padding max-w-lg mx-auto" id="feed-container">
+  <!-- Posts injected here -->
+  <div id="feed"></div>
+  <div id="feed-loader" class="flex justify-center py-md">
+    <div class="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
   </div>
+  <div id="feed-end" class="hidden text-center text-sm text-on-surface-variant py-md">没有更多了 🐾</div>
 </main>
 
+<!-- Compose FAB -->
+<button id="fab-compose" onclick="openCompose()" class="fixed bottom-24 right-5 z-40 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center soft-pop squishy shadow-lg">
+  <span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+
+<!-- Bottom Nav -->
 <nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-gutter pb-4 bg-surface-container-low shadow-[0_-4px_10px_rgba(2,103,127,0.08)] rounded-t-2xl">
   <a href="/play.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">pets</span><span class="font-label text-[10px] font-bold">我的宠物</span></a>
-  <a href="/community.html" class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-105"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">group</span><span class="font-label text-[10px] font-bold">社区</span></a>
+  <button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-105"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">group</span><span class="font-label text-[10px] font-bold">社区</span></button>
   <a href="/chat.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">chat_bubble</span><span class="font-label text-[10px] font-bold">聊天</span></a>
   <a href="/games.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">sports_esports</span><span class="font-label text-[10px] font-bold">游戏</span></a>
 </nav>
+
+<!-- Sheet overlay -->
+<div id="sheet-overlay" onclick="closeCompose()" class="fixed inset-0 z-50 bg-black/40"></div>
+
+<!-- Compose Sheet -->
+<div id="compose-sheet" class="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl max-w-lg mx-auto" style="max-height:90dvh;overflow-y:auto;">
+  <div class="p-md">
+    <div class="flex justify-between items-center mb-md">
+      <h2 class="font-display font-bold text-lg text-on-surface">代宠物发帖</h2>
+      <button onclick="closeCompose()" class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center squishy">
+        <span class="material-symbols-outlined text-[20px] text-on-surface-variant">close</span>
+      </button>
+    </div>
+
+    <!-- Pet info row -->
+    <div class="flex items-center gap-sm mb-md bg-surface-container-low rounded-2xl p-sm">
+      <div id="compose-avatar" class="w-10 h-10 rounded-full bg-primary-container border-2 border-primary overflow-hidden flex items-center justify-center text-lg">🐾</div>
+      <div>
+        <div id="compose-pet-name" class="font-display font-bold text-sm text-on-surface">我的宠物</div>
+        <div id="compose-pet-level" class="text-xs text-on-surface-variant">Lv.1</div>
+      </div>
+    </div>
+
+    <!-- Content textarea -->
+    <textarea id="compose-text" placeholder="今天发生了什么有趣的事？让大家知道吧！" rows="4"
+      class="w-full bg-surface-container-low border-2 border-outline-variant rounded-2xl px-md py-sm text-sm focus:outline-none focus:border-primary resize-none placeholder:text-on-surface-variant/50 mb-sm"
+      oninput="updateCharCount()"></textarea>
+    <div class="flex justify-end mb-md">
+      <span id="char-count" class="text-xs text-on-surface-variant">0 / 200</span>
+    </div>
+
+    <!-- Image preview -->
+    <div id="img-preview-wrap" class="hidden mb-md">
+      <div class="img-preview">
+        <img id="img-preview" src="" alt="预览">
+        <button onclick="removeImage()" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center">
+          <span class="material-symbols-outlined text-white text-[16px]">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Image upload -->
+    <input type="file" id="img-input" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
+    <div class="flex gap-sm mb-lg">
+      <button onclick="document.getElementById('img-input').click()" class="flex items-center gap-xs bg-surface-container border border-outline-variant rounded-full px-sm py-xs text-sm text-on-surface-variant squishy">
+        <span class="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+        <span class="font-label font-bold text-xs">添加照片</span>
+      </button>
+    </div>
+
+    <!-- Error -->
+    <div id="compose-error" class="hidden text-sm text-red-500 mb-sm"></div>
+
+    <!-- Submit -->
+    <button id="submit-btn" onclick="submitPost()" class="w-full py-sm rounded-2xl bg-primary text-white font-display font-bold text-base soft-pop squishy">
+      发布
+    </button>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+let myPet = null;
+let feedCursor = null;
+let isLoading = false;
+let hasMore = true;
+let selectedImageBase64 = null;
+let selectedImageType = null;
+
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('pw_session');
+  if (saved) {
+    try {
+      const s = JSON.parse(saved);
+      if (s.token) currentUser = s;
+    } catch {}
+  }
+  loadFeed();
+  if (currentUser) loadMyPet();
+
+  // Infinite scroll
+  window.addEventListener('scroll', () => {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+      if (!isLoading && hasMore) loadFeed();
+    }
+  });
+});
+
+async function loadMyPet() {
+  try {
+    const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + currentUser.token } });
+    const data = await res.json();
+    if (data.pet) {
+      myPet = data.pet;
+      // Update compose sheet pet info
+      document.getElementById('compose-pet-name').textContent = myPet.name;
+      document.getElementById('compose-pet-level').textContent = 'Lv.' + (myPet.level || 1);
+      if (myPet.cartoon_url) {
+        document.getElementById('compose-avatar').innerHTML =
+          '<img src="' + myPet.cartoon_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+      }
+    }
+  } catch {}
+}
+
+async function loadFeed() {
+  if (isLoading || !hasMore) return;
+  isLoading = true;
+  document.getElementById('feed-loader').classList.remove('hidden');
+
+  try {
+    let url = '/api/posts';
+    if (feedCursor) url += '?cursor=' + encodeURIComponent(feedCursor);
+    const headers = { 'Content-Type': 'application/json' };
+    if (currentUser?.token) headers['Authorization'] = 'Bearer ' + currentUser.token;
+
+    const res = await fetch(url, { headers });
+    const data = await res.json();
+    const posts = data.posts || [];
+
+    if (posts.length === 0) {
+      hasMore = false;
+      document.getElementById('feed-loader').classList.add('hidden');
+      if (!feedCursor) showEmptyState();
+      else document.getElementById('feed-end').classList.remove('hidden');
+      return;
+    }
+
+    posts.forEach(renderPost);
+    feedCursor = posts[posts.length - 1].created_at;
+    if (posts.length < 10) {
+      hasMore = false;
+      document.getElementById('feed-end').classList.remove('hidden');
+    }
+  } catch (e) {
+    console.error('loadFeed error:', e);
+  } finally {
+    isLoading = false;
+    document.getElementById('feed-loader').classList.add('hidden');
+  }
+}
+
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return '刚刚';
+  if (m < 60) return m + '分钟前';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + '小时前';
+  const d = Math.floor(h / 24);
+  if (d < 7) return d + '天前';
+  return new Date(dateStr).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+}
+
+function renderPost(post) {
+  const pet = post.pets || {};
+  const isOwner = currentUser && post.user_id === currentUser.user?.id;
+  const isLiked = post.liked;
+
+  const card = document.createElement('div');
+  card.className = 'post-card';
+  card.id = 'post-' + post.id;
+
+  const avatarHtml = pet.cartoon_url
+    ? `<img src="${pet.cartoon_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+    : '🐾';
+
+  card.innerHTML = `
+    <div class="flex items-center justify-between mb-sm">
+      <div class="flex items-center gap-sm">
+        <div class="w-11 h-11 rounded-full bg-primary-container border-2 border-primary-container overflow-hidden flex items-center justify-center text-lg flex-shrink-0">${avatarHtml}</div>
+        <div>
+          <div class="flex items-center gap-xs">
+            <span class="font-display font-bold text-sm text-on-surface">${pet.name || '宠物'}</span>
+            <span class="bg-secondary-container text-on-secondary-container font-label font-bold text-[10px] px-2 py-0.5 rounded-full">Lv.${pet.level || 1}</span>
+          </div>
+          <div class="text-xs text-on-surface-variant">${timeAgo(post.created_at)}</div>
+        </div>
+      </div>
+      ${isOwner ? `<button onclick="deletePost('${post.id}')" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container squishy"><span class="material-symbols-outlined text-[18px]">more_horiz</span></button>` : ''}
+    </div>
+
+    <p class="text-sm text-on-surface leading-relaxed mb-sm">${escapeHtml(post.content)}</p>
+
+    ${post.image_url ? `<div class="img-preview mb-sm"><img src="${post.image_url}" alt="帖子图片" loading="lazy"></div>` : ''}
+
+    <div class="flex items-center gap-md pt-sm border-t border-outline-variant/30">
+      <button onclick="toggleLike('${post.id}', this)" class="flex items-center gap-xs squishy ${isLiked ? 'liked' : ''}">
+        <span class="material-symbols-outlined like-icon text-[20px] text-on-surface-variant" style="${isLiked ? "font-variation-settings:'FILL' 1;color:#e53e3e;" : ''}">favorite</span>
+        <span class="like-count text-sm text-on-surface-variant ${isLiked ? 'text-red-500' : ''}">${post.likes_count || 0}</span>
+      </button>
+      <div class="flex items-center gap-xs text-on-surface-variant">
+        <span class="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
+        <span class="text-sm">${post.comments_count || 0}</span>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('feed').appendChild(card);
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showEmptyState() {
+  document.getElementById('feed').innerHTML = `
+    <div class="flex flex-col items-center justify-center py-16 gap-md text-center">
+      <div class="text-6xl">🐾</div>
+      <div class="font-display font-bold text-lg text-on-surface">社区还没有帖子</div>
+      <div class="text-sm text-on-surface-variant">成为第一个分享宠物故事的人！</div>
+      <button onclick="openCompose()" class="bg-primary text-white px-lg py-sm rounded-full font-display font-bold squishy soft-pop">发第一条帖子</button>
+    </div>`;
+}
+
+async function toggleLike(postId, btn) {
+  if (!currentUser?.token) { alert('请先登录'); return; }
+  const isLiked = btn.classList.contains('liked');
+  const action = isLiked ? 'unlike' : 'like';
+
+  // Optimistic update
+  btn.classList.toggle('liked');
+  const countEl = btn.querySelector('.like-count');
+  const iconEl = btn.querySelector('.like-icon');
+  const current = parseInt(countEl.textContent) || 0;
+  countEl.textContent = action === 'like' ? current + 1 : Math.max(current - 1, 0);
+  if (action === 'like') {
+    iconEl.style.fontVariationSettings = "'FILL' 1";
+    iconEl.style.color = '#e53e3e';
+    countEl.style.color = '#e53e3e';
+  } else {
+    iconEl.style.fontVariationSettings = "'FILL' 0";
+    iconEl.style.color = '';
+    countEl.style.color = '';
+  }
+
+  try {
+    await fetch('/api/likes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
+      body: JSON.stringify({ post_id: postId, action })
+    });
+  } catch {}
+}
+
+async function deletePost(postId) {
+  if (!confirm('确定要删除这条帖子吗？')) return;
+  try {
+    await fetch('/api/posts?id=' + postId, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + currentUser.token }
+    });
+    const card = document.getElementById('post-' + postId);
+    if (card) card.remove();
+  } catch {}
+}
+
+// Compose sheet
+function openCompose() {
+  if (!currentUser?.token) { window.location.href = '/'; return; }
+  document.getElementById('compose-sheet').classList.add('open');
+  document.getElementById('sheet-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCompose() {
+  document.getElementById('compose-sheet').classList.remove('open');
+  document.getElementById('sheet-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function updateCharCount() {
+  const len = document.getElementById('compose-text').value.length;
+  const el = document.getElementById('char-count');
+  el.textContent = len + ' / 200';
+  el.style.color = len > 180 ? '#e53e3e' : '';
+}
+
+function handleImageSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('图片不能超过5MB'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const result = ev.target.result;
+    selectedImageBase64 = result.split(',')[1];
+    selectedImageType = file.type;
+    document.getElementById('img-preview').src = result;
+    document.getElementById('img-preview-wrap').classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage() {
+  selectedImageBase64 = null;
+  selectedImageType = null;
+  document.getElementById('img-preview-wrap').classList.add('hidden');
+  document.getElementById('img-input').value = '';
+}
+
+async function submitPost() {
+  const content = document.getElementById('compose-text').value.trim();
+  const errEl = document.getElementById('compose-error');
+  const btn = document.getElementById('submit-btn');
+
+  errEl.classList.add('hidden');
+  if (!content) { errEl.textContent = '请写点什么吧！'; errEl.classList.remove('hidden'); return; }
+  if (content.length > 200) { errEl.textContent = '内容不能超过200字'; errEl.classList.remove('hidden'); return; }
+  if (!myPet) { errEl.textContent = '请先创建你的宠物'; errEl.classList.remove('hidden'); return; }
+
+  btn.textContent = '发布中...';
+  btn.disabled = true;
+
+  try {
+    let imageUrl = null;
+
+    // Upload image if selected
+    if (selectedImageBase64) {
+      const upRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
+        body: JSON.stringify({ imageBase64: selectedImageBase64, mediaType: selectedImageType })
+      });
+      const upData = await upRes.json();
+      imageUrl = upData.url || null;
+    }
+
+    // Create post
+    const res = await fetch('/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
+      body: JSON.stringify({ pet_id: myPet.id, content, image_url: imageUrl })
+    });
+    const data = await res.json();
+
+    if (data.post) {
+      // Prepend new post to feed
+      const tempPost = {
+        ...data.post,
+        liked: false,
+        pets: { name: myPet.name, level: myPet.level, cartoon_url: myPet.cartoon_url }
+      };
+      const feed = document.getElementById('feed');
+      const tempDiv = document.createElement('div');
+      feed.insertBefore(tempDiv, feed.firstChild);
+      const oldAppend = HTMLElement.prototype.appendChild;
+      // Render and prepend
+      const frag = document.createElement('div');
+      frag.id = 'post-' + tempPost.id;
+      frag.className = 'post-card';
+      const pet = tempPost.pets || {};
+      const avatarHtml = pet.cartoon_url
+        ? `<img src="${pet.cartoon_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+        : '🐾';
+      frag.innerHTML = `
+        <div class="flex items-center justify-between mb-sm">
+          <div class="flex items-center gap-sm">
+            <div class="w-11 h-11 rounded-full bg-primary-container border-2 border-primary-container overflow-hidden flex items-center justify-center text-lg flex-shrink-0">${avatarHtml}</div>
+            <div>
+              <div class="flex items-center gap-xs">
+                <span class="font-display font-bold text-sm text-on-surface">${pet.name || '宠物'}</span>
+                <span class="bg-secondary-container text-on-secondary-container font-label font-bold text-[10px] px-2 py-0.5 rounded-full">Lv.${pet.level || 1}</span>
+              </div>
+              <div class="text-xs text-on-surface-variant">刚刚</div>
+            </div>
+          </div>
+          <button onclick="deletePost('${tempPost.id}')" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant squishy"><span class="material-symbols-outlined text-[18px]">more_horiz</span></button>
+        </div>
+        <p class="text-sm text-on-surface leading-relaxed mb-sm">${escapeHtml(content)}</p>
+        ${imageUrl ? `<div class="img-preview mb-sm"><img src="${imageUrl}" alt="帖子图片"></div>` : ''}
+        <div class="flex items-center gap-md pt-sm border-t border-outline-variant/30">
+          <button onclick="toggleLike('${tempPost.id}', this)" class="flex items-center gap-xs squishy">
+            <span class="material-symbols-outlined like-icon text-[20px] text-on-surface-variant">favorite</span>
+            <span class="like-count text-sm text-on-surface-variant">0</span>
+          </button>
+          <div class="flex items-center gap-xs text-on-surface-variant">
+            <span class="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
+            <span class="text-sm">0</span>
+          </div>
+        </div>`;
+      feed.replaceChild(frag, tempDiv);
+
+      // Reset form
+      document.getElementById('compose-text').value = '';
+      removeImage();
+      updateCharCount();
+      closeCompose();
+    }
+  } catch (e) {
+    errEl.textContent = '发布失败，请重试';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.textContent = '发布';
+    btn.disabled = false;
+  }
+}
+</script>
 </body>
 </html>
