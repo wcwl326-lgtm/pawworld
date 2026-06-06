@@ -75,6 +75,7 @@ tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":
 <script>
 let pet = null;
 let chatHistory = [];
+let personalitySeed = null;
 
 window.addEventListener('load', () => {
   const saved = localStorage.getItem('pw_session');
@@ -99,6 +100,11 @@ async function loadPet(token) {
         display.innerHTML = '<img src="' + pet.cartoon_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">';
         const av = document.getElementById('chat-avatar');
         av.innerHTML = '<img src="' + pet.cartoon_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+      }
+      // Load or generate personality seed
+      const savedSeed = localStorage.getItem('pw_seed_' + pet.id);
+      if (savedSeed) {
+        personalitySeed = parseInt(savedSeed);
       }
       addChatMsg('pet', pet.name + '：主人来聊天啦！今天有什么想说的吗？😊');
     }
@@ -142,10 +148,23 @@ async function sendChat() {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (sess.token || '') },
-      body: JSON.stringify({ petName: pet.name, hunger: 80, energy: 80, mood: 80, message: msg, history: chatHistory.slice(-8) })
+      body: JSON.stringify({
+        petName: pet.name,
+        hunger: pet.hunger || 80,
+        energy: pet.energy || 80,
+        mood: pet.mood || 80,
+        message: msg,
+        history: chatHistory.slice(-12),
+        personalitySeed: personalitySeed
+      })
     });
     const data = await res.json();
     typing.classList.add('hidden');
+    // Save seed on first reply so same pet always has same personality
+    if (data.seed !== undefined && personalitySeed === null) {
+      personalitySeed = data.seed;
+      localStorage.setItem('pw_seed_' + pet.id, data.seed);
+    }
     addChatMsg('pet', data.reply ? pet.name + '：' + data.reply : pet.name + '：...🥺');
   } catch {
     typing.classList.add('hidden');
