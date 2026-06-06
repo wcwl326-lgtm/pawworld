@@ -885,7 +885,7 @@ async function doAuth() {
     else {
       currentUser = data.user; currentUser.token = data.access_token;
       currentUser.id = getUserIdFromToken(data.access_token) || data.user.id || data.user.sub;
-      localStorage.setItem('pw_session', JSON.stringify({user:data.user,token:data.access_token}));
+      localStorage.setItem('pw_session', JSON.stringify({user:data.user,token:data.access_token,refresh_token:data.refresh_token||''}));
       showMainApp(); loadPet();
     }
   } catch(err) { errEl.textContent=err.message; errEl.classList.remove('hidden'); }
