@@ -89,11 +89,9 @@ tailwind.config = {
         <p class="text-xs text-on-surface-variant font-label" id="header-pet-level">Lv.1</p>
       </div>
     </div>
-    <div class="bg-secondary-container px-sm py-xs rounded-full flex items-center gap-xs soft-pop">
-      <span class="material-symbols-outlined text-secondary text-[18px]" style="font-variation-settings:'FILL' 1;">pets</span>
-      <span class="font-display font-bold text-sm text-on-secondary-container" id="header-coins">0</span>
-      <span class="text-xs text-on-secondary-container font-label">积分</span>
-    </div>
+    <a href="/profile.html" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-high transition-colors squishy">
+      <span class="material-symbols-outlined text-on-surface-variant text-[22px]">settings</span>
+    </a>
   </div>
 </header>
 
@@ -166,30 +164,13 @@ tailwind.config = {
     </div>
   </div>
 
-  <!-- Action Buttons -->
-  <div class="w-full grid grid-cols-4 gap-sm mb-md" id="action-grid">
-    <button onclick="openFood()" class="flex flex-col items-center justify-center w-full aspect-square rounded-2xl bg-tertiary-container text-on-tertiary-container care-btn-gradient soft-pop squishy gap-1">
-      <span class="material-symbols-outlined text-[28px]">restaurant</span>
-      <span class="font-label text-xs font-bold">喂食</span>
-    </button>
-    <button onclick="openGames()" class="flex flex-col items-center justify-center w-full aspect-square rounded-2xl bg-primary-container text-on-primary-container care-btn-gradient soft-pop squishy gap-1">
-      <span class="material-symbols-outlined text-[28px]">sports_esports</span>
-      <span class="font-label text-xs font-bold">玩耍</span>
-    </button>
-    <button onclick="startSleep()" class="flex flex-col items-center justify-center w-full aspect-square rounded-2xl bg-surface-container-high text-on-surface-variant care-btn-gradient soft-pop squishy gap-1">
-      <span class="material-symbols-outlined text-[28px]">bedtime</span>
-      <span class="font-label text-xs font-bold">休息</span>
-    </button>
-    <button onclick="openBath()" class="flex flex-col items-center justify-center w-full aspect-square rounded-2xl bg-primary-fixed text-primary care-btn-gradient soft-pop squishy gap-1">
-      <span class="material-symbols-outlined text-[28px]">water_drop</span>
-      <span class="font-label text-xs font-bold">洗澡</span>
+  <!-- Action: Games only -->
+  <div class="w-full mb-md" id="action-grid">
+    <button onclick="openGames()" class="w-full py-md rounded-2xl bg-primary-container text-on-primary-container care-btn-gradient soft-pop squishy flex items-center justify-center gap-sm">
+      <span class="material-symbols-outlined text-[26px]">sports_esports</span>
+      <span class="font-label text-base font-bold">玩游戏赚积分</span>
     </button>
   </div>
-
-  <!-- Wake up button -->
-  <button id="wakeup-btn" onclick="wakeUp()" class="hidden w-full py-md rounded-2xl bg-slate-800 text-slate-300 font-display font-bold text-lg flex items-center justify-center gap-2 mb-md squishy soft-pop">
-    ☀️ 起床啦！
-  </button>
 
   <!-- Chat -->
   <div class="w-full bg-white/80 backdrop-blur rounded-2xl p-md soft-pop border border-white">
@@ -406,11 +387,10 @@ tailwind.config = {
 
 <!-- Nav Bar -->
 <nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-gutter pb-4 bg-surface-container-low shadow-[0_-4px_10px_rgba(2,103,127,0.08)] rounded-t-2xl" id="nav-bar">
-  <button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-105"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">home</span><span class="font-label text-[10px] font-bold">互动</span></button>
-  <a href="/wardrobe.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-primary-fixed transition-colors rounded-xl"><span class="material-symbols-outlined">styler</span><span class="font-label text-[10px] font-bold">衣橱</span></a>
-  <a href="/checkin.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-primary-fixed transition-colors rounded-xl"><span class="material-symbols-outlined">calendar_today</span><span class="font-label text-[10px] font-bold">签到</span></a>
-  <a href="/milestone.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-primary-fixed transition-colors rounded-xl"><span class="material-symbols-outlined">emoji_events</span><span class="font-label text-[10px] font-bold">成长</span></a>
-  <a href="/profile.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-primary-fixed transition-colors rounded-xl"><span class="material-symbols-outlined">person</span><span class="font-label text-[10px] font-bold">我的</span></a>
+  <button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-105"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">pets</span><span class="font-label text-[10px] font-bold">我的宠物</span></button>
+  <a href="/community.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-primary-fixed transition-colors rounded-xl"><span class="material-symbols-outlined">group</span><span class="font-label text-[10px] font-bold">社区</span></a>
+  <a href="/chat.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-primary-fixed transition-colors rounded-xl"><span class="material-symbols-outlined">chat_bubble</span><span class="font-label text-[10px] font-bold">聊天</span></a>
+  <a href="/games.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-primary-fixed transition-colors rounded-xl"><span class="material-symbols-outlined">sports_esports</span><span class="font-label text-[10px] font-bold">游戏</span></a>
 </nav>
 
 <script>
