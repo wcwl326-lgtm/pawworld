@@ -76,12 +76,41 @@ tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":
 let pet = null;
 let chatHistory = [];
 
+
+// Auto-refresh Supabase token if expired
+async function getValidToken() {
+  const saved = localStorage.getItem('pw_session');
+  if (!saved) return null;
+  try {
+    const s = JSON.parse(saved);
+    if (!s.token) return null;
+    // Test if token is valid by checking expiry
+    const payload = JSON.parse(atob(s.token.split('.')[1]));
+    const exp = payload.exp * 1000;
+    if (Date.now() < exp - 60000) return s.token; // still valid
+    // Token expired or expiring soon - refresh
+    if (!s.refresh_token) { localStorage.removeItem('pw_session'); return null; }
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'refresh', refresh_token: s.refresh_token })
+    });
+    if (!res.ok) { localStorage.removeItem('pw_session'); return null; }
+    const data = await res.json();
+    // Save new tokens
+    s.token = data.access_token;
+    if (data.refresh_token) s.refresh_token = data.refresh_token;
+    localStorage.setItem('pw_session', JSON.stringify(s));
+    return data.access_token;
+  } catch { return null; }
+}
+
 window.addEventListener('load', () => {
   const saved = localStorage.getItem('pw_session');
   if (!saved) { window.location.href = '/'; return; }
   try {
     const s = JSON.parse(saved);
-    if (s.token) loadPet(s.token);
+    if (s.token) getValidToken().then(t => { if(t) loadPet(t); else { localStorage.removeItem('pw_session'); window.location.href='/'; } });
     else window.location.href = '/';
   } catch { window.location.href = '/'; }
 });
@@ -89,6 +118,7 @@ window.addEventListener('load', () => {
 async function loadPet(token) {
   try {
     const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) { localStorage.removeItem('pw_session'); window.location.href = '/'; return; }
     const data = await res.json();
     if (data.pet) {
       pet = data.pet;
