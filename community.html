@@ -18,12 +18,17 @@ tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":
   .post-card{background:white;border-radius:20px;padding:16px;margin-bottom:12px;border:0.5px solid #e8e2d8;}
   .liked .like-icon{font-variation-settings:'FILL' 1 !important;color:#e53e3e !important;}
   .liked .like-count{color:#e53e3e !important;}
-  #compose-sheet{transition:transform 0.3s ease;transform:translateY(100%);}
-  #compose-sheet.open{transform:translateY(0);}
-  #sheet-overlay{transition:opacity 0.3s ease;opacity:0;pointer-events:none;}
-  #sheet-overlay.open{opacity:1;pointer-events:all;}
+  .sheet{transition:transform 0.3s cubic-bezier(.32,.72,0,1);transform:translateY(100%);}
+  .sheet.open{transform:translateY(0);}
+  .overlay{transition:opacity 0.3s;opacity:0;pointer-events:none;}
+  .overlay.open{opacity:1;pointer-events:all;}
   .img-preview{position:relative;width:100%;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:#f3ede4;}
   .img-preview img{width:100%;height:100%;object-fit:cover;}
+  .comment-item{display:flex;gap:10px;padding:10px 0;border-bottom:0.5px solid #f3ede4;}
+  .comment-item:last-child{border-bottom:none;}
+  .notif-item{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:0.5px solid #f3ede4;}
+  .notif-item.unread{background:linear-gradient(90deg,rgba(2,103,127,0.04),transparent);}
+  .notif-item:last-child{border-bottom:none;}
 </style>
 </head>
 <body class="font-sans text-on-surface">
@@ -33,15 +38,21 @@ tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":
 <header class="fixed top-0 w-full z-50 bg-surface-bright/90 backdrop-blur-md border-b border-outline-variant/30">
   <div class="flex justify-between items-center px-container-padding py-sm max-w-lg mx-auto">
     <h1 class="font-display font-extrabold text-xl text-primary">社区广场</h1>
-    <a href="/profile.html" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center squishy">
-      <span class="material-symbols-outlined text-on-surface-variant text-[22px]">settings</span>
-    </a>
+    <div class="flex items-center gap-sm">
+      <!-- Notification bell -->
+      <button onclick="openNotifications()" class="relative w-10 h-10 rounded-full bg-surface-container flex items-center justify-center squishy">
+        <span class="material-symbols-outlined text-on-surface-variant text-[22px]">notifications</span>
+        <span id="notif-badge" class="hidden absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center"></span>
+      </button>
+      <a href="/profile.html" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center squishy">
+        <span class="material-symbols-outlined text-on-surface-variant text-[22px]">settings</span>
+      </a>
+    </div>
   </div>
 </header>
 
 <!-- Feed -->
-<main class="relative z-10 pt-20 pb-28 px-container-padding max-w-lg mx-auto" id="feed-container">
-  <!-- Posts injected here -->
+<main class="relative z-10 pt-20 pb-28 px-container-padding max-w-lg mx-auto">
   <div id="feed"></div>
   <div id="feed-loader" class="flex justify-center py-md">
     <div class="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
@@ -49,12 +60,12 @@ tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":
   <div id="feed-end" class="hidden text-center text-sm text-on-surface-variant py-md">没有更多了 🐾</div>
 </main>
 
-<!-- Compose FAB -->
-<button id="fab-compose" onclick="openCompose()" class="fixed bottom-24 right-5 z-40 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center soft-pop squishy shadow-lg">
+<!-- FAB -->
+<button onclick="openCompose()" class="fixed bottom-24 right-5 z-40 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center soft-pop squishy shadow-lg">
   <span class="material-symbols-outlined text-[28px]">add</span>
 </button>
 
-<!-- Bottom Nav -->
+<!-- Nav -->
 <nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-gutter pb-4 bg-surface-container-low shadow-[0_-4px_10px_rgba(2,103,127,0.08)] rounded-t-2xl">
   <a href="/play.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">pets</span><span class="font-label text-[10px] font-bold">我的宠物</span></a>
   <button class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-105"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">group</span><span class="font-label text-[10px] font-bold">社区</span></button>
@@ -62,38 +73,30 @@ tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":
   <a href="/games.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">sports_esports</span><span class="font-label text-[10px] font-bold">游戏</span></a>
 </nav>
 
-<!-- Sheet overlay -->
-<div id="sheet-overlay" onclick="closeCompose()" class="fixed inset-0 z-50 bg-black/40"></div>
+<!-- Shared overlay -->
+<div id="overlay" class="overlay fixed inset-0 z-50 bg-black/40" onclick="closeAll()"></div>
 
-<!-- Compose Sheet -->
-<div id="compose-sheet" class="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl max-w-lg mx-auto" style="max-height:90dvh;overflow-y:auto;">
+<!-- ── Compose Sheet ── -->
+<div id="compose-sheet" class="sheet fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl max-w-lg mx-auto" style="max-height:90dvh;overflow-y:auto;">
   <div class="p-md">
     <div class="flex justify-between items-center mb-md">
-      <h2 class="font-display font-bold text-lg text-on-surface">代宠物发帖</h2>
-      <button onclick="closeCompose()" class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center squishy">
+      <h2 class="font-display font-bold text-lg">代宠物发帖</h2>
+      <button onclick="closeAll()" class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center squishy">
         <span class="material-symbols-outlined text-[20px] text-on-surface-variant">close</span>
       </button>
     </div>
-
-    <!-- Pet info row -->
     <div class="flex items-center gap-sm mb-md bg-surface-container-low rounded-2xl p-sm">
       <div id="compose-avatar" class="w-10 h-10 rounded-full bg-primary-container border-2 border-primary overflow-hidden flex items-center justify-center text-lg">🐾</div>
       <div>
-        <div id="compose-pet-name" class="font-display font-bold text-sm text-on-surface">我的宠物</div>
+        <div id="compose-pet-name" class="font-display font-bold text-sm">加载中...</div>
         <div id="compose-pet-level" class="text-xs text-on-surface-variant">Lv.1</div>
       </div>
     </div>
-
-    <!-- Content textarea -->
-    <textarea id="compose-text" placeholder="今天发生了什么有趣的事？让大家知道吧！" rows="4"
-      class="w-full bg-surface-container-low border-2 border-outline-variant rounded-2xl px-md py-sm text-sm focus:outline-none focus:border-primary resize-none placeholder:text-on-surface-variant/50 mb-sm"
+    <textarea id="compose-text" placeholder="今天发生了什么有趣的事？" rows="4"
+      class="w-full bg-surface-container-low border-2 border-outline-variant rounded-2xl px-md py-sm text-sm focus:outline-none focus:border-primary resize-none mb-xs"
       oninput="updateCharCount()"></textarea>
-    <div class="flex justify-end mb-md">
-      <span id="char-count" class="text-xs text-on-surface-variant">0 / 200</span>
-    </div>
-
-    <!-- Image preview -->
-    <div id="img-preview-wrap" class="hidden mb-md">
+    <div class="flex justify-end mb-sm"><span id="char-count" class="text-xs text-on-surface-variant">0 / 200</span></div>
+    <div id="img-preview-wrap" class="hidden mb-sm">
       <div class="img-preview">
         <img id="img-preview" src="" alt="预览">
         <button onclick="removeImage()" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center">
@@ -101,24 +104,56 @@ tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":
         </button>
       </div>
     </div>
-
-    <!-- Image upload -->
     <input type="file" id="img-input" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
-    <div class="flex gap-sm mb-lg">
-      <button onclick="document.getElementById('img-input').click()" class="flex items-center gap-xs bg-surface-container border border-outline-variant rounded-full px-sm py-xs text-sm text-on-surface-variant squishy">
-        <span class="material-symbols-outlined text-[18px]">add_photo_alternate</span>
-        <span class="font-label font-bold text-xs">添加照片</span>
+    <div class="flex gap-sm mb-md">
+      <button onclick="document.getElementById('img-input').click()" class="flex items-center gap-xs bg-surface-container border border-outline-variant rounded-full px-sm py-xs squishy">
+        <span class="material-symbols-outlined text-[18px] text-on-surface-variant">add_photo_alternate</span>
+        <span class="font-label font-bold text-xs text-on-surface-variant">添加照片</span>
       </button>
     </div>
-
-    <!-- Error -->
     <div id="compose-error" class="hidden text-sm text-red-500 mb-sm"></div>
-
-    <!-- Submit -->
-    <button id="submit-btn" onclick="submitPost()" class="w-full py-sm rounded-2xl bg-primary text-white font-display font-bold text-base soft-pop squishy">
-      发布
-    </button>
+    <button id="submit-btn" onclick="submitPost()" class="w-full py-sm rounded-2xl bg-primary text-white font-display font-bold text-base soft-pop squishy">发布</button>
   </div>
+</div>
+
+<!-- ── Comments Sheet ── -->
+<div id="comments-sheet" class="sheet fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl max-w-lg mx-auto" style="max-height:85dvh;display:flex;flex-direction:column;">
+  <div class="p-md pb-sm flex-shrink-0">
+    <div class="flex justify-between items-center">
+      <h2 class="font-display font-bold text-lg">评论</h2>
+      <button onclick="closeAll()" class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center squishy">
+        <span class="material-symbols-outlined text-[20px] text-on-surface-variant">close</span>
+      </button>
+    </div>
+  </div>
+  <!-- Comments list -->
+  <div id="comments-list" class="flex-1 overflow-y-auto px-md pb-sm"></div>
+  <!-- Comment input -->
+  <div class="px-md pb-6 pt-sm border-t border-outline-variant/30 flex-shrink-0 bg-white">
+    <div class="flex items-center gap-sm">
+      <div id="comment-my-avatar" class="w-9 h-9 rounded-full bg-primary-container border-2 border-primary overflow-hidden flex items-center justify-center text-base flex-shrink-0">🐾</div>
+      <input id="comment-input" placeholder="用宠物身份评论..." maxlength="100"
+        class="flex-1 bg-surface-container-low border-2 border-outline-variant rounded-full px-md py-sm text-sm focus:outline-none focus:border-primary"
+        onkeydown="if(event.key==='Enter')submitComment()">
+      <button onclick="submitComment()" class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center soft-pop squishy flex-shrink-0">
+        <span class="material-symbols-outlined text-[18px]">send</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Notifications Sheet ── -->
+<div id="notif-sheet" class="sheet fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl max-w-lg mx-auto" style="max-height:85dvh;display:flex;flex-direction:column;">
+  <div class="p-md pb-sm flex-shrink-0 flex justify-between items-center border-b border-outline-variant/30">
+    <h2 class="font-display font-bold text-lg">通知</h2>
+    <div class="flex items-center gap-sm">
+      <button onclick="markAllRead()" class="text-xs text-primary font-label font-bold">全部已读</button>
+      <button onclick="closeAll()" class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center squishy">
+        <span class="material-symbols-outlined text-[20px] text-on-surface-variant">close</span>
+      </button>
+    </div>
+  </div>
+  <div id="notif-list" class="flex-1 overflow-y-auto px-md"></div>
 </div>
 
 <script>
@@ -129,39 +164,194 @@ let isLoading = false;
 let hasMore = true;
 let selectedImageBase64 = null;
 let selectedImageType = null;
+let activeCommentPostId = null;
 
 window.addEventListener('load', () => {
   const saved = localStorage.getItem('pw_session');
   if (saved) {
-    try {
-      const s = JSON.parse(saved);
-      if (s.token) currentUser = s;
-    } catch {}
+    try { const s = JSON.parse(saved); if (s.token) currentUser = s; } catch {}
   }
   loadFeed();
-  if (currentUser) loadMyPet();
-
-  // Infinite scroll
+  if (currentUser) {
+    loadMyPet();
+    pollNotifications();
+  }
   window.addEventListener('scroll', () => {
-    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
-      if (!isLoading && hasMore) loadFeed();
-    }
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300 && !isLoading && hasMore) loadFeed();
   });
 });
 
+// ── Notifications ──────────────────────────────
+function pollNotifications() {
+  fetchNotifCount();
+  setInterval(fetchNotifCount, 30000); // every 30s
+}
+
+async function fetchNotifCount() {
+  if (!currentUser?.token) return;
+  try {
+    const res = await fetch('/api/notifications?action=count', {
+      headers: { 'Authorization': 'Bearer ' + currentUser.token }
+    });
+    const data = await res.json();
+    const badge = document.getElementById('notif-badge');
+    if (data.count > 0) {
+      badge.textContent = data.count > 9 ? '9+' : data.count;
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  } catch {}
+}
+
+async function openNotifications() {
+  openSheet('notif-sheet');
+  document.getElementById('notif-list').innerHTML = '<div class="py-lg text-center text-on-surface-variant text-sm">加载中...</div>';
+  try {
+    const res = await fetch('/api/notifications', {
+      headers: { 'Authorization': 'Bearer ' + currentUser.token }
+    });
+    const data = await res.json();
+    renderNotifications(data.notifications || []);
+    markAllRead();
+  } catch {
+    document.getElementById('notif-list').innerHTML = '<div class="py-lg text-center text-on-surface-variant text-sm">加载失败</div>';
+  }
+}
+
+function renderNotifications(notifs) {
+  const el = document.getElementById('notif-list');
+  if (!notifs.length) {
+    el.innerHTML = '<div class="flex flex-col items-center py-16 gap-sm text-center"><div class="text-4xl">🔔</div><div class="text-sm text-on-surface-variant">暂时没有通知</div></div>';
+    return;
+  }
+  el.innerHTML = notifs.map(n => `
+    <div class="notif-item ${n.is_read ? '' : 'unread px-sm rounded-xl'}">
+      <div class="w-10 h-10 rounded-full bg-primary-container overflow-hidden flex items-center justify-center text-lg flex-shrink-0">
+        ${n.from_pet_avatar ? `<img src="${n.from_pet_avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : '🐾'}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm text-on-surface leading-snug">${n.message}</div>
+        <div class="text-xs text-on-surface-variant mt-0.5">${timeAgo(n.created_at)}</div>
+      </div>
+      <div class="flex-shrink-0">
+        ${n.type === 'like'
+          ? '<span class="material-symbols-outlined text-red-400 text-[20px]" style="font-variation-settings:\'FILL\' 1;">favorite</span>'
+          : '<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings:\'FILL\' 1;">chat_bubble</span>'}
+      </div>
+    </div>`).join('');
+}
+
+async function markAllRead() {
+  if (!currentUser?.token) return;
+  try {
+    await fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Authorization': 'Bearer ' + currentUser.token }
+    });
+    document.getElementById('notif-badge').classList.add('hidden');
+  } catch {}
+}
+
+// ── Comments ───────────────────────────────────
+async function openComments(postId) {
+  activeCommentPostId = postId;
+  openSheet('comments-sheet');
+  const list = document.getElementById('comments-list');
+  list.innerHTML = '<div class="py-lg text-center text-on-surface-variant text-sm">加载中...</div>';
+  try {
+    const res = await fetch('/api/comments?post_id=' + postId);
+    const data = await res.json();
+    renderComments(data.comments || []);
+  } catch {
+    list.innerHTML = '<div class="py-lg text-center text-on-surface-variant text-sm">加载失败</div>';
+  }
+}
+
+function renderComments(comments) {
+  const list = document.getElementById('comments-list');
+  if (!comments.length) {
+    list.innerHTML = '<div class="flex flex-col items-center py-12 gap-sm text-center"><div class="text-4xl">💬</div><div class="text-sm text-on-surface-variant">还没有评论，来第一个说说吧！</div></div>';
+    return;
+  }
+  list.innerHTML = comments.map(c => `
+    <div class="comment-item" id="comment-${c.id}">
+      <div class="w-9 h-9 rounded-full bg-primary-container overflow-hidden flex items-center justify-center text-base flex-shrink-0">
+        ${c.pet_avatar ? `<img src="${c.pet_avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : '🐾'}
+      </div>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-baseline gap-xs mb-0.5">
+          <span class="font-display font-bold text-sm text-on-surface">${escapeHtml(c.pet_name || '宠物')}</span>
+          <span class="text-xs text-on-surface-variant">${timeAgo(c.created_at)}</span>
+        </div>
+        <p class="text-sm text-on-surface leading-relaxed">${escapeHtml(c.content)}</p>
+      </div>
+    </div>`).join('');
+}
+
+async function submitComment() {
+  if (!currentUser?.token) { alert('请先登录'); return; }
+  if (!myPet) { alert('请先创建宠物'); return; }
+  const input = document.getElementById('comment-input');
+  const content = input.value.trim();
+  if (!content) return;
+
+  input.value = '';
+  try {
+    const res = await fetch('/api/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
+      body: JSON.stringify({
+        post_id: activeCommentPostId,
+        pet_id: myPet.id,
+        pet_name: myPet.name,
+        pet_avatar: myPet.cartoon_url || null,
+        content
+      })
+    });
+    const data = await res.json();
+    if (data.comment) {
+      // Append to list
+      const list = document.getElementById('comments-list');
+      const emptyMsg = list.querySelector('.text-center');
+      if (emptyMsg) list.innerHTML = '';
+      const div = document.createElement('div');
+      div.className = 'comment-item';
+      div.id = 'comment-' + data.comment.id;
+      div.innerHTML = `
+        <div class="w-9 h-9 rounded-full bg-primary-container overflow-hidden flex items-center justify-center text-base flex-shrink-0">
+          ${myPet.cartoon_url ? `<img src="${myPet.cartoon_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : '🐾'}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-baseline gap-xs mb-0.5">
+            <span class="font-display font-bold text-sm text-on-surface">${escapeHtml(myPet.name)}</span>
+            <span class="text-xs text-on-surface-variant">刚刚</span>
+          </div>
+          <p class="text-sm text-on-surface leading-relaxed">${escapeHtml(content)}</p>
+        </div>`;
+      list.appendChild(div);
+      list.scrollTop = list.scrollHeight;
+      // Update count in feed
+      const countEl = document.querySelector(`#post-${activeCommentPostId} .comment-count`);
+      if (countEl) countEl.textContent = parseInt(countEl.textContent || 0) + 1;
+    }
+  } catch {}
+}
+
+// ── Feed ───────────────────────────────────────
 async function loadMyPet() {
   try {
     const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + currentUser.token } });
     const data = await res.json();
     if (data.pet) {
       myPet = data.pet;
-      // Update compose sheet pet info
       document.getElementById('compose-pet-name').textContent = myPet.name;
       document.getElementById('compose-pet-level').textContent = 'Lv.' + (myPet.level || 1);
-      if (myPet.cartoon_url) {
-        document.getElementById('compose-avatar').innerHTML =
-          '<img src="' + myPet.cartoon_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
-      }
+      const avatarHtml = myPet.cartoon_url
+        ? `<img src="${myPet.cartoon_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+        : '🐾';
+      document.getElementById('compose-avatar').innerHTML = avatarHtml;
+      document.getElementById('comment-my-avatar').innerHTML = avatarHtml;
     }
   } catch {}
 }
@@ -170,107 +360,72 @@ async function loadFeed() {
   if (isLoading || !hasMore) return;
   isLoading = true;
   document.getElementById('feed-loader').classList.remove('hidden');
-
   try {
     let url = '/api/posts';
     if (feedCursor) url += '?cursor=' + encodeURIComponent(feedCursor);
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = {};
     if (currentUser?.token) headers['Authorization'] = 'Bearer ' + currentUser.token;
-
     const res = await fetch(url, { headers });
     const data = await res.json();
     const posts = data.posts || [];
-
-    if (posts.length === 0) {
+    if (!posts.length) {
       hasMore = false;
       document.getElementById('feed-loader').classList.add('hidden');
       if (!feedCursor) showEmptyState();
       else document.getElementById('feed-end').classList.remove('hidden');
       return;
     }
-
     posts.forEach(renderPost);
     feedCursor = posts[posts.length - 1].created_at;
-    if (posts.length < 10) {
-      hasMore = false;
-      document.getElementById('feed-end').classList.remove('hidden');
-    }
-  } catch (e) {
-    console.error('loadFeed error:', e);
-  } finally {
-    isLoading = false;
-    document.getElementById('feed-loader').classList.add('hidden');
-  }
-}
-
-function timeAgo(dateStr) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return '刚刚';
-  if (m < 60) return m + '分钟前';
-  const h = Math.floor(m / 60);
-  if (h < 24) return h + '小时前';
-  const d = Math.floor(h / 24);
-  if (d < 7) return d + '天前';
-  return new Date(dateStr).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+    if (posts.length < 10) { hasMore = false; document.getElementById('feed-end').classList.remove('hidden'); }
+  } catch {}
+  finally { isLoading = false; document.getElementById('feed-loader').classList.add('hidden'); }
 }
 
 function renderPost(post) {
   const pet = post.pets || {};
   const isOwner = currentUser && post.user_id === currentUser.user?.id;
   const isLiked = post.liked;
-
   const card = document.createElement('div');
   card.className = 'post-card';
   card.id = 'post-' + post.id;
-
   const avatarHtml = pet.cartoon_url
     ? `<img src="${pet.cartoon_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
     : '🐾';
-
   card.innerHTML = `
     <div class="flex items-center justify-between mb-sm">
       <div class="flex items-center gap-sm">
         <div class="w-11 h-11 rounded-full bg-primary-container border-2 border-primary-container overflow-hidden flex items-center justify-center text-lg flex-shrink-0">${avatarHtml}</div>
         <div>
           <div class="flex items-center gap-xs">
-            <span class="font-display font-bold text-sm text-on-surface">${pet.name || '宠物'}</span>
+            <span class="font-display font-bold text-sm">${escapeHtml(pet.name || '宠物')}</span>
             <span class="bg-secondary-container text-on-secondary-container font-label font-bold text-[10px] px-2 py-0.5 rounded-full">Lv.${pet.level || 1}</span>
           </div>
           <div class="text-xs text-on-surface-variant">${timeAgo(post.created_at)}</div>
         </div>
       </div>
-      ${isOwner ? `<button onclick="deletePost('${post.id}')" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container squishy"><span class="material-symbols-outlined text-[18px]">more_horiz</span></button>` : ''}
+      ${isOwner ? `<button onclick="deletePost('${post.id}')" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant squishy"><span class="material-symbols-outlined text-[18px]">delete_outline</span></button>` : ''}
     </div>
-
-    <p class="text-sm text-on-surface leading-relaxed mb-sm">${escapeHtml(post.content)}</p>
-
-    ${post.image_url ? `<div class="img-preview mb-sm"><img src="${post.image_url}" alt="帖子图片" loading="lazy"></div>` : ''}
-
+    <p class="text-sm leading-relaxed mb-sm">${escapeHtml(post.content)}</p>
+    ${post.image_url ? `<div class="img-preview mb-sm"><img src="${post.image_url}" alt="" loading="lazy"></div>` : ''}
     <div class="flex items-center gap-md pt-sm border-t border-outline-variant/30">
       <button onclick="toggleLike('${post.id}', this)" class="flex items-center gap-xs squishy ${isLiked ? 'liked' : ''}">
-        <span class="material-symbols-outlined like-icon text-[20px] text-on-surface-variant" style="${isLiked ? "font-variation-settings:'FILL' 1;color:#e53e3e;" : ''}">favorite</span>
+        <span class="material-symbols-outlined like-icon text-[20px] text-on-surface-variant" ${isLiked ? "style=\"font-variation-settings:'FILL' 1;color:#e53e3e;\"" : ''}>favorite</span>
         <span class="like-count text-sm text-on-surface-variant ${isLiked ? 'text-red-500' : ''}">${post.likes_count || 0}</span>
       </button>
-      <div class="flex items-center gap-xs text-on-surface-variant">
+      <button onclick="openComments('${post.id}')" class="flex items-center gap-xs squishy text-on-surface-variant">
         <span class="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
-        <span class="text-sm">${post.comments_count || 0}</span>
-      </div>
-    </div>
-  `;
-
+        <span class="comment-count text-sm">${post.comments_count || 0}</span>
+      </button>
+    </div>`;
   document.getElementById('feed').appendChild(card);
-}
-
-function escapeHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function showEmptyState() {
   document.getElementById('feed').innerHTML = `
     <div class="flex flex-col items-center justify-center py-16 gap-md text-center">
       <div class="text-6xl">🐾</div>
-      <div class="font-display font-bold text-lg text-on-surface">社区还没有帖子</div>
+      <div class="font-display font-bold text-lg">社区还没有帖子</div>
       <div class="text-sm text-on-surface-variant">成为第一个分享宠物故事的人！</div>
       <button onclick="openCompose()" class="bg-primary text-white px-lg py-sm rounded-full font-display font-bold squishy soft-pop">发第一条帖子</button>
     </div>`;
@@ -280,23 +435,13 @@ async function toggleLike(postId, btn) {
   if (!currentUser?.token) { alert('请先登录'); return; }
   const isLiked = btn.classList.contains('liked');
   const action = isLiked ? 'unlike' : 'like';
-
-  // Optimistic update
   btn.classList.toggle('liked');
   const countEl = btn.querySelector('.like-count');
   const iconEl = btn.querySelector('.like-icon');
   const current = parseInt(countEl.textContent) || 0;
   countEl.textContent = action === 'like' ? current + 1 : Math.max(current - 1, 0);
-  if (action === 'like') {
-    iconEl.style.fontVariationSettings = "'FILL' 1";
-    iconEl.style.color = '#e53e3e';
-    countEl.style.color = '#e53e3e';
-  } else {
-    iconEl.style.fontVariationSettings = "'FILL' 0";
-    iconEl.style.color = '';
-    countEl.style.color = '';
-  }
-
+  if (action === 'like') { iconEl.style.fontVariationSettings = "'FILL' 1"; iconEl.style.color = '#e53e3e'; countEl.style.color = '#e53e3e'; }
+  else { iconEl.style.fontVariationSettings = "'FILL' 0"; iconEl.style.color = ''; countEl.style.color = ''; }
   try {
     await fetch('/api/likes', {
       method: 'POST',
@@ -309,27 +454,15 @@ async function toggleLike(postId, btn) {
 async function deletePost(postId) {
   if (!confirm('确定要删除这条帖子吗？')) return;
   try {
-    await fetch('/api/posts?id=' + postId, {
-      method: 'DELETE',
-      headers: { 'Authorization': 'Bearer ' + currentUser.token }
-    });
-    const card = document.getElementById('post-' + postId);
-    if (card) card.remove();
+    await fetch('/api/posts?id=' + postId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + currentUser.token } });
+    document.getElementById('post-' + postId)?.remove();
   } catch {}
 }
 
-// Compose sheet
+// ── Compose ────────────────────────────────────
 function openCompose() {
   if (!currentUser?.token) { window.location.href = '/'; return; }
-  document.getElementById('compose-sheet').classList.add('open');
-  document.getElementById('sheet-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeCompose() {
-  document.getElementById('compose-sheet').classList.remove('open');
-  document.getElementById('sheet-overlay').classList.remove('open');
-  document.body.style.overflow = '';
+  openSheet('compose-sheet');
 }
 
 function updateCharCount() {
@@ -365,97 +498,89 @@ async function submitPost() {
   const content = document.getElementById('compose-text').value.trim();
   const errEl = document.getElementById('compose-error');
   const btn = document.getElementById('submit-btn');
-
   errEl.classList.add('hidden');
   if (!content) { errEl.textContent = '请写点什么吧！'; errEl.classList.remove('hidden'); return; }
   if (content.length > 200) { errEl.textContent = '内容不能超过200字'; errEl.classList.remove('hidden'); return; }
   if (!myPet) { errEl.textContent = '请先创建你的宠物'; errEl.classList.remove('hidden'); return; }
-
-  btn.textContent = '发布中...';
-  btn.disabled = true;
-
+  btn.textContent = '发布中...'; btn.disabled = true;
   try {
     let imageUrl = null;
-
-    // Upload image if selected
     if (selectedImageBase64) {
       const upRes = await fetch('/api/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
         body: JSON.stringify({ imageBase64: selectedImageBase64, mediaType: selectedImageType })
       });
-      const upData = await upRes.json();
-      imageUrl = upData.url || null;
+      imageUrl = (await upRes.json()).url || null;
     }
-
-    // Create post
     const res = await fetch('/api/posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentUser.token },
       body: JSON.stringify({ pet_id: myPet.id, content, image_url: imageUrl })
     });
     const data = await res.json();
-
     if (data.post) {
-      // Prepend new post to feed
-      const tempPost = {
-        ...data.post,
-        liked: false,
-        pets: { name: myPet.name, level: myPet.level, cartoon_url: myPet.cartoon_url }
-      };
+      const tempPost = { ...data.post, liked: false, pets: { name: myPet.name, level: myPet.level, cartoon_url: myPet.cartoon_url } };
       const feed = document.getElementById('feed');
-      const tempDiv = document.createElement('div');
-      feed.insertBefore(tempDiv, feed.firstChild);
-      const oldAppend = HTMLElement.prototype.appendChild;
-      // Render and prepend
+      const placeholder = document.createElement('div');
+      feed.insertBefore(placeholder, feed.firstChild);
       const frag = document.createElement('div');
-      frag.id = 'post-' + tempPost.id;
-      frag.className = 'post-card';
-      const pet = tempPost.pets || {};
-      const avatarHtml = pet.cartoon_url
-        ? `<img src="${pet.cartoon_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-        : '🐾';
+      frag.className = 'post-card'; frag.id = 'post-' + tempPost.id;
+      const avHtml = myPet.cartoon_url ? `<img src="${myPet.cartoon_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : '🐾';
       frag.innerHTML = `
         <div class="flex items-center justify-between mb-sm">
           <div class="flex items-center gap-sm">
-            <div class="w-11 h-11 rounded-full bg-primary-container border-2 border-primary-container overflow-hidden flex items-center justify-center text-lg flex-shrink-0">${avatarHtml}</div>
+            <div class="w-11 h-11 rounded-full bg-primary-container overflow-hidden flex items-center justify-center text-lg">${avHtml}</div>
             <div>
-              <div class="flex items-center gap-xs">
-                <span class="font-display font-bold text-sm text-on-surface">${pet.name || '宠物'}</span>
-                <span class="bg-secondary-container text-on-secondary-container font-label font-bold text-[10px] px-2 py-0.5 rounded-full">Lv.${pet.level || 1}</span>
-              </div>
+              <div class="flex items-center gap-xs"><span class="font-display font-bold text-sm">${escapeHtml(myPet.name)}</span><span class="bg-secondary-container text-on-secondary-container font-label font-bold text-[10px] px-2 py-0.5 rounded-full">Lv.${myPet.level||1}</span></div>
               <div class="text-xs text-on-surface-variant">刚刚</div>
             </div>
           </div>
-          <button onclick="deletePost('${tempPost.id}')" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant squishy"><span class="material-symbols-outlined text-[18px]">more_horiz</span></button>
+          <button onclick="deletePost('${tempPost.id}')" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant squishy"><span class="material-symbols-outlined text-[18px]">delete_outline</span></button>
         </div>
-        <p class="text-sm text-on-surface leading-relaxed mb-sm">${escapeHtml(content)}</p>
-        ${imageUrl ? `<div class="img-preview mb-sm"><img src="${imageUrl}" alt="帖子图片"></div>` : ''}
+        <p class="text-sm leading-relaxed mb-sm">${escapeHtml(content)}</p>
+        ${imageUrl ? `<div class="img-preview mb-sm"><img src="${imageUrl}" alt=""></div>` : ''}
         <div class="flex items-center gap-md pt-sm border-t border-outline-variant/30">
-          <button onclick="toggleLike('${tempPost.id}', this)" class="flex items-center gap-xs squishy">
-            <span class="material-symbols-outlined like-icon text-[20px] text-on-surface-variant">favorite</span>
-            <span class="like-count text-sm text-on-surface-variant">0</span>
-          </button>
-          <div class="flex items-center gap-xs text-on-surface-variant">
-            <span class="material-symbols-outlined text-[20px]">chat_bubble_outline</span>
-            <span class="text-sm">0</span>
-          </div>
+          <button onclick="toggleLike('${tempPost.id}', this)" class="flex items-center gap-xs squishy"><span class="material-symbols-outlined like-icon text-[20px] text-on-surface-variant">favorite</span><span class="like-count text-sm text-on-surface-variant">0</span></button>
+          <button onclick="openComments('${tempPost.id}')" class="flex items-center gap-xs squishy text-on-surface-variant"><span class="material-symbols-outlined text-[20px]">chat_bubble_outline</span><span class="comment-count text-sm">0</span></button>
         </div>`;
-      feed.replaceChild(frag, tempDiv);
-
-      // Reset form
+      feed.replaceChild(frag, placeholder);
       document.getElementById('compose-text').value = '';
-      removeImage();
-      updateCharCount();
-      closeCompose();
+      removeImage(); updateCharCount(); closeAll();
     }
-  } catch (e) {
-    errEl.textContent = '发布失败，请重试';
-    errEl.classList.remove('hidden');
-  } finally {
-    btn.textContent = '发布';
-    btn.disabled = false;
-  }
+  } catch { errEl.textContent = '发布失败，请重试'; errEl.classList.remove('hidden'); }
+  finally { btn.textContent = '发布'; btn.disabled = false; }
+}
+
+// ── Sheet helpers ──────────────────────────────
+function openSheet(id) {
+  closeAll(false);
+  document.getElementById(id).classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAll(restoreScroll = true) {
+  ['compose-sheet','comments-sheet','notif-sheet'].forEach(id => document.getElementById(id).classList.remove('open'));
+  document.getElementById('overlay').classList.remove('open');
+  if (restoreScroll) document.body.style.overflow = '';
+}
+
+// ── Utils ──────────────────────────────────────
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return '刚刚';
+  if (m < 60) return m + '分钟前';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + '小时前';
+  const d = Math.floor(h / 24);
+  if (d < 7) return d + '天前';
+  return new Date(dateStr).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
 </body>
