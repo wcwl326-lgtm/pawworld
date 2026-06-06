@@ -405,31 +405,13 @@ let scores = JSON.parse(localStorage.getItem('pw_scores') || '{"dodge":0,"memory
 // ───────────────────────────────────────────────────────
 
 
-// Auto-refresh Supabase token if expired
+// Get token from session - 401 in loadPet handles expired tokens
 async function getValidToken() {
-  const saved = localStorage.getItem('pw_session');
-  if (!saved) return null;
   try {
+    const saved = localStorage.getItem('pw_session');
+    if (!saved) return null;
     const s = JSON.parse(saved);
-    if (!s.token) return null;
-    // Test if token is valid by checking expiry
-    const payload = JSON.parse(atob(s.token.split('.')[1]));
-    const exp = payload.exp * 1000;
-    if (Date.now() < exp - 60000) return s.token; // still valid
-    // Token expired or expiring soon - refresh
-    if (!s.refresh_token) { localStorage.removeItem('pw_session'); return null; }
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'refresh', refresh_token: s.refresh_token })
-    });
-    if (!res.ok) { localStorage.removeItem('pw_session'); return null; }
-    const data = await res.json();
-    // Save new tokens
-    s.token = data.access_token;
-    if (data.refresh_token) s.refresh_token = data.refresh_token;
-    localStorage.setItem('pw_session', JSON.stringify(s));
-    return data.access_token;
+    return s.token || null;
   } catch { return null; }
 }
 
@@ -438,33 +420,11 @@ window.addEventListener('load', () => {
   if (!saved) { window.location.href = '/'; return; }
   try {
     const s = JSON.parse(saved);
-    if (s.user && s.token) {
-      const lastVisit = localStorage.getItem('pw_last_visit');
-      const now = Date.now();
-      // Only trigger missing if lastVisit exists AND is a reasonable timestamp (> year 2020)
-      if (lastVisit && parseInt(lastVisit) > 1577836800000 && (now - parseInt(lastVisit)) > 24 * 3600 * 1000) {
-        localStorage.setItem('pw_last_visit', now.toString());
-        window.location.href = '/missing.html';
-        return;
-      }
-      localStorage.setItem('pw_last_visit', now.toString());
-      getValidToken().then(t => {
-      if (t) {
-        loadPet(t);
-        updateBestScores();
-        applyDailyBonus(t);
-      } else {
-        localStorage.removeItem('pw_session');
-        window.location.href = '/';
-      }
-    });
-    } else { window.location.href = '/'; }
-  } catch (e) {
-    // Don't redirect on API errors - only redirect if truly no session
-    console.error('play.html load error:', e);
-    const s2 = localStorage.getItem('pw_session');
-    if (!s2) window.location.href = '/';
-  }
+    if (!s.token) { window.location.href = '/'; return; }
+    loadPet(s.token);
+    updateBestScores();
+    applyDailyBonus(s.token);
+  } catch { window.location.href = '/'; }
 });
 
 async function applyDailyBonus(token) {
