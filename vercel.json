@@ -1,9 +1,13 @@
 {
   "functions": {
-    "api/analyze.js": { "maxDuration": 10 },
     "api/generate.js": { "maxDuration": 10 },
-    "api/pet.js": { "maxDuration": 10 },
-    "api/chat.js": { "maxDuration": 10 },
-    "api/auth.js": { "maxDuration": 10 }
+    "api/analyze.js":  { "maxDuration": 10 },
+    "api/pet.js":      { "maxDuration": 10 },
+    "api/pets-all.js": { "maxDuration": 10 },
+    "api/chat.js":     { "maxDuration": 10 },
+    "api/auth.js":     { "maxDuration": 10 },
+    "api/posts.js":    { "maxDuration": 10 },
+    "api/likes.js":    { "maxDuration": 10 },
+    "api/upload.js":   { "maxDuration": 10 }
   }
 }
