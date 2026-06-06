@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PawWorld — 和宠物聊天</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Quicksand:wght@700&family=Be+Vietnam+Pro:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script>
+tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":"#7ec8e3","on-primary":"#ffffff","on-primary-container":"#005468","secondary":"#705d00","secondary-container":"#fdd73b","on-secondary-container":"#715d00","tertiary":"#2d6a44","tertiary-container":"#8dcc9f","surface-bright":"#fff9f0","surface-container-low":"#f9f3ea","surface-container":"#f3ede4","surface-container-high":"#ede7df","surface-container-highest":"#e7e2d9","on-surface":"#1d1b16","on-surface-variant":"#3f484c","outline-variant":"#bfc8cd"},borderRadius:{"DEFAULT":"1rem","lg":"2rem","xl":"3rem","full":"9999px"},spacing:{"xs":"4px","sm":"12px","md":"24px","lg":"40px","gutter":"16px","container-padding":"20px"},fontFamily:{"sans":["Be Vietnam Pro","sans-serif"],"display":["Plus Jakarta Sans","sans-serif"],"label":["Quicksand","sans-serif"]}}}}
+</script>
+<style>
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .soft-pop{box-shadow:inset 0 2px 4px rgba(255,255,255,0.4),0 4px 12px rgba(2,103,127,0.15);}
+  .squishy:active{transform:scale(0.95);}
+  body{background-color:#fff9f0;min-height:100dvh;}
+</style>
+</head>
+<body class="font-sans text-on-surface">
+<div class="fixed inset-0 z-0 opacity-30 pointer-events-none" style="background:radial-gradient(ellipse at 20% 20%,#b7eaff 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,#b0f1c2 0%,transparent 50%);"></div>
+
+<header class="fixed top-0 w-full z-50 bg-surface-bright/80 backdrop-blur-md">
+  <div class="flex justify-between items-center px-container-padding py-sm w-full max-w-lg mx-auto">
+    <div class="flex items-center gap-sm">
+      <div id="chat-avatar" class="w-10 h-10 rounded-full bg-primary-container border-2 border-primary flex items-center justify-center overflow-hidden text-lg">🐾</div>
+      <div>
+        <h1 class="font-display font-extrabold text-lg text-primary leading-tight" id="chat-pet-name">我的宠物</h1>
+        <div class="flex items-center gap-1">
+          <div class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></div>
+          <p class="text-xs text-on-surface-variant font-label">在听你说话...</p>
+        </div>
+      </div>
+    </div>
+    <a href="/profile.html" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-high transition-colors squishy">
+      <span class="material-symbols-outlined text-on-surface-variant text-[22px]">settings</span>
+    </a>
+  </div>
+</header>
+
+<main class="relative z-10 pt-20 pb-36 px-container-padding max-w-lg mx-auto flex flex-col min-h-screen">
+  <!-- Pet avatar float -->
+  <div class="flex justify-center py-md">
+    <div class="relative" style="animation:float 3s ease-in-out infinite;">
+      <div id="chat-pet-display" class="w-28 h-28 rounded-2xl bg-primary-container/20 flex items-center justify-center text-6xl border-2 border-primary-container overflow-hidden">🐾</div>
+    </div>
+  </div>
+
+  <!-- Chat messages -->
+  <div id="chat-messages" class="flex flex-col gap-sm flex-1 pb-4 min-h-[200px]"></div>
+  <div id="chat-typing" class="hidden text-xs text-on-surface-variant italic px-sm pb-sm">宠物正在回复...</div>
+</main>
+
+<!-- Input fixed at bottom above nav -->
+<div class="fixed bottom-[72px] left-0 right-0 z-40 px-container-padding max-w-lg mx-auto pb-sm">
+  <div class="bg-white/90 backdrop-blur rounded-2xl p-sm soft-pop border border-white flex items-center gap-sm">
+    <input id="chat-input" placeholder="跟你的宠物说话..." class="flex-1 bg-surface-container-low border-2 border-primary-container rounded-full py-sm px-md focus:outline-none focus:border-primary text-sm placeholder:text-on-surface-variant/50" onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()" class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center soft-pop squishy flex-shrink-0">
+      <span class="material-symbols-outlined text-[18px]">send</span>
+    </button>
+  </div>
+</div>
+
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-gutter pb-4 bg-surface-container-low shadow-[0_-4px_10px_rgba(2,103,127,0.08)] rounded-t-2xl">
+  <a href="/play.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">pets</span><span class="font-label text-[10px] font-bold">我的宠物</span></a>
+  <a href="/community.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">group</span><span class="font-label text-[10px] font-bold">社区</span></a>
+  <a href="/chat.html" class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl p-2 scale-105"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">chat_bubble</span><span class="font-label text-[10px] font-bold">聊天</span></a>
+  <a href="/games.html" class="flex flex-col items-center justify-center text-on-surface-variant p-2 rounded-xl"><span class="material-symbols-outlined">sports_esports</span><span class="font-label text-[10px] font-bold">游戏</span></a>
+</nav>
+
+<style>
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+</style>
+
+<script>
+let pet = null;
+let chatHistory = [];
+
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('pw_session');
+  if (!saved) { window.location.href = '/'; return; }
+  try {
+    const s = JSON.parse(saved);
+    if (s.token) loadPet(s.token);
+    else window.location.href = '/';
+  } catch { window.location.href = '/'; }
+});
+
+async function loadPet(token) {
+  try {
+    const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    if (data.pet) {
+      pet = data.pet;
+      document.getElementById('chat-pet-name').textContent = pet.name;
+      if (pet.cartoon_url) {
+        const img = document.createElement('img');
+        img.src = pet.cartoon_url;
+        img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:14px;';
+        document.getElementById('chat-pet-display').innerHTML = '';
+        document.getElementById('chat-pet-display').appendChild(img);
+        const av = document.getElementById('chat-avatar');
+        const avImg = document.createElement('img');
+        avImg.src = pet.cartoon_url;
+        avImg.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+        av.innerHTML = '';
+        av.appendChild(avImg);
+      }
+      addChatMsg('pet', pet.name + '：主人来聊天啦！今天有什么想说的吗？😊');
+    }
+  } catch {}
+}
+
+function addChatMsg(role, text) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  const isUser = role === 'user';
+  div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:4px;' + (isUser ? 'flex-direction:row-reverse;' : '');
+  div.innerHTML = isUser
+    ? '<div style="background:#7ec8e3;color:#005468;border-radius:18px 18px 4px 18px;padding:8px 14px;font-size:14px;max-width:75%;font-family:'Be Vietnam Pro',sans-serif;line-height:1.5;">' + text + '</div><div style="font-size:20px;flex-shrink:0;">👤</div>'
+    : '<div style="font-size:20px;flex-shrink:0;">🐾</div><div style="background:#f9f3ea;border-radius:18px 18px 18px 4px;padding:8px 14px;font-size:14px;max-width:75%;color:#1d1b16;font-family:'Be Vietnam Pro',sans-serif;border:1px solid #bfc8cd;line-height:1.5;">' + text + '</div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  window.scrollTo(0, document.body.scrollHeight);
+  if (role !== 'pet') chatHistory.push({ role: role === 'user' ? 'user' : 'assistant', content: text });
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg || !pet) return;
+  input.value = '';
+  addChatMsg('user', msg);
+  const typing = document.getElementById('chat-typing');
+  typing.classList.remove('hidden');
+  try {
+    const sess = JSON.parse(localStorage.getItem('pw_session') || '{}');
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (sess.token || '') },
+      body: JSON.stringify({ petName: pet.name, hunger: pet.hunger||80, energy: pet.energy||80, mood: pet.mood||80, message: msg, history: chatHistory.slice(-8) })
+    });
+    const data = await res.json();
+    typing.classList.add('hidden');
+    addChatMsg('pet', data.reply ? pet.name + '：' + data.reply : pet.name + '：...🥺');
+  } catch {
+    typing.classList.add('hidden');
+    addChatMsg('pet', pet.name + '：主人，我现在说不了话...🥺');
+  }
+}
+</script>
+</body>
+</html>
