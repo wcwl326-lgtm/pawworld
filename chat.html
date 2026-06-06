@@ -87,32 +87,34 @@ window.addEventListener('load', () => {
   if (!saved) { window.location.href = '/'; return; }
   try {
     const s = JSON.parse(saved);
-    if (!s.token) { window.location.href = '/'; return; }
-    currentToken = s.token;
-    loadPet(s.token);
+    const token = s.token || s.access_token;
+    if (!token) { window.location.href = '/'; return; }
+    currentToken = token;
+    loadPet(token);
   } catch { window.location.href = '/'; }
 });
 
 async function loadPet(token) {
-  try {
-    const res = await fetch('/api/pet', { headers: { 'Authorization': 'Bearer ' + token } });
-    if (res.status === 401) { localStorage.removeItem('pw_session'); window.location.href = '/'; return; }
-    const data = await res.json();
-    if (data.pet) {
-      pet = data.pet;
-      document.getElementById('chat-pet-name').textContent = pet.name;
-      if (pet.cartoon_url) {
-        const display = document.getElementById('chat-pet-display');
-        display.innerHTML = '<img src="' + pet.cartoon_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">';
-        const av = document.getElementById('chat-avatar');
-        av.innerHTML = '<img src="' + pet.cartoon_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
-      }
-      // Load saved history from DB
-      await loadHistory(token);
-    }
-  } catch (e) {
-    console.error('loadPet error:', e);
+  const res = await fetch('/api/pet', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  });
+  if (res.status === 401) {
+    localStorage.removeItem('pw_session');
+    window.location.href = '/';
+    return;
   }
+  const data = await res.json();
+  if (!data.pet) return;
+
+  pet = data.pet;
+  document.getElementById('chat-pet-name').textContent = pet.name;
+  if (pet.cartoon_url) {
+    document.getElementById('chat-pet-display').innerHTML =
+      '<img src="' + pet.cartoon_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">';
+    document.getElementById('chat-avatar').innerHTML =
+      '<img src="' + pet.cartoon_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+  }
+  loadHistory(token);
 }
 
 async function loadHistory(token) {
@@ -120,71 +122,62 @@ async function loadHistory(token) {
     const res = await fetch('/api/chat-history?pet_id=' + pet.id, {
       headers: { 'Authorization': 'Bearer ' + token }
     });
+    if (!res.ok) throw new Error('history fetch failed: ' + res.status);
     const data = await res.json();
     const messages = data.messages || [];
-
     if (messages.length === 0) {
-      // First time - show greeting
       const greeting = pet.name + '：主人来聊天啦！今天有什么想说的吗？😊';
       addChatMsg('pet', greeting);
       saveMessage('pet', greeting);
     } else {
-      // Restore history
-      messages.forEach(m => addChatMsg(m.role, m.content, false));
-      // Scroll to bottom
-      const container = document.getElementById('chat-messages');
-      container.scrollTop = container.scrollHeight;
-      // Rebuild API history (last 12 for context)
+      messages.forEach(m => addChatMsg(m.role, m.content));
+      document.getElementById('chat-messages').scrollTop = 99999;
       chatHistory = messages.slice(-12).map(m => ({
         role: m.role === 'user' ? 'user' : 'assistant',
         content: m.content
       }));
     }
   } catch (e) {
-    console.error('loadHistory error:', e);
-    addChatMsg('pet', pet.name + '：主人来聊天啦！今天有什么想说的吗？😊');
+    console.error('loadHistory:', e);
+    const greeting = pet.name + '：主人来聊天啦！今天有什么想说的吗？😊';
+    addChatMsg('pet', greeting);
   }
 }
 
 async function saveMessage(role, content) {
   if (!pet || !currentToken) return;
-  try {
-    await fetch('/api/chat-history', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentToken },
-      body: JSON.stringify({ pet_id: pet.id, role, content })
-    });
-  } catch {}
+  fetch('/api/chat-history', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentToken },
+    body: JSON.stringify({ pet_id: pet.id, role, content })
+  }).catch(() => {});
 }
 
 async function clearHistory() {
   if (!confirm('确定要清除全部聊天记录吗？')) return;
   if (!pet || !currentToken) return;
-  try {
-    await fetch('/api/chat-history?pet_id=' + pet.id, {
-      method: 'DELETE',
-      headers: { 'Authorization': 'Bearer ' + currentToken }
-    });
-    chatHistory = [];
-    document.getElementById('chat-messages').innerHTML = '';
-    const greeting = pet.name + '：聊天记录已清除～重新开始吧！😊';
-    addChatMsg('pet', greeting);
-    saveMessage('pet', greeting);
-  } catch {}
+  await fetch('/api/chat-history?pet_id=' + pet.id, {
+    method: 'DELETE',
+    headers: { 'Authorization': 'Bearer ' + currentToken }
+  }).catch(() => {});
+  chatHistory = [];
+  document.getElementById('chat-messages').innerHTML = '';
+  const greeting = pet.name + '：聊天记录已清除～重新开始吧！😊';
+  addChatMsg('pet', greeting);
+  saveMessage('pet', greeting);
 }
 
-function addChatMsg(role, text, shouldSave = false) {
+function addChatMsg(role, text) {
   const container = document.getElementById('chat-messages');
   const div = document.createElement('div');
   const isUser = role === 'user';
-  div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;' + (isUser ? 'flex-direction:row-reverse;' : '');
+  div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;'
+    + (isUser ? 'flex-direction:row-reverse;' : '');
   const bubble = document.createElement('div');
   bubble.textContent = text;
-  if (isUser) {
-    bubble.style.cssText = 'background:#7ec8e3;color:#005468;border-radius:18px 18px 4px 18px;padding:8px 14px;font-size:14px;max-width:75%;line-height:1.5;';
-  } else {
-    bubble.style.cssText = 'background:#f9f3ea;border-radius:18px 18px 18px 4px;padding:8px 14px;font-size:14px;max-width:75%;color:#1d1b16;border:1px solid #bfc8cd;line-height:1.5;';
-  }
+  bubble.style.cssText = isUser
+    ? 'background:#7ec8e3;color:#005468;border-radius:18px 18px 4px 18px;padding:8px 14px;font-size:14px;max-width:75%;line-height:1.5;'
+    : 'background:#f9f3ea;border-radius:18px 18px 18px 4px;padding:8px 14px;font-size:14px;max-width:75%;color:#1d1b16;border:1px solid #bfc8cd;line-height:1.5;';
   const avatar = document.createElement('div');
   avatar.style.cssText = 'font-size:20px;flex-shrink:0;';
   avatar.textContent = isUser ? '👤' : '🐾';
@@ -192,11 +185,6 @@ function addChatMsg(role, text, shouldSave = false) {
   div.appendChild(isUser ? avatar : bubble);
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
-  // Update API history
-  if (isUser) chatHistory.push({ role: 'user', content: text });
-  else chatHistory.push({ role: 'assistant', content: text });
-  // Keep last 12 for API context
-  if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
 }
 
 async function sendChat() {
@@ -204,9 +192,10 @@ async function sendChat() {
   const msg = input.value.trim();
   if (!msg || !pet) return;
   input.value = '';
-
   addChatMsg('user', msg);
   saveMessage('user', msg);
+  chatHistory.push({ role: 'user', content: msg });
+  if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
 
   const typing = document.getElementById('chat-typing');
   typing.classList.remove('hidden');
@@ -215,7 +204,7 @@ async function sendChat() {
     const savedSeed = localStorage.getItem('pw_seed_' + pet.id);
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (sess.token || '') },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentToken },
       body: JSON.stringify({
         petName: pet.name,
         hunger: pet.hunger || 80,
@@ -228,13 +217,14 @@ async function sendChat() {
     });
     const data = await res.json();
     typing.classList.add('hidden');
-    const reply = data.reply ? pet.name + '：' + data.reply : pet.name + '：...🥺';
-    // Save seed on first reply
     if (data.seed !== undefined && !savedSeed) {
       localStorage.setItem('pw_seed_' + pet.id, data.seed);
     }
+    const reply = data.reply ? pet.name + '：' + data.reply : pet.name + '：...🥺';
     addChatMsg('pet', reply);
     saveMessage('pet', reply);
+    chatHistory.push({ role: 'assistant', content: reply });
+    if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
   } catch {
     typing.classList.add('hidden');
     addChatMsg('pet', pet.name + '：主人，我现在说不了话...🥺');
