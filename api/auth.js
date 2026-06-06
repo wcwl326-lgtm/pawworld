@@ -15,6 +15,22 @@ export default async function handler(req) {
 
   const { action, email, password } = body;
 
+  // Refresh token using Supabase refresh_token
+  if (action === 'refresh') {
+    const { refresh_token } = body;
+    if (!refresh_token) return new Response(JSON.stringify({ error: 'Missing refresh_token' }), { status: 400 });
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({ refresh_token })
+    });
+    const data = await res.json();
+    if (!res.ok) return new Response(JSON.stringify({ error: data.error_description || 'Refresh failed' }), { status: 401 });
+    return new Response(JSON.stringify({ access_token: data.access_token, refresh_token: data.refresh_token, user: data.user }), {
+      status: 200, headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   if (action === 'signup') {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
       method: 'POST',
@@ -22,7 +38,7 @@ export default async function handler(req) {
       body: JSON.stringify({ email, password })
     });
     const data = await res.json();
-    if (!res.ok) return new Response(JSON.stringify({ error: data.msg || data.error_description || data.message || JSON.stringify(data) }), { status: 400 });
+    if (!res.ok) return new Response(JSON.stringify({ error: data.msg || data.error_description || '注册失败' }), { status: 400 });
     return new Response(JSON.stringify({ user: data.user, session: data.session }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
 
@@ -34,7 +50,7 @@ export default async function handler(req) {
     });
     const data = await res.json();
     if (!res.ok) return new Response(JSON.stringify({ error: data.error_description || '邮箱或密码错误' }), { status: 400 });
-    return new Response(JSON.stringify({ user: data.user, access_token: data.access_token }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ user: data.user, access_token: data.access_token, refresh_token: data.refresh_token }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
 
   return new Response(JSON.stringify({ error: 'Unknown action' }), { status: 400 });
