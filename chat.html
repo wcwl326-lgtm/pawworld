@@ -32,9 +32,14 @@ tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":
         </div>
       </div>
     </div>
-    <a href="/profile.html" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center hover:bg-surface-container-high transition-colors squishy">
-      <span class="material-symbols-outlined text-on-surface-variant text-[22px]">settings</span>
-    </a>
+    <div class="flex items-center gap-sm">
+      <button onclick="clearHistory()" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center squishy" title="清除聊天记录">
+        <span class="material-symbols-outlined text-on-surface-variant text-[20px]">delete_outline</span>
+      </button>
+      <a href="/profile.html" class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center squishy">
+        <span class="material-symbols-outlined text-on-surface-variant text-[22px]">settings</span>
+      </a>
+    </div>
   </div>
 </header>
 
@@ -75,7 +80,7 @@ tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":
 <script>
 let pet = null;
 let chatHistory = [];
-let personalitySeed = null;
+let currentToken = null;
 
 window.addEventListener('load', () => {
   const saved = localStorage.getItem('pw_session');
@@ -83,6 +88,7 @@ window.addEventListener('load', () => {
   try {
     const s = JSON.parse(saved);
     if (!s.token) { window.location.href = '/'; return; }
+    currentToken = s.token;
     loadPet(s.token);
   } catch { window.location.href = '/'; }
 });
@@ -101,23 +107,77 @@ async function loadPet(token) {
         const av = document.getElementById('chat-avatar');
         av.innerHTML = '<img src="' + pet.cartoon_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
       }
-      // Load or generate personality seed
-      const savedSeed = localStorage.getItem('pw_seed_' + pet.id);
-      if (savedSeed) {
-        personalitySeed = parseInt(savedSeed);
-      }
-      addChatMsg('pet', pet.name + '：主人来聊天啦！今天有什么想说的吗？😊');
+      // Load saved history from DB
+      await loadHistory(token);
     }
   } catch (e) {
     console.error('loadPet error:', e);
   }
 }
 
-function addChatMsg(role, text) {
+async function loadHistory(token) {
+  try {
+    const res = await fetch('/api/chat-history?pet_id=' + pet.id, {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    const messages = data.messages || [];
+
+    if (messages.length === 0) {
+      // First time - show greeting
+      const greeting = pet.name + '：主人来聊天啦！今天有什么想说的吗？😊';
+      addChatMsg('pet', greeting);
+      saveMessage('pet', greeting);
+    } else {
+      // Restore history
+      messages.forEach(m => addChatMsg(m.role, m.content, false));
+      // Scroll to bottom
+      const container = document.getElementById('chat-messages');
+      container.scrollTop = container.scrollHeight;
+      // Rebuild API history (last 12 for context)
+      chatHistory = messages.slice(-12).map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.content
+      }));
+    }
+  } catch (e) {
+    console.error('loadHistory error:', e);
+    addChatMsg('pet', pet.name + '：主人来聊天啦！今天有什么想说的吗？😊');
+  }
+}
+
+async function saveMessage(role, content) {
+  if (!pet || !currentToken) return;
+  try {
+    await fetch('/api/chat-history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + currentToken },
+      body: JSON.stringify({ pet_id: pet.id, role, content })
+    });
+  } catch {}
+}
+
+async function clearHistory() {
+  if (!confirm('确定要清除全部聊天记录吗？')) return;
+  if (!pet || !currentToken) return;
+  try {
+    await fetch('/api/chat-history?pet_id=' + pet.id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + currentToken }
+    });
+    chatHistory = [];
+    document.getElementById('chat-messages').innerHTML = '';
+    const greeting = pet.name + '：聊天记录已清除～重新开始吧！😊';
+    addChatMsg('pet', greeting);
+    saveMessage('pet', greeting);
+  } catch {}
+}
+
+function addChatMsg(role, text, shouldSave = false) {
   const container = document.getElementById('chat-messages');
   const div = document.createElement('div');
   const isUser = role === 'user';
-  div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:4px;' + (isUser ? 'flex-direction:row-reverse;' : '');
+  div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:8px;' + (isUser ? 'flex-direction:row-reverse;' : '');
   const bubble = document.createElement('div');
   bubble.textContent = text;
   if (isUser) {
@@ -132,7 +192,11 @@ function addChatMsg(role, text) {
   div.appendChild(isUser ? avatar : bubble);
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
-  if (role !== 'pet') chatHistory.push({ role: isUser ? 'user' : 'assistant', content: text });
+  // Update API history
+  if (isUser) chatHistory.push({ role: 'user', content: text });
+  else chatHistory.push({ role: 'assistant', content: text });
+  // Keep last 12 for API context
+  if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
 }
 
 async function sendChat() {
@@ -140,11 +204,15 @@ async function sendChat() {
   const msg = input.value.trim();
   if (!msg || !pet) return;
   input.value = '';
+
   addChatMsg('user', msg);
+  saveMessage('user', msg);
+
   const typing = document.getElementById('chat-typing');
   typing.classList.remove('hidden');
   try {
     const sess = JSON.parse(localStorage.getItem('pw_session') || '{}');
+    const savedSeed = localStorage.getItem('pw_seed_' + pet.id);
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (sess.token || '') },
@@ -155,17 +223,18 @@ async function sendChat() {
         mood: pet.mood || 80,
         message: msg,
         history: chatHistory.slice(-12),
-        personalitySeed: personalitySeed
+        personalitySeed: savedSeed ? parseInt(savedSeed) : null
       })
     });
     const data = await res.json();
     typing.classList.add('hidden');
-    // Save seed on first reply so same pet always has same personality
-    if (data.seed !== undefined && personalitySeed === null) {
-      personalitySeed = data.seed;
+    const reply = data.reply ? pet.name + '：' + data.reply : pet.name + '：...🥺';
+    // Save seed on first reply
+    if (data.seed !== undefined && !savedSeed) {
       localStorage.setItem('pw_seed_' + pet.id, data.seed);
     }
-    addChatMsg('pet', data.reply ? pet.name + '：' + data.reply : pet.name + '：...🥺');
+    addChatMsg('pet', reply);
+    saveMessage('pet', reply);
   } catch {
     typing.classList.add('hidden');
     addChatMsg('pet', pet.name + '：主人，我现在说不了话...🥺');
