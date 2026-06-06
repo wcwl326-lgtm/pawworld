@@ -76,17 +76,6 @@ tailwind.config={theme:{extend:{colors:{"primary":"#02677f","primary-container":
 let pet = null;
 let chatHistory = [];
 
-
-// Get token from session - 401 in loadPet handles expired tokens
-async function getValidToken() {
-  try {
-    const saved = localStorage.getItem('pw_session');
-    if (!saved) return null;
-    const s = JSON.parse(saved);
-    return s.token || null;
-  } catch { return null; }
-}
-
 window.addEventListener('load', () => {
   const saved = localStorage.getItem('pw_session');
   if (!saved) { window.location.href = '/'; return; }
@@ -94,9 +83,6 @@ window.addEventListener('load', () => {
     const s = JSON.parse(saved);
     if (!s.token) { window.location.href = '/'; return; }
     loadPet(s.token);
-  } catch { window.location.href = '/'; }
-});
-    else window.location.href = '/';
   } catch { window.location.href = '/'; }
 });
 
@@ -109,21 +95,16 @@ async function loadPet(token) {
       pet = data.pet;
       document.getElementById('chat-pet-name').textContent = pet.name;
       if (pet.cartoon_url) {
-        const img = document.createElement('img');
-        img.src = pet.cartoon_url;
-        img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:14px;';
-        document.getElementById('chat-pet-display').innerHTML = '';
-        document.getElementById('chat-pet-display').appendChild(img);
+        const display = document.getElementById('chat-pet-display');
+        display.innerHTML = '<img src="' + pet.cartoon_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">';
         const av = document.getElementById('chat-avatar');
-        const avImg = document.createElement('img');
-        avImg.src = pet.cartoon_url;
-        avImg.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
-        av.innerHTML = '';
-        av.appendChild(avImg);
+        av.innerHTML = '<img src="' + pet.cartoon_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
       }
       addChatMsg('pet', pet.name + '：主人来聊天啦！今天有什么想说的吗？😊');
     }
-  } catch {}
+  } catch (e) {
+    console.error('loadPet error:', e);
+  }
 }
 
 function addChatMsg(role, text) {
@@ -131,13 +112,21 @@ function addChatMsg(role, text) {
   const div = document.createElement('div');
   const isUser = role === 'user';
   div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:4px;' + (isUser ? 'flex-direction:row-reverse;' : '');
-  div.innerHTML = isUser
-    ? '<div style="background:#7ec8e3;color:#005468;border-radius:18px 18px 4px 18px;padding:8px 14px;font-size:14px;max-width:75%;font-family:'Be Vietnam Pro',sans-serif;line-height:1.5;">' + text + '</div><div style="font-size:20px;flex-shrink:0;">👤</div>'
-    : '<div style="font-size:20px;flex-shrink:0;">🐾</div><div style="background:#f9f3ea;border-radius:18px 18px 18px 4px;padding:8px 14px;font-size:14px;max-width:75%;color:#1d1b16;font-family:'Be Vietnam Pro',sans-serif;border:1px solid #bfc8cd;line-height:1.5;">' + text + '</div>';
+  const bubble = document.createElement('div');
+  bubble.textContent = text;
+  if (isUser) {
+    bubble.style.cssText = 'background:#7ec8e3;color:#005468;border-radius:18px 18px 4px 18px;padding:8px 14px;font-size:14px;max-width:75%;line-height:1.5;';
+  } else {
+    bubble.style.cssText = 'background:#f9f3ea;border-radius:18px 18px 18px 4px;padding:8px 14px;font-size:14px;max-width:75%;color:#1d1b16;border:1px solid #bfc8cd;line-height:1.5;';
+  }
+  const avatar = document.createElement('div');
+  avatar.style.cssText = 'font-size:20px;flex-shrink:0;';
+  avatar.textContent = isUser ? '👤' : '🐾';
+  div.appendChild(isUser ? bubble : avatar);
+  div.appendChild(isUser ? avatar : bubble);
   container.appendChild(div);
   container.scrollTop = container.scrollHeight;
-  window.scrollTo(0, document.body.scrollHeight);
-  if (role !== 'pet') chatHistory.push({ role: role === 'user' ? 'user' : 'assistant', content: text });
+  if (role !== 'pet') chatHistory.push({ role: isUser ? 'user' : 'assistant', content: text });
 }
 
 async function sendChat() {
@@ -153,7 +142,7 @@ async function sendChat() {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (sess.token || '') },
-      body: JSON.stringify({ petName: pet.name, hunger: pet.hunger||80, energy: pet.energy||80, mood: pet.mood||80, message: msg, history: chatHistory.slice(-8) })
+      body: JSON.stringify({ petName: pet.name, hunger: 80, energy: 80, mood: 80, message: msg, history: chatHistory.slice(-8) })
     });
     const data = await res.json();
     typing.classList.add('hidden');
