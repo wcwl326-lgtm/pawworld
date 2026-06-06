@@ -77,31 +77,13 @@ let pet = null;
 let chatHistory = [];
 
 
-// Auto-refresh Supabase token if expired
+// Get token from session - 401 in loadPet handles expired tokens
 async function getValidToken() {
-  const saved = localStorage.getItem('pw_session');
-  if (!saved) return null;
   try {
+    const saved = localStorage.getItem('pw_session');
+    if (!saved) return null;
     const s = JSON.parse(saved);
-    if (!s.token) return null;
-    // Test if token is valid by checking expiry
-    const payload = JSON.parse(atob(s.token.split('.')[1]));
-    const exp = payload.exp * 1000;
-    if (Date.now() < exp - 60000) return s.token; // still valid
-    // Token expired or expiring soon - refresh
-    if (!s.refresh_token) { localStorage.removeItem('pw_session'); return null; }
-    const res = await fetch('/api/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'refresh', refresh_token: s.refresh_token })
-    });
-    if (!res.ok) { localStorage.removeItem('pw_session'); return null; }
-    const data = await res.json();
-    // Save new tokens
-    s.token = data.access_token;
-    if (data.refresh_token) s.refresh_token = data.refresh_token;
-    localStorage.setItem('pw_session', JSON.stringify(s));
-    return data.access_token;
+    return s.token || null;
   } catch { return null; }
 }
 
@@ -110,10 +92,10 @@ window.addEventListener('load', () => {
   if (!saved) { window.location.href = '/'; return; }
   try {
     const s = JSON.parse(saved);
-    if (s.token) getValidToken().then(t => {
-      if (t) loadPet(t);
-      else { localStorage.removeItem('pw_session'); window.location.href = '/'; }
-    });
+    if (!s.token) { window.location.href = '/'; return; }
+    loadPet(s.token);
+  } catch { window.location.href = '/'; }
+});
     else window.location.href = '/';
   } catch { window.location.href = '/'; }
 });
